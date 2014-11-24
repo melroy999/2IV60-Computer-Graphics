@@ -341,38 +341,78 @@ public class RobotRace extends Base {
          * Draws this robot (as a {@code stickfigure} if specified).
          */
         public void draw(boolean stickFigure) {
-            gl.glColor3f(1.f, 0.f, 0.3f);
-            final float TORSO_HEIGHT = 0.45f;
-            final float TORSO_THICKNESS = 0.15f;
-            final float SHOULDER_HEIGHT = 0.13f;
-            final float SHOULDER_WIDTH = TORSO_HEIGHT*2.2f;
-            final float NECK_HEIGHT = 0.05f;
-            final float NECK_WIDTH = NECK_HEIGHT*1.5f;
-            final float HEAD_HEIGHT = 0.35f;
-            final float HEAD_WIDTH = HEAD_HEIGHT*0.55f;
+            gl.glColor3f(1.f, 0.2f, 0.3f);
+
+            final float VAKJE                   = 0.1f;
+            final float SHOULDER_OVERLAP_MAGIC  = 1.f;
+
+            final float TORSO_HEIGHT            = 5     *VAKJE;
+            final float TORSO_THICKNESS         = 1.5f  *VAKJE;
+            final float SHOULDER_HEIGHT         = 2     *VAKJE;
+            final float SHOULDER_WIDTH          = TORSO_HEIGHT;
+            final float NECK_HEIGHT             = 1     *VAKJE;
+            final float NECK_WIDTH              = 0.5f  *VAKJE;
+            final float HEAD_HEIGHT             = 3     *VAKJE;
+            final float HEAD_WIDTH              = 2     *VAKJE;
+            final float SHOUlDER_JOINT_HEIGHT   = 1     *VAKJE;
+            final float SHOULDER_JOINT_WIDTH    = 1.3f  *VAKJE;
+            final float ARM_PART_LENGTH         = 4     *VAKJE;
+            
+            final float ARM_WIDTH               = SHOULDER_JOINT_WIDTH * 0.8f;
+            final float ELBOW_JOINT_WIDTH       = SHOULDER_JOINT_WIDTH * 0.9f;
             
             gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_LINE );
             
             gl.glPushMatrix();
-                gl.glTranslatef(0.f, 0.f, TORSO_HEIGHT);
+                gl.glTranslatef(0.f, 0.f, TORSO_HEIGHT/2);
                 gl.glPushMatrix();
                     gl.glTranslatef(0.f, TORSO_THICKNESS/2, 0.f);
                     gl.glRotatef(90, 1.f, 0.f, 0.f);
-                    glut.glutSolidCylinder(TORSO_HEIGHT, TORSO_THICKNESS, 50, 51);
+                    glut.glutSolidCylinder(TORSO_HEIGHT/2, TORSO_THICKNESS, 50, 51);
                 gl.glPopMatrix();
-                gl.glTranslatef(0.f, 0.f, TORSO_HEIGHT+SHOULDER_HEIGHT/2);
+                gl.glTranslatef(0.f, 0.f, TORSO_HEIGHT/2+SHOULDER_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                 gl.glPushMatrix();
                     gl.glTranslatef(-SHOULDER_WIDTH/2, 0.f, 0.f);
                     gl.glRotatef(90, 0.f, 1.f, 0.f);
-                    glut.glutSolidCylinder(SHOULDER_HEIGHT, SHOULDER_WIDTH, 50, 51);
+                    glut.glutSolidCylinder(SHOULDER_HEIGHT/2, SHOULDER_WIDTH, 50, 51);
                 gl.glPopMatrix();
                 gl.glPushMatrix();
-                    glut.glutSolidCylinder(NECK_WIDTH ,NECK_HEIGHT+SHOULDER_HEIGHT, 50, 51);
+                    glut.glutSolidCylinder(NECK_WIDTH/2 ,NECK_HEIGHT+SHOULDER_HEIGHT/2, 50, 51);
                 gl.glPopMatrix();
-                gl.glTranslatef(0.f, 0.f, NECK_HEIGHT+SHOULDER_HEIGHT);
+                
                 gl.glPushMatrix();
-                    glut.glutSolidCylinder(0.2, HEAD_HEIGHT, 50, 51);
+                    gl.glTranslatef(0.f, 0.f, NECK_HEIGHT+SHOULDER_HEIGHT/2);
+                    glut.glutSolidCylinder(HEAD_WIDTH/2, HEAD_HEIGHT, 50, 51);
                 gl.glPopMatrix();
+                
+                for(int i = 0; i < 2; i++)
+                {
+                    gl.glPushMatrix();
+                        if(i == 1) gl.glScalef(-1.f, 1.f, 1.f);
+                        gl.glTranslatef(SHOULDER_WIDTH/2, 0.f, 0.f);
+                        gl.glPushMatrix();
+                            gl.glRotatef(90, 0.f, 1.f, 0.f);
+                            glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, SHOULDER_JOINT_WIDTH, 50, 51);
+                        gl.glPopMatrix();
+                        gl.glTranslatef(SHOULDER_JOINT_WIDTH, 0.f, 0.f);
+                        glut.glutSolidSphere(SHOUlDER_JOINT_HEIGHT/3, 50, 51);
+                        gl.glTranslatef(-SHOULDER_JOINT_WIDTH/2, 0.f, 0.f);
+                        for(int j = 0; j < 2; j++)
+                        {
+                            gl.glPushMatrix();
+                                gl.glTranslatef(0.f, 0.f, -ARM_PART_LENGTH/2);
+                                gl.glScalef(ARM_WIDTH, SHOUlDER_JOINT_HEIGHT, ARM_PART_LENGTH);
+                                glut.glutSolidCube(1.f);
+                            gl.glPopMatrix();
+                            gl.glTranslatef(0.f, 0.f, -ARM_PART_LENGTH);
+                            gl.glPushMatrix();
+                                gl.glTranslatef(-ELBOW_JOINT_WIDTH/2, 0.f, 0.f);
+                                gl.glRotatef(90, 0.f, 1.f, 0.f);
+                                glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, ELBOW_JOINT_WIDTH, 50, 51);
+                            gl.glPopMatrix();
+                        }
+                    gl.glPopMatrix();
+                }
             gl.glPopMatrix();
             
             gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_FILL );
