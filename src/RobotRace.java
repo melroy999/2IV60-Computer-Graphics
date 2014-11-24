@@ -357,19 +357,64 @@ public class RobotRace extends Base {
             final float SHOUlDER_JOINT_HEIGHT   = 1     *VAKJE;
             final float SHOULDER_JOINT_WIDTH    = 1.3f  *VAKJE;
             final float ARM_PART_LENGTH         = 4     *VAKJE;
+            final float LEG_PART_LENGTH         = 5     *VAKJE;
+            final float TORSO_BOTTOM_HEIGHT     = 1.5f  *VAKJE;
+            final float TORSO_BOTTOM_WIDTH      = 0.95f  *TORSO_HEIGHT;
+            
             
             final float ARM_WIDTH               = SHOULDER_JOINT_WIDTH * 0.8f;
             final float ELBOW_JOINT_WIDTH       = SHOULDER_JOINT_WIDTH * 0.9f;
             
+            final float LEG_WIDTH               = ARM_WIDTH;
+            final float KNEE_JOINT_WIDTH        = ELBOW_JOINT_WIDTH;
+            final float KNEE_JOINT_HEIGHT       = SHOUlDER_JOINT_HEIGHT;
+            
+            final float TORSO_RELATIVE_HEIGHT = 2*LEG_PART_LENGTH+TORSO_HEIGHT/2+TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC)+KNEE_JOINT_HEIGHT/2; 
+            
             gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_LINE );
             
             gl.glPushMatrix();
-                gl.glTranslatef(0.f, 0.f, TORSO_HEIGHT/2);
-                gl.glPushMatrix();
+                gl.glTranslatef(0.f, 0.f, TORSO_RELATIVE_HEIGHT);
+                gl.glPushMatrix();//chest
                     gl.glTranslatef(0.f, TORSO_THICKNESS/2, 0.f);
                     gl.glRotatef(90, 1.f, 0.f, 0.f);
                     glut.glutSolidCylinder(TORSO_HEIGHT/2, TORSO_THICKNESS, 50, 51);
                 gl.glPopMatrix();
+                
+                gl.glPushMatrix();
+                    
+                    gl.glPushMatrix();
+                        gl.glTranslatef(0.f, 0.f, -TORSO_HEIGHT/2-TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
+                        gl.glTranslatef(-TORSO_BOTTOM_WIDTH/2, 0.f, 0.f);
+                        gl.glRotatef(90, 0.f, 1.f, 0.f);
+                        glut.glutSolidCylinder(TORSO_BOTTOM_HEIGHT/2, TORSO_BOTTOM_WIDTH, 50, 51);
+                    gl.glPopMatrix();
+
+                    gl.glTranslatef(0.f, 0.f, -TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
+                    for(int i = 0; i < 2; i++)
+                    {
+                        gl.glPushMatrix();
+                            gl.glTranslatef(0.f, 0.f, -TORSO_HEIGHT/2);
+                            if(i == 1) gl.glScalef(-1.f, 1.f, 1.f);
+                            gl.glTranslatef(TORSO_BOTTOM_WIDTH/2-3*LEG_WIDTH/4,0.f,0.f);
+                            for(int j = 0; j < 2; j++)
+                            {
+                                gl.glPushMatrix();
+                                    gl.glTranslatef(0.f, 0.f, -LEG_PART_LENGTH/2);
+                                    gl.glScalef(ARM_WIDTH, KNEE_JOINT_HEIGHT, LEG_PART_LENGTH);
+                                    glut.glutSolidCube(1.f);
+                                gl.glPopMatrix();
+                                gl.glTranslatef(0.f, 0.f, -LEG_PART_LENGTH);
+                                gl.glPushMatrix();
+                                    gl.glTranslatef(-KNEE_JOINT_WIDTH/2, 0.f, 0.f);
+                                    gl.glRotatef(90, 0.f, 1.f, 0.f);
+                                    glut.glutSolidCylinder(KNEE_JOINT_HEIGHT/2, KNEE_JOINT_WIDTH, 50, 51);
+                                gl.glPopMatrix();
+                            }
+                        gl.glPopMatrix();
+                    }
+                gl.glPopMatrix();
+                
                 gl.glTranslatef(0.f, 0.f, TORSO_HEIGHT/2+SHOULDER_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                 gl.glPushMatrix();
                     gl.glTranslatef(-SHOULDER_WIDTH/2, 0.f, 0.f);
