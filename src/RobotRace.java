@@ -99,10 +99,10 @@ public class RobotRace extends Base {
 
         // Anti-aliasing can be enabled by uncommenting the following 4 lines.
         // This can however cause problems on some graphics cards.
-        //gl.glEnable(GL_LINE_SMOOTH);
-        //gl.glEnable(GL_POLYGON_SMOOTH);
-        //gl.glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-        //gl.glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+        gl.glEnable(GL_LINE_SMOOTH);
+        gl.glEnable(GL_POLYGON_SMOOTH);
+        gl.glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+        gl.glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 
         // Enable depth testing.
         gl.glEnable(GL_DEPTH_TEST);
@@ -120,6 +120,10 @@ public class RobotRace extends Base {
         gl.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
         gl.glBindTexture(GL_TEXTURE_2D, 0);
 
+        // Enable lightning
+        gl.glEnable(GL_LIGHTING);
+        gl.glEnable(GL_LIGHT0);
+        
         // Try to load four textures, add more if you like.
         track = loadTexture("track.jpg");
         brick = loadTexture("brick.jpg");
@@ -354,7 +358,7 @@ public class RobotRace extends Base {
             final float NECK_WIDTH              = 0.5f  *VAKJE;
             final float HEAD_HEIGHT             = 3     *VAKJE;
             final float HEAD_WIDTH              = 2     *VAKJE;
-            final float SHOUlDER_JOINT_HEIGHT   = 1     *VAKJE;
+            final float SHOUlDER_JOINT_HEIGHT   = 1f    *VAKJE;
             final float SHOULDER_JOINT_WIDTH    = 1.3f  *VAKJE;
             final float ARM_PART_LENGTH         = 4     *VAKJE;
             final float LEG_PART_LENGTH         = 5     *VAKJE;
@@ -363,15 +367,17 @@ public class RobotRace extends Base {
             
             
             final float ARM_WIDTH               = SHOULDER_JOINT_WIDTH * 0.8f;
-            final float ELBOW_JOINT_WIDTH       = SHOULDER_JOINT_WIDTH * 0.9f;
+            final float ELBOW_JOINT_WIDTH       = SHOULDER_JOINT_WIDTH;
+            final float ARM_HEIGHT             = ARM_WIDTH * 0.8f;
             
             final float LEG_WIDTH               = ARM_WIDTH;
             final float KNEE_JOINT_WIDTH        = ELBOW_JOINT_WIDTH;
             final float KNEE_JOINT_HEIGHT       = SHOUlDER_JOINT_HEIGHT;
+            final float LEG_HEIGHT              = LEG_WIDTH * 0.8f;
             
             final float TORSO_RELATIVE_HEIGHT = 2*LEG_PART_LENGTH+TORSO_HEIGHT/2+TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC)+KNEE_JOINT_HEIGHT/2; 
             
-            gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_LINE );
+            //gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_LINE );
             
             gl.glPushMatrix();
                 gl.glTranslatef(0.f, 0.f, TORSO_RELATIVE_HEIGHT);
@@ -401,7 +407,7 @@ public class RobotRace extends Base {
                             {
                                 gl.glPushMatrix();
                                     gl.glTranslatef(0.f, 0.f, -LEG_PART_LENGTH/2);
-                                    gl.glScalef(ARM_WIDTH, KNEE_JOINT_HEIGHT, LEG_PART_LENGTH);
+                                    gl.glScalef(LEG_WIDTH, LEG_HEIGHT, LEG_PART_LENGTH);
                                     glut.glutSolidCube(1.f);
                                 gl.glPopMatrix();
                                 gl.glTranslatef(0.f, 0.f, -LEG_PART_LENGTH);
@@ -446,7 +452,7 @@ public class RobotRace extends Base {
                         {
                             gl.glPushMatrix();
                                 gl.glTranslatef(0.f, 0.f, -ARM_PART_LENGTH/2);
-                                gl.glScalef(ARM_WIDTH, SHOUlDER_JOINT_HEIGHT, ARM_PART_LENGTH);
+                                gl.glScalef(ARM_WIDTH, ARM_HEIGHT, ARM_PART_LENGTH);
                                 glut.glutSolidCube(1.f);
                             gl.glPopMatrix();
                             gl.glTranslatef(0.f, 0.f, -ARM_PART_LENGTH);
