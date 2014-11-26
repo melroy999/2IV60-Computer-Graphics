@@ -410,11 +410,44 @@ public class RobotRace extends Base {
                                     gl.glRotatef(90, 0.f, 1.f, 0.f);
                                     glut.glutSolidCylinder(KNEE_JOINT_HEIGHT/2, KNEE_JOINT_WIDTH, 50, 51);
                                 gl.glPopMatrix();
+
                             }
+
+                            /* z=1  __ ==\
+                             *  \==--      \
+                             *  | \   ---    \
+                             *  |   \    ---   \
+                             *  |     \      --==\
+                             *  |       \   __
+                             *  =========/==
+                             *  O        x=1
+                             */
+                            gl.glBegin(gl.GL_TRIANGLE_STRIP);
+                                // Left side
+                                gl.glVertex3f(0.f, 0.f, 0.f);
+                                gl.glVertex3f(1.f, 0.f, 0.f);
+                                gl.glVertex3f(0.f, 0.f, 1.f);
+
+                                //Front quad
+                                gl.glVertex3f(1.f, 1.f, 0.f);
+                                gl.glVertex3f(0.f, 1.f, 1.f);
+
+                                //Right side
+                                gl.glVertex3f(0.f, 1.f, 0.f);
+
+                                //Back side
+                                gl.glVertex3f(0.f, 0.f, 1.f);
+                                gl.glVertex3f(0.f, 0.f, 0.f);
+                                gl.glVertex3f(0.f, 1.f, 0.f);
+
+                                //Bottom side
+                                gl.glVertex3f(1.f, 0.f, 0.f);
+                                gl.glVertex3f(1.f, 1.f, 0.f);
+                            gl.glEnd();
                         gl.glPopMatrix();
                     }
                 gl.glPopMatrix();
-                
+
                 gl.glTranslatef(0.f, 0.f, TORSO_HEIGHT/2+SHOULDER_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                 gl.glPushMatrix();
                     gl.glTranslatef(-SHOULDER_WIDTH/2, 0.f, 0.f);
