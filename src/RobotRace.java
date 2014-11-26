@@ -1,6 +1,7 @@
 
 import javax.media.opengl.GL;
 import static javax.media.opengl.GL2.*;
+import javax.media.opengl.GL2;
 import robotrace.Base;
 import robotrace.Texture1D;
 import robotrace.Vector;
@@ -322,11 +323,56 @@ public class RobotRace extends Base {
      * Represents a Robot, to be implemented according to the Assignments.
      */
     private class Robot {
+        class GlColor {
+            float r, g, b, a;
+            GlColor(float r, float g, float b, float a) {
+                this.r = r;
+                this.g = g;
+                this.b = b;
+                this.a = a;
+            }
+
+            GlColor(float r, float g, float b) {
+                this(r, g, b, 1.f);
+            }
+
+            void set(GL2 gl) {
+                gl.glColor4f(r, g, b, a);
+            }
+        }
 
         /**
          * The material from which this robot is built.
          */
         private final Material material;
+
+        GlColor baseColor       = new GlColor(1.0f, 0.2f, 0.3f);
+        GlColor headColor       = new GlColor(0.4f, 0.4f, 0.4f);
+        GlColor neckColor       = new GlColor(0.5f, 0.4f, 0.4f);
+        GlColor shoulderColor   = new GlColor(0.4f, 0.4f, 0.4f);
+        GlColor chestColor      = new GlColor(0.4f, 0.4f, 0.4f);
+        GlColor hipColor        = new GlColor(0.0f, 0.4f, 0.4f);
+
+        GlColor legColor        = new GlColor(0.f, 0.f, 1.f);
+
+        GlColor [] singleLegColor = new GlColor[] {
+            legColor,
+            legColor
+        };
+        GlColor [][] legPartColor = new GlColor[][] {
+            singleLegColor,
+            singleLegColor,
+        };
+
+        GlColor [][] legJointColor = new GlColor[][] {
+            singleLegColor,
+            singleLegColor,
+        };
+
+        GlColor [] footColor = new GlColor[] {
+            legColor,
+            legColor,
+        };
 
         /**
          * Constructs the robot with initial parameters.
@@ -341,8 +387,6 @@ public class RobotRace extends Base {
          * Draws this robot (as a {@code stickfigure} if specified).
          */
         public void draw(boolean stickFigure) {
-            gl.glColor3f(1.f, 0.2f, 0.3f);
-
             final float VAKJE                   = 0.1f;
             final float SHOULDER_OVERLAP_MAGIC  = 1.f;
 
@@ -371,16 +415,17 @@ public class RobotRace extends Base {
             final float KNEE_JOINT_HEIGHT       = SHOUlDER_JOINT_HEIGHT;
             final float FEET_HEIGHT             = KNEE_JOINT_HEIGHT;
             final float FEET_WIDTH              = LEG_WIDTH;
-            
-            final float TORSO_RELATIVE_HEIGHT = 2*LEG_PART_LENGTH+TORSO_HEIGHT/2+TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC)+KNEE_JOINT_HEIGHT/2; 
-            
+
+            final float TORSO_RELATIVE_HEIGHT = 2*LEG_PART_LENGTH+TORSO_HEIGHT/2+TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC)+KNEE_JOINT_HEIGHT/2;
+
             gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_LINE );
-            
+
             gl.glPushMatrix();
                 gl.glTranslatef(0.f, 0.f, TORSO_RELATIVE_HEIGHT);
                 gl.glPushMatrix();//chest
                     gl.glTranslatef(0.f, TORSO_THICKNESS/2, 0.f);
                     gl.glRotatef(90, 1.f, 0.f, 0.f);
+                    chestColor.set(gl);
                     glut.glutSolidCylinder(TORSO_HEIGHT/2, TORSO_THICKNESS, 50, 51);
                 gl.glPopMatrix();
                 
@@ -390,9 +435,11 @@ public class RobotRace extends Base {
                         gl.glTranslatef(0.f, 0.f, -TORSO_HEIGHT/2-TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                         gl.glTranslatef(-TORSO_BOTTOM_WIDTH/2, 0.f, 0.f);
                         gl.glRotatef(90, 0.f, 1.f, 0.f);
+                        hipColor.set(gl);
                         glut.glutSolidCylinder(TORSO_BOTTOM_HEIGHT/2, TORSO_BOTTOM_WIDTH, 50, 51);
                     gl.glPopMatrix();
 
+                    baseColor.set(gl);
                     gl.glTranslatef(0.f, 0.f, -TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                     for(int i = 0; i < 2; i++)
                     {
@@ -406,12 +453,14 @@ public class RobotRace extends Base {
                                 gl.glPushMatrix();
                                     gl.glTranslatef(0.f, 0.f, -LEG_PART_LENGTH/2);
                                     gl.glScalef(ARM_WIDTH, KNEE_JOINT_HEIGHT, LEG_PART_LENGTH);
+                                    legPartColor[i][j].set(gl);
                                     glut.glutSolidCube(1.f);
                                 gl.glPopMatrix();
                                 gl.glTranslatef(0.f, 0.f, -LEG_PART_LENGTH);
                                 gl.glPushMatrix();
                                     gl.glTranslatef(-KNEE_JOINT_WIDTH/2, 0.f, 0.f);
                                     gl.glRotatef(90, 0.f, 1.f, 0.f);
+                                    legJointColor[i][j].set(gl);
                                     glut.glutSolidCylinder(KNEE_JOINT_HEIGHT/2, KNEE_JOINT_WIDTH, 50, 51);
                                 gl.glPopMatrix();
 
@@ -430,6 +479,7 @@ public class RobotRace extends Base {
                              *  =========/==
                              *  O        x=1
                              */
+                            footColor[i].set(gl);
                             gl.glBegin(gl.GL_TRIANGLE_STRIP);
                                 // Left side
                                 gl.glVertex3f(0.f, 0.f, 0.f);
@@ -460,17 +510,20 @@ public class RobotRace extends Base {
                 gl.glPushMatrix();
                     gl.glTranslatef(-SHOULDER_WIDTH/2, 0.f, 0.f);
                     gl.glRotatef(90, 0.f, 1.f, 0.f);
+                    shoulderColor.set(gl);
                     glut.glutSolidCylinder(SHOULDER_HEIGHT/2, SHOULDER_WIDTH, 50, 51);
                 gl.glPopMatrix();
                 gl.glPushMatrix();
+                    neckColor.set(gl);
                     glut.glutSolidCylinder(NECK_WIDTH/2 ,NECK_HEIGHT+SHOULDER_HEIGHT/2, 50, 51);
                 gl.glPopMatrix();
-                
+
                 gl.glPushMatrix();
                     gl.glTranslatef(0.f, 0.f, NECK_HEIGHT+SHOULDER_HEIGHT/2);
+                    headColor.set(gl);
                     glut.glutSolidCylinder(HEAD_WIDTH/2, HEAD_HEIGHT, 50, 51);
                 gl.glPopMatrix();
-                
+
                 for(int i = 0; i < 2; i++)
                 {
                     gl.glPushMatrix();
