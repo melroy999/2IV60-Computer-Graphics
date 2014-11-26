@@ -359,15 +359,18 @@ public class RobotRace extends Base {
             final float ARM_PART_LENGTH         = 4     *VAKJE;
             final float LEG_PART_LENGTH         = 5     *VAKJE;
             final float TORSO_BOTTOM_HEIGHT     = 1.5f  *VAKJE;
-            final float TORSO_BOTTOM_WIDTH      = 0.95f  *TORSO_HEIGHT;
-            
-            
+            final float TORSO_BOTTOM_WIDTH      = 0.95f *TORSO_HEIGHT;
+            final float FEET_LENGTH             = 2.f   *VAKJE; // TODO look up
+
+
             final float ARM_WIDTH               = SHOULDER_JOINT_WIDTH * 0.8f;
             final float ELBOW_JOINT_WIDTH       = SHOULDER_JOINT_WIDTH * 0.9f;
-            
+
             final float LEG_WIDTH               = ARM_WIDTH;
             final float KNEE_JOINT_WIDTH        = ELBOW_JOINT_WIDTH;
             final float KNEE_JOINT_HEIGHT       = SHOUlDER_JOINT_HEIGHT;
+            final float FEET_HEIGHT             = KNEE_JOINT_HEIGHT;
+            final float FEET_WIDTH              = LEG_WIDTH;
             
             final float TORSO_RELATIVE_HEIGHT = 2*LEG_PART_LENGTH+TORSO_HEIGHT/2+TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC)+KNEE_JOINT_HEIGHT/2; 
             
@@ -397,6 +400,7 @@ public class RobotRace extends Base {
                             gl.glTranslatef(0.f, 0.f, -TORSO_HEIGHT/2);
                             if(i == 1) gl.glScalef(-1.f, 1.f, 1.f);
                             gl.glTranslatef(TORSO_BOTTOM_WIDTH/2-3*LEG_WIDTH/4,0.f,0.f);
+
                             for(int j = 0; j < 2; j++)
                             {
                                 gl.glPushMatrix();
@@ -413,6 +417,10 @@ public class RobotRace extends Base {
 
                             }
 
+                            //TODO gl.glRotatef(45, 1.f, 0.f, 0.f);
+                            gl.glRotatef(90, 0.f, 0.f, 1.f);
+                            gl.glTranslatef(0.f, -KNEE_JOINT_WIDTH/2, -KNEE_JOINT_HEIGHT/2);
+                            gl.glScalef(FEET_LENGTH, FEET_WIDTH, FEET_HEIGHT);
                             /* z=1  __ ==\
                              *  \==--      \
                              *  | \   ---    \
