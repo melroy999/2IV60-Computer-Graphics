@@ -2,3 +2,5 @@
 /dist
 /nbproject
 /nbproject/private/
+*kdev*
+target
