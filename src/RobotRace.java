@@ -116,7 +116,7 @@ public class RobotRace extends Base {
         gl.glEnable(GL_COLOR_MATERIAL);
         gl.glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
-        // Enable textures. 
+        // Enable textures.
         gl.glEnable(GL_TEXTURE_2D);
         gl.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
         gl.glBindTexture(GL_TEXTURE_2D, 0);
@@ -178,13 +178,13 @@ public class RobotRace extends Base {
 
         /*gl.glBegin(gl.GL_LINES);
          gl.glColor4f(0f,0f,0f,1f);
-        
+
          final double LENGTH_CONSTANT = gs.vDist / (2*Math.cos(gs.phi)*gs.vDist);
          System.out.println(LENGTH_CONSTANT);
          gl.glVertex3d(gs.cnt.x(),gs.cnt.y(),gs.cnt.z());
          gl.glVertex3d(-LENGTH_CONSTANT*Math.sin(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.y(),-LENGTH_CONSTANT*Math.cos(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.x(),0);
          gl.glVertex3d(LENGTH_CONSTANT*Math.sin(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.y(),LENGTH_CONSTANT*Math.cos(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.x(),0);
-        
+
          /*gl.glVertex3d(-Math.sin(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.y(),-Math.cos(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.x(),0);
          gl.glVertex3d(Math.sin(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.y(),Math.cos(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.x(),0);
          System.out.println(Math.sin(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.y()+";"+Math.cos(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.x());
@@ -428,9 +428,9 @@ public class RobotRace extends Base {
                     chestColor.set(gl);
                     glut.glutSolidCylinder(TORSO_HEIGHT/2, TORSO_THICKNESS, 50, 51);
                 gl.glPopMatrix();
-                
+
                 gl.glPushMatrix();
-                    
+
                     gl.glPushMatrix();
                         gl.glTranslatef(0.f, 0.f, -TORSO_HEIGHT/2-TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                         gl.glTranslatef(-TORSO_BOTTOM_WIDTH/2, 0.f, 0.f);
@@ -553,7 +553,7 @@ public class RobotRace extends Base {
                     gl.glPopMatrix();
                 }
             gl.glPopMatrix();
-            
+
             gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_FILL );
         }
     }
