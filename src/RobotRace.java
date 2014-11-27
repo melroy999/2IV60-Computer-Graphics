@@ -1,7 +1,6 @@
 
 import javax.media.opengl.GL;
 import static javax.media.opengl.GL2.*;
-import static javax.media.opengl.fixedfunc.GLLightingFunc.GL_LIGHT0;
 import javax.media.opengl.GL2;
 import robotrace.Base;
 import robotrace.Texture1D;
@@ -121,11 +120,34 @@ public class RobotRace extends Base {
         gl.glEnable(GL_TEXTURE_2D);
         gl.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
         gl.glBindTexture(GL_TEXTURE_2D, 0);
+
         // Enable lightning
         gl.glEnable(GL_LIGHTING);
         gl.glEnable(GL_LIGHT0);
+        {
+            // Create light components
+            float ambientLight[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+            float diffuseLight[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+            float specularLight[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+
+            // Assign created components to GL_LIGHT0
+            gl.glLightfv(gl.GL_LIGHT0, gl.GL_AMBIENT, ambientLight, 0);
+            gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, diffuseLight, 0);
+            gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, specularLight, 0);
+        }
         gl.glEnable(GL_LIGHT1);
-        gl.glEnable(GL_NORMALIZE);
+        {
+            // Create light components
+            float ambientLight[] = { 0f, 0f, 0f, 0f};
+            float diffuseLight[] = { 1f, 0.8f, 0.8f, 1.0f };
+            float specularLight[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+
+            // Assign created components to GL_LIGHT0
+            gl.glLightfv(gl.GL_LIGHT1, gl.GL_AMBIENT, ambientLight, 0);
+            gl.glLightfv(gl.GL_LIGHT1, gl.GL_DIFFUSE, diffuseLight, 0);
+            gl.glLightfv(gl.GL_LIGHT1, gl.GL_SPECULAR, specularLight, 0);
+        
+        }
 
         // Try to load four textures, add more if you like.
         track = loadTexture("track.jpg");
@@ -161,6 +183,19 @@ public class RobotRace extends Base {
 
         // Update the view according to the camera mode
         camera.update(gs.camMode);
+        
+         double X_EYE_COR = gs.vDist * Math.cos(gs.phi) * Math.sin(gs.theta) + gs.cnt.x();
+         double Y_EYE_COR = gs.vDist * Math.cos(gs.phi) * Math.cos(gs.theta) + gs.cnt.y();
+         double Z_EYE_COR = gs.vDist * Math.sin(gs.phi) + gs.cnt.z();
+         glu.gluLookAt(X_EYE_COR, Y_EYE_COR, Z_EYE_COR, gs.cnt.x(), gs.cnt.y(), gs.cnt.z(), camera.up.x(), camera.up.y(), camera.up.z());
+         
+         {
+            Vector cameraLocation = new Vector(X_EYE_COR, Y_EYE_COR, Z_EYE_COR);
+            Vector viewDirection = gs.cnt.subtract(cameraLocation);
+            Vector leftDirection = viewDirection.cross(camera.up).add(new Vector(0, 0, 1)).scale(0.3);
+            float lightPosition[] = { (float)leftDirection.x(), (float)leftDirection.y(), (float)leftDirection.z(), 0 };
+            gl.glLightfv(gl.GL_LIGHT1, gl.GL_POSITION, lightPosition, 0);
+         }
     }
 
     /**
@@ -702,49 +737,6 @@ public class RobotRace extends Base {
             } else {
                 setDefaultMode();
             }
-            
-            double X_EYE_COR = gs.vDist * Math.cos(gs.phi) * Math.sin(gs.theta) + gs.cnt.x();
-            double Y_EYE_COR = gs.vDist * Math.cos(gs.phi) * Math.cos(gs.theta) + gs.cnt.y();
-            double Z_EYE_COR = gs.vDist * Math.sin(gs.phi) + gs.cnt.z();
-            glu.gluLookAt(X_EYE_COR, Y_EYE_COR, Z_EYE_COR, gs.cnt.x(), gs.cnt.y(), gs.cnt.z(), 0, 0, 1);
-            
-            
-            /** -- WARNING: the credit for the below code for the lighting goes to rene zaal -- **/
-            /* rene zaal has given us credit to make use of this code */
-            
-            // draw a light above and to the left of the camera
-            // calculate the direction in which the camera looks in the xy plane 
-            Vector xyCameraDir = (new Vector(eye.subtract(center).x(), eye.subtract(center).y(), 0)).normalized();
-
-            // take the cross product of that vector with the up vector to get a vector orthogonal to the direction vector in the xyplane
-            Vector light1 = xyCameraDir.cross(up).normalized();
-
-            // now we can look correct the vector if it points to the right instead of to the left
-            // this part is only easy to explain when you visualize it on paper
-            // basically we compare the x coordinates to find out whether light1 is pointing to the left or right
-            // a switch happens at y=-x
-            if (xyCameraDir.y() > -xyCameraDir.x()) {
-                if (light1.x() > xyCameraDir.x()) {
-                    light1 = Vector.O.subtract(light1);
-                }
-            } else if (xyCameraDir.y() < -xyCameraDir.x()) {
-                if (light1.x() < xyCameraDir.x()) {
-                    light1 = Vector.O.subtract(light1);
-                }
-            } else if (light1.x() != xyCameraDir.x()) {
-                light1 = Vector.O.subtract(light1);
-            }
-
-            light1 = light1.add(eye);
-
-            float light1co[] = new float[]{(float) light1.x(), (float) light1.y(), (float) light1.z(), 1.0f};
-
-            // activate the spot
-            gl.glLightfv(GL_LIGHT1, GL_POSITION, light1co, 0);
-            if (mode != 0) {
-                glu.gluLookAt(eye.x(), eye.y(), eye.z(), center.x(), center.y(), center.z(), up.x(), up.y(), up.z());
-            }
-            /** --------------------------------------------------- **/
         }   
 
         /**
