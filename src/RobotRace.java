@@ -1,6 +1,7 @@
 
 import javax.media.opengl.GL;
 import static javax.media.opengl.GL2.*;
+import static javax.media.opengl.fixedfunc.GLLightingFunc.GL_LIGHT0;
 import robotrace.Base;
 import robotrace.Texture1D;
 import robotrace.Vector;
@@ -123,6 +124,8 @@ public class RobotRace extends Base {
         // Enable lightning
         gl.glEnable(GL_LIGHTING);
         gl.glEnable(GL_LIGHT0);
+        gl.glEnable(GL_LIGHT1);
+        gl.glEnable(GL_NORMALIZE);
         
         // Try to load four textures, add more if you like.
         track = loadTexture("track.jpg");
@@ -150,7 +153,7 @@ public class RobotRace extends Base {
         float fovY = (float) Math.atan2((0.5f * vHeight), gs.vDist) * 2f;
         fovY = (float) Math.toDegrees(fovY);
 
-        glu.gluPerspective(fovY, (float) gs.w / (float) gs.h, 0.1 * gs.vDist, 10.0 * gs.vDist);
+        glu.gluPerspective(fovY, (float) gs.w / (float) gs.h, 0.1 * gs.vDist, 100 * gs.vDist);
 
         // Set camera.
         gl.glMatrixMode(GL_MODELVIEW);
@@ -158,11 +161,6 @@ public class RobotRace extends Base {
 
         // Update the view according to the camera mode
         camera.update(gs.camMode);
-
-        double X_EYE_COR = gs.vDist * Math.cos(gs.phi) * Math.sin(gs.theta) + gs.cnt.x();
-        double Y_EYE_COR = gs.vDist * Math.cos(gs.phi) * Math.cos(gs.theta) + gs.cnt.y();
-        double Z_EYE_COR = gs.vDist * Math.sin(gs.phi) + gs.cnt.z();
-        glu.gluLookAt(X_EYE_COR, Y_EYE_COR, Z_EYE_COR, gs.cnt.x(), gs.cnt.y(), gs.cnt.z(), 0, 0, 1);
     }
 
     /**
@@ -204,9 +202,21 @@ public class RobotRace extends Base {
 
         // Set color to black.
         gl.glColor3f(0f, 0f, 0f);
-
+         
         // Draw the first robot
         robots[0].draw(false);
+        
+        gl.glTranslatef(1f, 0f, 0f);
+        
+        robots[1].draw(false);
+        
+        gl.glTranslatef(1f, 0f, 0f);
+        
+        robots[2].draw(false);
+        
+        gl.glTranslatef(1f, 0f, 0f);
+        
+        robots[3].draw(false);
 
         // Draw race track
         raceTrack.draw(gs.trackNr);
@@ -243,14 +253,6 @@ public class RobotRace extends Base {
         final float LINE_WIDTH = 0.015f;
 
         for (int[] direction : directionVectors) {
-            /*
-             gl.glBegin(gl.GL_LINES);
-             gl.glColor4f(direction[0]*255,direction[1]*255,direction[2]*255, 1f);
-             gl.glVertex3f(0f,0f,0f);
-             gl.glVertex3f(LINE_LENGTH*direction[0],LINE_LENGTH*direction[1],LINE_LENGTH*direction[2]);
-             gl.glEnd();
-             */
-
             gl.glPushMatrix();
             gl.glColor4f(direction[0] * 255, direction[1] * 255, direction[2] * 255, 1f);
             gl.glScalef(LINE_LENGTH * direction[0] + LINE_WIDTH, LINE_LENGTH * direction[1] + LINE_WIDTH, LINE_LENGTH * direction[2] + LINE_WIDTH);
@@ -281,29 +283,29 @@ public class RobotRace extends Base {
          * like gold.
          */
         GOLD(
-        new float[]{0.8f, 0.8f, 0.8f, 1.0f},
-        new float[]{0.0f, 0.0f, 0.0f, 1.0f}),
+        new float[]{0.75164f, 0.60648f, 0.22648f, 1f},
+        new float[]{0.628281f, 0.555802f, 0.366065f, 1f}),
         /**
          * Silver material properties. Modify the default values to make it look
          * like silver.
          */
         SILVER(
-        new float[]{0.8f, 0.8f, 0.8f, 1.0f},
-        new float[]{0.0f, 0.0f, 0.0f, 1.0f}),
+        new float[]{0.50754f, 0.50754f, 0.50754f, 1f},
+        new float[]{0.508273f, 0.508273f, 0.508273f, 1f}),
         /**
          * Wood material properties. Modify the default values to make it look
          * like wood.
          */
         WOOD(
-        new float[]{0.8f, 0.8f, 0.8f, 1.0f},
-        new float[]{0.0f, 0.0f, 0.0f, 1.0f}),
+        new float[]{0.227f, 0.13f, 0.065f, 1.0f},
+        new float[]{0.3f, 0.14f, 0.071f, 1.0f}),
         /**
          * Orange material properties. Modify the default values to make it look
          * like orange.
          */
         ORANGE(
-        new float[]{0.8f, 0.8f, 0.8f, 1.0f},
-        new float[]{0.0f, 0.0f, 0.0f, 1.0f});
+        new float[]{1f, 0.5f, 0f, 1.0f},
+        new float[]{1f, 0.5f, 0f, 1.0f});
         /**
          * The diffuse RGBA reflectance of the material.
          */
@@ -365,6 +367,8 @@ public class RobotRace extends Base {
             final float TORSO_BOTTOM_HEIGHT     = 1.5f  *VAKJE;
             final float TORSO_BOTTOM_WIDTH      = 0.95f  *TORSO_HEIGHT;
             
+            final int PRECISION               = 40;
+            
             
             final float ARM_WIDTH               = SHOULDER_JOINT_WIDTH * 0.8f;
             final float ELBOW_JOINT_WIDTH       = SHOULDER_JOINT_WIDTH;
@@ -384,7 +388,7 @@ public class RobotRace extends Base {
                 gl.glPushMatrix();//chest
                     gl.glTranslatef(0.f, TORSO_THICKNESS/2, 0.f);
                     gl.glRotatef(90, 1.f, 0.f, 0.f);
-                    glut.glutSolidCylinder(TORSO_HEIGHT/2, TORSO_THICKNESS, 50, 51);
+                    glut.glutSolidCylinder(TORSO_HEIGHT/2, TORSO_THICKNESS, PRECISION, PRECISION);
                 gl.glPopMatrix();
                 
                 gl.glPushMatrix();
@@ -393,7 +397,7 @@ public class RobotRace extends Base {
                         gl.glTranslatef(0.f, 0.f, -TORSO_HEIGHT/2-TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                         gl.glTranslatef(-TORSO_BOTTOM_WIDTH/2, 0.f, 0.f);
                         gl.glRotatef(90, 0.f, 1.f, 0.f);
-                        glut.glutSolidCylinder(TORSO_BOTTOM_HEIGHT/2, TORSO_BOTTOM_WIDTH, 50, 51);
+                        glut.glutSolidCylinder(TORSO_BOTTOM_HEIGHT/2, TORSO_BOTTOM_WIDTH, PRECISION, PRECISION);
                     gl.glPopMatrix();
 
                     gl.glTranslatef(0.f, 0.f, -TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
@@ -414,7 +418,7 @@ public class RobotRace extends Base {
                                 gl.glPushMatrix();
                                     gl.glTranslatef(-KNEE_JOINT_WIDTH/2, 0.f, 0.f);
                                     gl.glRotatef(90, 0.f, 1.f, 0.f);
-                                    glut.glutSolidCylinder(KNEE_JOINT_HEIGHT/2, KNEE_JOINT_WIDTH, 50, 51);
+                                    glut.glutSolidCylinder(KNEE_JOINT_HEIGHT/2, KNEE_JOINT_WIDTH, PRECISION, PRECISION);
                                 gl.glPopMatrix();
                             }
                         gl.glPopMatrix();
@@ -428,12 +432,12 @@ public class RobotRace extends Base {
                     glut.glutSolidCylinder(SHOULDER_HEIGHT/2, SHOULDER_WIDTH, 50, 51);
                 gl.glPopMatrix();
                 gl.glPushMatrix();
-                    glut.glutSolidCylinder(NECK_WIDTH/2 ,NECK_HEIGHT+SHOULDER_HEIGHT/2, 50, 51);
+                    glut.glutSolidCylinder(NECK_WIDTH/2 ,NECK_HEIGHT+SHOULDER_HEIGHT/2, PRECISION, PRECISION);
                 gl.glPopMatrix();
                 
                 gl.glPushMatrix();
                     gl.glTranslatef(0.f, 0.f, NECK_HEIGHT+SHOULDER_HEIGHT/2);
-                    glut.glutSolidCylinder(HEAD_WIDTH/2, HEAD_HEIGHT, 50, 51);
+                    glut.glutSolidCylinder(HEAD_WIDTH/2, HEAD_HEIGHT, PRECISION, PRECISION);
                 gl.glPopMatrix();
                 
                 for(int i = 0; i < 2; i++)
@@ -443,10 +447,10 @@ public class RobotRace extends Base {
                         gl.glTranslatef(SHOULDER_WIDTH/2, 0.f, 0.f);
                         gl.glPushMatrix();
                             gl.glRotatef(90, 0.f, 1.f, 0.f);
-                            glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, SHOULDER_JOINT_WIDTH, 50, 51);
+                            glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, SHOULDER_JOINT_WIDTH, PRECISION, PRECISION);
                         gl.glPopMatrix();
                         gl.glTranslatef(SHOULDER_JOINT_WIDTH, 0.f, 0.f);
-                        glut.glutSolidSphere(SHOUlDER_JOINT_HEIGHT/3, 50, 51);
+                        glut.glutSolidSphere(SHOUlDER_JOINT_HEIGHT/3, PRECISION, PRECISION);
                         gl.glTranslatef(-SHOULDER_JOINT_WIDTH/2, 0.f, 0.f);
                         for(int j = 0; j < 2; j++)
                         {
@@ -459,7 +463,7 @@ public class RobotRace extends Base {
                             gl.glPushMatrix();
                                 gl.glTranslatef(-ELBOW_JOINT_WIDTH/2, 0.f, 0.f);
                                 gl.glRotatef(90, 0.f, 1.f, 0.f);
-                                glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, ELBOW_JOINT_WIDTH, 50, 51);
+                                glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, ELBOW_JOINT_WIDTH, PRECISION, PRECISION);
                             gl.glPopMatrix();
                         }
                     gl.glPopMatrix();
@@ -514,7 +518,50 @@ public class RobotRace extends Base {
             } else {
                 setDefaultMode();
             }
-        }
+            
+            double X_EYE_COR = gs.vDist * Math.cos(gs.phi) * Math.sin(gs.theta) + gs.cnt.x();
+            double Y_EYE_COR = gs.vDist * Math.cos(gs.phi) * Math.cos(gs.theta) + gs.cnt.y();
+            double Z_EYE_COR = gs.vDist * Math.sin(gs.phi) + gs.cnt.z();
+            glu.gluLookAt(X_EYE_COR, Y_EYE_COR, Z_EYE_COR, gs.cnt.x(), gs.cnt.y(), gs.cnt.z(), 0, 0, 1);
+            
+            
+            /** -- WARNING: the credit for the below code for the lighting goes to rene zaal -- **/
+            /* rene zaal has given us credit to make use of this code */
+            
+            // draw a light above and to the left of the camera
+            // calculate the direction in which the camera looks in the xy plane 
+            Vector xyCameraDir = (new Vector(eye.subtract(center).x(), eye.subtract(center).y(), 0)).normalized();
+
+            // take the cross product of that vector with the up vector to get a vector orthogonal to the direction vector in the xyplane
+            Vector light1 = xyCameraDir.cross(up).normalized();
+
+            // now we can look correct the vector if it points to the right instead of to the left
+            // this part is only easy to explain when you visualize it on paper
+            // basically we compare the x coordinates to find out whether light1 is pointing to the left or right
+            // a switch happens at y=-x
+            if (xyCameraDir.y() > -xyCameraDir.x()) {
+                if (light1.x() > xyCameraDir.x()) {
+                    light1 = Vector.O.subtract(light1);
+                }
+            } else if (xyCameraDir.y() < -xyCameraDir.x()) {
+                if (light1.x() < xyCameraDir.x()) {
+                    light1 = Vector.O.subtract(light1);
+                }
+            } else if (light1.x() != xyCameraDir.x()) {
+                light1 = Vector.O.subtract(light1);
+            }
+
+            light1 = light1.add(eye);
+
+            float light1co[] = new float[]{(float) light1.x(), (float) light1.y(), (float) light1.z(), 1.0f};
+
+            // activate the spot
+            gl.glLightfv(GL_LIGHT1, GL_POSITION, light1co, 0);
+            if (mode != 0) {
+                glu.gluLookAt(eye.x(), eye.y(), eye.z(), center.x(), center.y(), center.z(), up.x(), up.y(), up.z());
+            }
+            /** --------------------------------------------------- **/
+        }   
 
         /**
          * Computes {@code eye}, {@code center}, and {@code up}, based on the
