@@ -2,6 +2,7 @@
 import javax.media.opengl.GL;
 import static javax.media.opengl.GL2.*;
 import static javax.media.opengl.fixedfunc.GLLightingFunc.GL_LIGHT0;
+import javax.media.opengl.GL2;
 import robotrace.Base;
 import robotrace.Texture1D;
 import robotrace.Vector;
@@ -120,13 +121,12 @@ public class RobotRace extends Base {
         gl.glEnable(GL_TEXTURE_2D);
         gl.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
         gl.glBindTexture(GL_TEXTURE_2D, 0);
-
         // Enable lightning
         gl.glEnable(GL_LIGHTING);
         gl.glEnable(GL_LIGHT0);
         gl.glEnable(GL_LIGHT1);
         gl.glEnable(GL_NORMALIZE);
-        
+
         // Try to load four textures, add more if you like.
         track = loadTexture("track.jpg");
         brick = loadTexture("brick.jpg");
@@ -204,19 +204,19 @@ public class RobotRace extends Base {
         gl.glColor3f(0f, 0f, 0f);
          
         // Draw the first robot
-        robots[0].draw(false);
+        robots[0].draw(gs.showStick);
         
         gl.glTranslatef(1f, 0f, 0f);
         
-        robots[1].draw(false);
+        robots[1].draw(gs.showStick);
         
         gl.glTranslatef(1f, 0f, 0f);
         
-        robots[2].draw(false);
+        robots[2].draw(gs.showStick);
         
         gl.glTranslatef(1f, 0f, 0f);
         
-        robots[3].draw(false);
+        robots[3].draw(gs.showStick);
 
         // Draw race track
         raceTrack.draw(gs.trackNr);
@@ -328,12 +328,56 @@ public class RobotRace extends Base {
      * Represents a Robot, to be implemented according to the Assignments.
      */
     private class Robot {
+        class GlColor {
+            float r, g, b, a;
+            GlColor(float r, float g, float b, float a) {
+                this.r = r;
+                this.g = g;
+                this.b = b;
+                this.a = a;
+            }
+
+            GlColor(float r, float g, float b) {
+                this(r, g, b, 1.f);
+            }
+
+            void set(GL2 gl) {
+                gl.glColor4f(r, g, b, a);
+            }
+        }
 
         /**
          * The material from which this robot is built.
          */
         private final Material material;
 
+        GlColor baseColor       = new GlColor(1.0f, 0.2f, 0.3f);
+        GlColor headColor       = new GlColor(0.4f, 0.4f, 0.4f);
+        GlColor neckColor       = new GlColor(0.5f, 0.4f, 0.4f);
+        GlColor shoulderColor   = new GlColor(0.4f, 0.4f, 0.4f);
+        GlColor chestColor      = new GlColor(0.4f, 0.4f, 0.4f);
+        GlColor hipColor        = new GlColor(0.0f, 0.4f, 0.4f);
+
+        GlColor legColor        = new GlColor(0.f, 0.f, 1.f);
+
+        GlColor [] singleLegColor = new GlColor[] {
+            legColor,
+            legColor
+        };
+        GlColor [][] legPartColor = new GlColor[][] {
+            singleLegColor,
+            singleLegColor,
+        };
+
+        GlColor [][] legJointColor = new GlColor[][] {
+            singleLegColor,
+            singleLegColor,
+        };
+
+        GlColor [] footColor = new GlColor[] {
+            legColor,
+            legColor,
+        };
         /**
          * Constructs the robot with initial parameters.
          */
@@ -347,7 +391,6 @@ public class RobotRace extends Base {
          * Draws this robot (as a {@code stickfigure} if specified).
          */
         public void draw(boolean stickFigure) {
-            gl.glColor3f(1.f, 0.2f, 0.3f);
 
             final float VAKJE                   = 0.1f;
             final float SHOULDER_OVERLAP_MAGIC  = 1.f;
@@ -360,14 +403,16 @@ public class RobotRace extends Base {
             final float NECK_WIDTH              = 0.5f  *VAKJE;
             final float HEAD_HEIGHT             = 3     *VAKJE;
             final float HEAD_WIDTH              = 2     *VAKJE;
-            final float SHOUlDER_JOINT_HEIGHT   = 1f    *VAKJE;
+            final float SHOUlDER_JOINT_HEIGHT   = 1     *VAKJE;
             final float SHOULDER_JOINT_WIDTH    = 1.3f  *VAKJE;
             final float ARM_PART_LENGTH         = 4     *VAKJE;
             final float LEG_PART_LENGTH         = 5     *VAKJE;
             final float TORSO_BOTTOM_HEIGHT     = 1.5f  *VAKJE;
-            final float TORSO_BOTTOM_WIDTH      = 0.95f  *TORSO_HEIGHT;
+            final float TORSO_BOTTOM_WIDTH      = 0.95f *TORSO_HEIGHT;
+            final float FEET_LENGTH             = 2.f   *VAKJE; // TODO look up
             
             final int PRECISION               = 40;
+            final int PRECISION2               = PRECISION+1;
             
             
             final float ARM_WIDTH               = SHOULDER_JOINT_WIDTH * 0.8f;
@@ -378,17 +423,33 @@ public class RobotRace extends Base {
             final float KNEE_JOINT_WIDTH        = ELBOW_JOINT_WIDTH;
             final float KNEE_JOINT_HEIGHT       = SHOUlDER_JOINT_HEIGHT;
             final float LEG_HEIGHT              = LEG_WIDTH * 0.8f;
+            final float FEET_HEIGHT             = KNEE_JOINT_HEIGHT;
+            final float FEET_WIDTH              = LEG_WIDTH;
             
             final float TORSO_RELATIVE_HEIGHT = 2*LEG_PART_LENGTH+TORSO_HEIGHT/2+TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC)+KNEE_JOINT_HEIGHT/2; 
             
-            //gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_LINE );
+//             gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_LINE );
             
             gl.glPushMatrix();
                 gl.glTranslatef(0.f, 0.f, TORSO_RELATIVE_HEIGHT);
                 gl.glPushMatrix();//chest
                     gl.glTranslatef(0.f, TORSO_THICKNESS/2, 0.f);
                     gl.glRotatef(90, 1.f, 0.f, 0.f);
-                    glut.glutSolidCylinder(TORSO_HEIGHT/2, TORSO_THICKNESS, PRECISION, PRECISION);
+                    chestColor.set(gl);
+                    if(stickFigure) {
+                        gl.glBegin(gl.GL_LINES);
+                            gl.glVertex3f(0.f, (TORSO_HEIGHT+SHOULDER_HEIGHT)/2, TORSO_THICKNESS/2);
+                            gl.glVertex3f(0.f, TORSO_HEIGHT/2, 0.f);
+                            gl.glVertex3f(0.f, TORSO_HEIGHT/2, 0.f);
+                            gl.glVertex3f(0.f, 0.f, 0.f);
+                            gl.glVertex3f(0.f, 0.f, 0.f);
+                            gl.glVertex3f(0.f, -TORSO_HEIGHT/2, 0.f);
+                            gl.glVertex3f(0.f, -TORSO_HEIGHT/2, 0.f);
+                            gl.glVertex3f(0.f, -TORSO_HEIGHT/2-TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC), TORSO_THICKNESS/2);
+                        gl.glEnd();
+                    } else {
+                        glut.glutSolidCylinder(TORSO_HEIGHT/2, TORSO_THICKNESS, PRECISION, PRECISION2);
+                    }
                 gl.glPopMatrix();
                 
                 gl.glPushMatrix();
@@ -397,9 +458,18 @@ public class RobotRace extends Base {
                         gl.glTranslatef(0.f, 0.f, -TORSO_HEIGHT/2-TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                         gl.glTranslatef(-TORSO_BOTTOM_WIDTH/2, 0.f, 0.f);
                         gl.glRotatef(90, 0.f, 1.f, 0.f);
-                        glut.glutSolidCylinder(TORSO_BOTTOM_HEIGHT/2, TORSO_BOTTOM_WIDTH, PRECISION, PRECISION);
+                        hipColor.set(gl);
+                        if(stickFigure) {
+                            gl.glBegin(gl.GL_LINES);
+                                gl.glVertex3f(0.f, 0.f, 0);
+                                gl.glVertex3f(0.f, 0.f, TORSO_BOTTOM_WIDTH);
+                            gl.glEnd();
+                        } else {
+                        glut.glutSolidCylinder(TORSO_BOTTOM_HEIGHT/2, TORSO_BOTTOM_WIDTH, PRECISION, PRECISION2);
+                        }
                     gl.glPopMatrix();
 
+                    baseColor.set(gl);
                     gl.glTranslatef(0.f, 0.f, -TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                     for(int i = 0; i < 2; i++)
                     {
@@ -412,15 +482,77 @@ public class RobotRace extends Base {
                                 gl.glPushMatrix();
                                     gl.glTranslatef(0.f, 0.f, -LEG_PART_LENGTH/2);
                                     gl.glScalef(LEG_WIDTH, LEG_HEIGHT, LEG_PART_LENGTH);
+                                    legPartColor[i][j].set(gl);
+                                    if(stickFigure) {
+                                        gl.glBegin(gl.GL_LINES);
+                                            gl.glVertex3f(0.f, 0.f, 0.f);
+                                            gl.glVertex3f(0.f, 0.f, 0.5f);
+                                            gl.glVertex3f(0.f, 0.f, 0.f);
+                                            gl.glVertex3f(0.f, 0.f, -0.5f);
+                                        gl.glEnd();
+                                    } else {
                                     glut.glutSolidCube(1.f);
+                                    }
                                 gl.glPopMatrix();
                                 gl.glTranslatef(0.f, 0.f, -LEG_PART_LENGTH);
                                 gl.glPushMatrix();
                                     gl.glTranslatef(-KNEE_JOINT_WIDTH/2, 0.f, 0.f);
                                     gl.glRotatef(90, 0.f, 1.f, 0.f);
-                                    glut.glutSolidCylinder(KNEE_JOINT_HEIGHT/2, KNEE_JOINT_WIDTH, PRECISION, PRECISION);
+                                    legJointColor[i][j].set(gl);
+                                    if(stickFigure) {
+                                        gl.glBegin(gl.GL_LINES);
+                                            gl.glVertex3f(0.f, 0.f, 0.f);
+                                            gl.glVertex3f(0.f, 0.f, KNEE_JOINT_WIDTH);
+                                        gl.glEnd();
+                                    } else {
+                                        glut.glutSolidCylinder(KNEE_JOINT_HEIGHT/2, KNEE_JOINT_WIDTH, PRECISION, PRECISION2);
+                                    }
                                 gl.glPopMatrix();
                             }
+                            //TODO gl.glRotatef(45, 1.f, 0.f, 0.f);
+                            gl.glRotatef(90, 0.f, 0.f, 1.f);
+                            gl.glTranslatef(0.f, -KNEE_JOINT_WIDTH/2, -KNEE_JOINT_HEIGHT/2);
+                            gl.glScalef(FEET_LENGTH, FEET_WIDTH, FEET_HEIGHT);
+                            /* z=1  __ ==\
+                             *  \==--      \
+                             *  | \   ---    \
+                             *  |   \    ---   \
+                             *  |     \      --==\
+                             *  |       \   __
+                             *  =========/==
+                             *  O        x=1
+                             */
+                            footColor[i].set(gl);
+                            gl.glBegin(stickFigure ? gl.GL_LINE_STRIP : gl.GL_TRIANGLE_STRIP);
+                                // Left side
+                                gl.glVertex3f(0.f, 0.f, 0.f);
+                                gl.glVertex3f(1.f, 0.f, 0.f);
+                                gl.glVertex3f(0.f, 0.f, 1.f);
+
+                                //Front quad
+                                gl.glVertex3f(1.f, 1.f, 0.f);
+                                gl.glVertex3f(0.f, 1.f, 1.f);
+
+                                //Right side
+                                gl.glVertex3f(0.f, 1.f, 0.f);
+
+                                //Back side
+                                gl.glVertex3f(0.f, 0.f, 1.f);
+                                gl.glVertex3f(0.f, 0.f, 0.f);
+                                gl.glVertex3f(0.f, 1.f, 0.f);
+
+                                //Bottom side
+                                gl.glVertex3f(1.f, 0.f, 0.f);
+                                gl.glVertex3f(1.f, 1.f, 0.f);
+
+                                if(stickFigure) {
+                                    gl.glVertex3f(1.f, 0.f, 0.f);
+                                    gl.glVertex3f(1.f, 1.f, 0.f);
+                                    gl.glVertex3f(0.f, 1.f, 0.f);
+                                    gl.glVertex3f(0.f, 1.f, 1.f);
+                                    gl.glVertex3f(0.f, 0.f, 1.f);
+                                }
+                            gl.glEnd();
                         gl.glPopMatrix();
                     }
                 gl.glPopMatrix();
@@ -429,15 +561,39 @@ public class RobotRace extends Base {
                 gl.glPushMatrix();
                     gl.glTranslatef(-SHOULDER_WIDTH/2, 0.f, 0.f);
                     gl.glRotatef(90, 0.f, 1.f, 0.f);
-                    glut.glutSolidCylinder(SHOULDER_HEIGHT/2, SHOULDER_WIDTH, 50, 51);
+                    shoulderColor.set(gl);
+                    if(stickFigure) {
+                        gl.glBegin(gl.GL_LINES);
+                            gl.glVertex3f(0.f, 0.f, 0.f);
+                            gl.glVertex3f(0.f, 0.f, SHOULDER_WIDTH);
+                        gl.glEnd();
+                    } else {
+                        glut.glutSolidCylinder(SHOULDER_HEIGHT/2, SHOULDER_WIDTH, PRECISION, PRECISION2);
+                    }
                 gl.glPopMatrix();
                 gl.glPushMatrix();
-                    glut.glutSolidCylinder(NECK_WIDTH/2 ,NECK_HEIGHT+SHOULDER_HEIGHT/2, PRECISION, PRECISION);
+                    neckColor.set(gl);
+                    if(stickFigure) {
+                        gl.glBegin(gl.GL_LINES);
+                            gl.glVertex3f(0.f, 0.f, 0.f);
+                            gl.glVertex3f(0.f, 0.f, NECK_HEIGHT+SHOULDER_HEIGHT/2);
+                        gl.glEnd();
+                    } else {
+                        glut.glutSolidCylinder(NECK_WIDTH/2 ,NECK_HEIGHT+SHOULDER_HEIGHT/2, PRECISION, PRECISION2);
+                    }
                 gl.glPopMatrix();
                 
                 gl.glPushMatrix();
                     gl.glTranslatef(0.f, 0.f, NECK_HEIGHT+SHOULDER_HEIGHT/2);
-                    glut.glutSolidCylinder(HEAD_WIDTH/2, HEAD_HEIGHT, PRECISION, PRECISION);
+                    headColor.set(gl);
+                    if(stickFigure) {
+                        gl.glBegin(gl.GL_LINES);
+                            gl.glVertex3f(0.f, 0.f, 0.f);
+                            gl.glVertex3f(0.f, 0.f, HEAD_HEIGHT);
+                        gl.glEnd();
+                    } else {
+                        glut.glutSolidCylinder(HEAD_WIDTH/2, HEAD_HEIGHT, PRECISION, PRECISION2);
+                    }
                 gl.glPopMatrix();
                 
                 for(int i = 0; i < 2; i++)
@@ -447,30 +603,58 @@ public class RobotRace extends Base {
                         gl.glTranslatef(SHOULDER_WIDTH/2, 0.f, 0.f);
                         gl.glPushMatrix();
                             gl.glRotatef(90, 0.f, 1.f, 0.f);
-                            glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, SHOULDER_JOINT_WIDTH, PRECISION, PRECISION);
+                            if(stickFigure) {
+                                gl.glBegin(gl.GL_LINES);
+                                    gl.glVertex3f(0.f, 0.f, 0.f);
+                                    gl.glVertex3f(0.f, 0.f, SHOULDER_JOINT_WIDTH);
+                                gl.glEnd();
+                            } else {
+                                glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, SHOULDER_JOINT_WIDTH, PRECISION, PRECISION2);
+                            }
                         gl.glPopMatrix();
                         gl.glTranslatef(SHOULDER_JOINT_WIDTH, 0.f, 0.f);
-                        glut.glutSolidSphere(SHOUlDER_JOINT_HEIGHT/3, PRECISION, PRECISION);
+                        if(stickFigure) {
+                            gl.glBegin(gl.GL_LINES);
+                                gl.glVertex3f(0.f, 0.f, -SHOUlDER_JOINT_HEIGHT/3);
+                                gl.glVertex3f(0.f, 0.f, SHOUlDER_JOINT_HEIGHT/3);
+                            gl.glEnd();
+                        } else {
+                            glut.glutSolidSphere(SHOUlDER_JOINT_HEIGHT/3, PRECISION, PRECISION2); //TODO: give seperate variable
+                        }
                         gl.glTranslatef(-SHOULDER_JOINT_WIDTH/2, 0.f, 0.f);
                         for(int j = 0; j < 2; j++)
                         {
                             gl.glPushMatrix();
                                 gl.glTranslatef(0.f, 0.f, -ARM_PART_LENGTH/2);
                                 gl.glScalef(ARM_WIDTH, ARM_HEIGHT, ARM_PART_LENGTH);
+                                if(stickFigure) {
+                                    gl.glBegin(gl.GL_LINES);
+                                        gl.glVertex3f(0.f, 0.f, -1.f);
+                                        gl.glVertex3f(0.f, 0.f, 1.f);
+                                    gl.glEnd();
+                                } else {
                                 glut.glutSolidCube(1.f);
+                                }
                             gl.glPopMatrix();
                             gl.glTranslatef(0.f, 0.f, -ARM_PART_LENGTH);
                             gl.glPushMatrix();
                                 gl.glTranslatef(-ELBOW_JOINT_WIDTH/2, 0.f, 0.f);
                                 gl.glRotatef(90, 0.f, 1.f, 0.f);
-                                glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, ELBOW_JOINT_WIDTH, PRECISION, PRECISION);
+                                if(stickFigure) {
+                                    gl.glBegin(gl.GL_LINES);
+                                        gl.glVertex3f(0.f, 0.f, 0.f);
+                                        gl.glVertex3f(0.f, 0.f, ELBOW_JOINT_WIDTH);
+                                    gl.glEnd();
+                                } else {
+                                    glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, ELBOW_JOINT_WIDTH, PRECISION, PRECISION2);
+                                }
                             gl.glPopMatrix();
                         }
                     gl.glPopMatrix();
                 }
             gl.glPopMatrix();
             
-            gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_FILL );
+//             gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_FILL );
         }
     }
 
