@@ -124,6 +124,7 @@ public class RobotRace extends Base {
         // Enable lightning
         gl.glEnable(GL_LIGHTING);
         gl.glEnable(GL_LIGHT0);
+
         {
             // Create light components
             float ambientLight[] = { 0.2f, 0.2f, 0.2f, 1.0f };
@@ -192,7 +193,7 @@ public class RobotRace extends Base {
          
          {
             Vector cameraLocation = new Vector(X_EYE_COR, Y_EYE_COR, Z_EYE_COR);
-            Vector viewDirection = gs.cnt.subtract(cameraLocation);
+            Vector viewDirection = cameraLocation.subtract(gs.cnt);
             Vector leftDirection = viewDirection.cross(camera.up).add(new Vector(0, 0, 1)).scale(0.3);
             float lightPosition[] = { (float)leftDirection.x(), (float)leftDirection.y(), (float)leftDirection.z(), 0 };
             gl.glLightfv(gl.GL_LIGHT1, gl.GL_POSITION, lightPosition, 0);
@@ -498,29 +499,31 @@ public class RobotRace extends Base {
             int shine = 0;
             
             if (material == material.GOLD)   {
-                shine = 10;
+                shine = (int)Math.round(0.4*128);
             }
             else if (material == material.SILVER) {
-                shine = 10;
+                shine = (int)Math.round(0.4*128);
             }
             else if (material == material.WOOD)   {
-                shine = 120;
+                shine = (int)Math.round(0.1*128);
             }
             else if (material == material.ORANGE) {
-                shine = 100;
+                shine = (int)Math.round(0.25*128);
             }
             
 //             gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_LINE );
             
-            gl.glPushMatrix();
-                gl.glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, material.specular,0);
-                gl.glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, shine);
-                gl.glColor4fv(material.diffuse,0);
+            gl.glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, material.specular,0);
+            gl.glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, material.diffuse, 0);
+            gl.glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, shine);
+            gl.glColor4fv(material.diffuse,0);
+                       
+            gl.glPushMatrix();    
                 gl.glTranslatef(0.f, 0.f, TORSO_RELATIVE_HEIGHT);
                 gl.glPushMatrix();//chest
                     gl.glTranslatef(0.f, TORSO_THICKNESS/2, 0.f);
                     gl.glRotatef(90, 1.f, 0.f, 0.f);
-                    chestColor.set(gl);
+                    //chestColor.set(gl);
                     if(stickFigure) {
                         gl.glBegin(gl.GL_LINES);
                             gl.glVertex3f(0.f, (TORSO_HEIGHT+SHOULDER_HEIGHT)/2, TORSO_THICKNESS/2);
@@ -543,7 +546,7 @@ public class RobotRace extends Base {
                         gl.glTranslatef(0.f, 0.f, -TORSO_HEIGHT/2-TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                         gl.glTranslatef(-TORSO_BOTTOM_WIDTH/2, 0.f, 0.f);
                         gl.glRotatef(90, 0.f, 1.f, 0.f);
-                        hipColor.set(gl);
+                        //hipColor.set(gl);
                         if(stickFigure) {
                             gl.glBegin(gl.GL_LINES);
                                 gl.glVertex3f(0.f, 0.f, 0);
@@ -554,7 +557,7 @@ public class RobotRace extends Base {
                         }
                     gl.glPopMatrix();
 
-                    baseColor.set(gl);
+                    //baseColor.set(gl);
                     gl.glTranslatef(0.f, 0.f, -TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                     for(int i = 0; i < 2; i++)
                     {
@@ -567,7 +570,7 @@ public class RobotRace extends Base {
                                 gl.glPushMatrix();
                                     gl.glTranslatef(0.f, 0.f, -LEG_PART_LENGTH/2);
                                     gl.glScalef(LEG_WIDTH, LEG_HEIGHT, LEG_PART_LENGTH);
-                                    legPartColor[i][j].set(gl);
+                                    //legPartColor[i][j].set(gl);
                                     if(stickFigure) {
                                         gl.glBegin(gl.GL_LINES);
                                             gl.glVertex3f(0.f, 0.f, 0.f);
@@ -583,7 +586,7 @@ public class RobotRace extends Base {
                                 gl.glPushMatrix();
                                     gl.glTranslatef(-KNEE_JOINT_WIDTH/2, 0.f, 0.f);
                                     gl.glRotatef(90, 0.f, 1.f, 0.f);
-                                    legJointColor[i][j].set(gl);
+                                    //legJointColor[i][j].set(gl);
                                     if(stickFigure) {
                                         gl.glBegin(gl.GL_LINES);
                                             gl.glVertex3f(0.f, 0.f, 0.f);
@@ -607,7 +610,7 @@ public class RobotRace extends Base {
                              *  =========/==
                              *  O        x=1
                              */
-                            footColor[i].set(gl);
+                            //footColor[i].set(gl);
                             gl.glBegin(stickFigure ? gl.GL_LINE_STRIP : gl.GL_TRIANGLE_STRIP);
                                 // Left side
                                 gl.glVertex3f(0.f, 0.f, 0.f);
@@ -646,7 +649,7 @@ public class RobotRace extends Base {
                 gl.glPushMatrix();
                     gl.glTranslatef(-SHOULDER_WIDTH/2, 0.f, 0.f);
                     gl.glRotatef(90, 0.f, 1.f, 0.f);
-                    shoulderColor.set(gl);
+                    //shoulderColor.set(gl);
                     if(stickFigure) {
                         gl.glBegin(gl.GL_LINES);
                             gl.glVertex3f(0.f, 0.f, 0.f);
@@ -657,7 +660,7 @@ public class RobotRace extends Base {
                     }
                 gl.glPopMatrix();
                 gl.glPushMatrix();
-                    neckColor.set(gl);
+                    //neckColor.set(gl);
                     if(stickFigure) {
                         gl.glBegin(gl.GL_LINES);
                             gl.glVertex3f(0.f, 0.f, 0.f);
@@ -670,7 +673,7 @@ public class RobotRace extends Base {
                 
                 gl.glPushMatrix();
                     gl.glTranslatef(0.f, 0.f, NECK_HEIGHT+SHOULDER_HEIGHT/2);
-                    headColor.set(gl);
+                    //headColor.set(gl);
                     if(stickFigure) {
                         gl.glBegin(gl.GL_LINES);
                             gl.glVertex3f(0.f, 0.f, 0.f);
@@ -737,8 +740,6 @@ public class RobotRace extends Base {
                         }
                     gl.glPopMatrix();
                 }
-            gl.glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, new float[] {0,0,0,0},0);
-            gl.glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 0);
             gl.glPopMatrix();         
         }
     }
