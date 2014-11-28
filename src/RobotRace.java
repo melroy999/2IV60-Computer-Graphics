@@ -135,6 +135,7 @@ public class RobotRace extends Base {
             gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, diffuseLight, 0);
             gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, specularLight, 0);
         }
+        
         gl.glEnable(GL_LIGHT1);
         {
             // Create light components
@@ -312,7 +313,7 @@ public class RobotRace extends Base {
      * Materials that can be used for the robots.
      */
     public enum Material {
-
+        /** source from numbers used: http://devernay.free.fr/cours/opengl/materials.html **/
         /**
          * Gold material properties. Modify the default values to make it look
          * like gold.
@@ -386,7 +387,7 @@ public class RobotRace extends Base {
          */
         private final Material material;
 
-        GlColor baseColor       = new GlColor(1.0f, 0.2f, 0.3f);
+        /*GlColor baseColor       = new GlColor(1.0f, 0.2f, 0.3f);
         GlColor headColor       = new GlColor(0.4f, 0.4f, 0.4f);
         GlColor neckColor       = new GlColor(0.5f, 0.4f, 0.4f);
         GlColor shoulderColor   = new GlColor(0.4f, 0.4f, 0.4f);
@@ -412,7 +413,38 @@ public class RobotRace extends Base {
         GlColor [] footColor = new GlColor[] {
             legColor,
             legColor,
+        };*/
+        
+        
+        GlColor baseColor       = new GlColor(0.0f, 0.0f, 0.0f);
+        GlColor headColor       = new GlColor(0.0f, 0.0f, 0.0f);
+        GlColor neckColor       = new GlColor(0.0f, 0.0f, 0.0f);
+        GlColor shoulderColor   = new GlColor(0.0f, 0.0f, 0.0f);
+        GlColor chestColor      = new GlColor(0.0f, 0.0f, 0.0f);
+        GlColor hipColor        = new GlColor(0.0f, 0.0f, 0.0f);
+
+        GlColor legColor        = new GlColor(0.0f, 0.0f, 0.0f);
+
+        GlColor [] singleLegColor = new GlColor[] {
+            legColor,
+            legColor
         };
+        GlColor [][] legPartColor = new GlColor[][] {
+            singleLegColor,
+            singleLegColor,
+        };
+
+        GlColor [][] legJointColor = new GlColor[][] {
+            singleLegColor,
+            singleLegColor,
+        };
+
+        GlColor [] footColor = new GlColor[] {
+            legColor,
+            legColor,
+        };
+        
+        
         /**
          * Constructs the robot with initial parameters.
          */
@@ -463,9 +495,27 @@ public class RobotRace extends Base {
             
             final float TORSO_RELATIVE_HEIGHT = 2*LEG_PART_LENGTH+TORSO_HEIGHT/2+TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC)+KNEE_JOINT_HEIGHT/2; 
             
+            int shine = 0;
+            
+            if (material == material.GOLD)   {
+                shine = 10;
+            }
+            else if (material == material.SILVER) {
+                shine = 10;
+            }
+            else if (material == material.WOOD)   {
+                shine = 120;
+            }
+            else if (material == material.ORANGE) {
+                shine = 100;
+            }
+            
 //             gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_LINE );
             
             gl.glPushMatrix();
+                gl.glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, material.specular,0);
+                gl.glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, shine);
+                gl.glColor4fv(material.diffuse,0);
                 gl.glTranslatef(0.f, 0.f, TORSO_RELATIVE_HEIGHT);
                 gl.glPushMatrix();//chest
                     gl.glTranslatef(0.f, TORSO_THICKNESS/2, 0.f);
@@ -687,9 +737,9 @@ public class RobotRace extends Base {
                         }
                     gl.glPopMatrix();
                 }
-            gl.glPopMatrix();
-            
-//             gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_FILL );
+            gl.glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, new float[] {0,0,0,0},0);
+            gl.glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 0);
+            gl.glPopMatrix();         
         }
     }
 
