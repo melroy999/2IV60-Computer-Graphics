@@ -185,17 +185,29 @@ public class RobotRace extends Base {
 
         // Update the view according to the camera mode
         camera.update(gs.camMode);
-        
-         double X_EYE_COR = gs.vDist * Math.cos(gs.phi) * Math.sin(gs.theta) + gs.cnt.x();
-         double Y_EYE_COR = gs.vDist * Math.cos(gs.phi) * Math.cos(gs.theta) + gs.cnt.y();
-         double Z_EYE_COR = gs.vDist * Math.sin(gs.phi) + gs.cnt.z();
-         glu.gluLookAt(X_EYE_COR, Y_EYE_COR, Z_EYE_COR, gs.cnt.x(), gs.cnt.y(), gs.cnt.z(), camera.up.x(), camera.up.y(), camera.up.z());
-         
-         {
-            Vector cameraLocation = new Vector(X_EYE_COR, Y_EYE_COR, Z_EYE_COR);
-            Vector viewDirection = cameraLocation.subtract(gs.cnt);
-            Vector leftDirection = viewDirection.cross(camera.up).add(new Vector(0, 0, 1)).scale(0.3);
-            float lightPosition[] = { (float)leftDirection.x(), (float)leftDirection.y(), (float)leftDirection.z(), 0 };
+
+        Vector eyePosition = new Vector (
+            gs.vDist * Math.cos(gs.phi) * Math.sin(gs.theta) + gs.cnt.x(),
+            gs.vDist * Math.cos(gs.phi) * Math.cos(gs.theta) + gs.cnt.y(),
+            gs.vDist * Math.sin(gs.phi) + gs.cnt.z());
+
+
+        glu.gluLookAt(
+            eyePosition.x(),    eyePosition.y(),    eyePosition.z(),
+            gs.cnt.x(),         gs.cnt.y(),         gs.cnt.z(),
+            camera.up.x(),      camera.up.y(),      camera.up.z());
+
+        {
+            Vector viewDirection    = eyePosition.subtract(gs.cnt);
+            Vector leftDirection    = viewDirection.cross(camera.up).normalized();
+            Vector upDirection      = leftDirection.cross(viewDirection).normalized();
+
+            Vector leftUpDirection  = leftDirection.add(upDirection)
+                                                   .normalized()
+                                                   .scale(1.1f);
+
+            Vector leftUp = eyePosition.add(leftUpDirection);
+            float lightPosition[] = { (float)leftUp.x(), (float)leftUp.y(), (float)leftUp.z(), 0 };
             gl.glLightfv(gl.GL_LIGHT1, gl.GL_POSITION, lightPosition, 0);
          }
     }
