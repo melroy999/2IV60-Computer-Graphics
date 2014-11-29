@@ -226,22 +226,6 @@ public class RobotRace extends Base {
         // Clear depth buffer.
         gl.glClear(GL_DEPTH_BUFFER_BIT);
 
-        /*gl.glBegin(gl.GL_LINES);
-         gl.glColor4f(0f,0f,0f,1f);
-        
-         final double LENGTH_CONSTANT = gs.vDist / (2*Math.cos(gs.phi)*gs.vDist);
-         System.out.println(LENGTH_CONSTANT);
-         gl.glVertex3d(gs.cnt.x(),gs.cnt.y(),gs.cnt.z());
-         gl.glVertex3d(-LENGTH_CONSTANT*Math.sin(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.y(),-LENGTH_CONSTANT*Math.cos(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.x(),0);
-         gl.glVertex3d(LENGTH_CONSTANT*Math.sin(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.y(),LENGTH_CONSTANT*Math.cos(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.x(),0);
-        
-         /*gl.glVertex3d(-Math.sin(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.y(),-Math.cos(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.x(),0);
-         gl.glVertex3d(Math.sin(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.y(),Math.cos(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.x(),0);
-         System.out.println(Math.sin(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.y()+";"+Math.cos(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.x());
-         /*gl.glVertex3d(-Math.cos(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.x(),-Math.sin(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.y(),0);
-         gl.glVertex3d(Math.cos(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.x(),Math.sin(gs.theta)*Math.cos(gs.phi)*gs.vDist+gs.cnt.y(),0);
-         gl.glEnd();*/
-
         gl.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         // Draw the axis frame
