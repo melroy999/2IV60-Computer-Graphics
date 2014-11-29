@@ -279,31 +279,49 @@ public class RobotRace extends Base {
      */
     public void drawAxisFrame() {
         final float CONE_LENGTH = 0.25f;
+        final float CONE_SIZE   = CONE_LENGTH * 0.2f;
         final float AXIS_LENGTH = 1f;
         final float LINE_LENGTH = AXIS_LENGTH - CONE_LENGTH;
-        int[][] directionVectors = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
-
         final float LINE_WIDTH = 0.015f;
 
-        for (int[] direction : directionVectors) {
-            gl.glPushMatrix();
-            gl.glColor4f(direction[0] * 255, direction[1] * 255, direction[2] * 255, 1f);
-            gl.glScalef(LINE_LENGTH * direction[0] + LINE_WIDTH, LINE_LENGTH * direction[1] + LINE_WIDTH, LINE_LENGTH * direction[2] + LINE_WIDTH);
-            gl.glTranslatef(0.5f * direction[0], 0.5f * direction[1], 0.5f * direction[2]);
-            glut.glutSolidCube(1f);
-            gl.glPopMatrix();
+        Vector [] directions = {
+            Vector.X,
+            Vector.Y,
+            Vector.Z
+        };
+
+
+        for (Vector direction : directions) {
+            gl.glColor4d(direction.x(), direction.y(), direction.z(), 1.);
 
             gl.glPushMatrix();
-            gl.glTranslated(LINE_LENGTH * direction[0], LINE_LENGTH * direction[1], LINE_LENGTH * direction[2]);
-            gl.glRotatef(90f, 0f - direction[1], direction[0], direction[2]);
-            glut.glutSolidCone(0.2 * CONE_LENGTH, CONE_LENGTH, 50, 51);
+                gl.glTranslated(
+                    direction.x() * LINE_LENGTH/2,
+                    direction.y() * LINE_LENGTH/2,
+                    direction.z() * LINE_LENGTH/2);
+
+                gl.glPushMatrix();
+                    gl.glScaled(
+                        LINE_LENGTH * direction.x() + (1.f - direction.x()) * LINE_WIDTH,
+                        LINE_LENGTH * direction.y() + (1.f - direction.y()) * LINE_WIDTH,
+                        LINE_LENGTH * direction.z() + (1.f - direction.z()) * LINE_WIDTH);
+
+                    glut.glutSolidCube(1f);
+                gl.glPopMatrix();
+
+                gl.glTranslated(
+                    direction.x() * LINE_LENGTH/2,
+                    direction.y() * LINE_LENGTH/2,
+                    direction.z() * LINE_LENGTH/2);
+
+                gl.glRotated(90f, -direction.y(), direction.x(), direction.z());
+
+                glut.glutSolidCone(CONE_SIZE, CONE_LENGTH, 50, 51);
             gl.glPopMatrix();
         }
 
-        gl.glPushMatrix();
         gl.glColor4f(255, 255, 0, 1);
         glut.glutSolidSphere(0.05f, 50, 51);
-        gl.glPopMatrix();
     }
 
     /**
