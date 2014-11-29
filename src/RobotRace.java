@@ -63,19 +63,12 @@ public class RobotRace extends Base {
     public RobotRace() {
 
         // Create a new array of four robots
-        robots = new Robot[4];
-
-        // Initialize robot 0
-        robots[0] = new Robot(Material.GOLD /* add other parameters that characterize this robot */);
-
-        // Initialize robot 1
-        robots[1] = new Robot(Material.SILVER /* add other parameters that characterize this robot */);
-
-        // Initialize robot 2
-        robots[2] = new Robot(Material.WOOD /* add other parameters that characterize this robot */);
-
-        // Initialize robot 3
-        robots[3] = new Robot(Material.ORANGE /* add other parameters that characterize this robot */);
+        robots = new Robot[] {
+            new Robot(Material.GOLD).setHeadMaterial(Material.SILVER),
+            new Robot(Material.SILVER),
+            new Robot(Material.WOOD),
+            new Robot(Material.ORANGE)
+        };
 
         // Initialize the camera
         camera = new Camera();
@@ -373,100 +366,89 @@ public class RobotRace extends Base {
             this.diffuse = diffuse;
             this.specular = specular;
         }
+
+        public int getShine() {
+            switch(this) {
+                case GOLD:      return (int)Math.round(0.4*128);
+                case SILVER:    return (int)Math.round(0.4*128);
+                case WOOD:      return (int)Math.round(0.1*128);
+                case ORANGE:    return (int)Math.round(0.25*128);
+                default:        return 0;
+            }
+        }
+
+        public void set(GL2 gl) {
+            gl.glMaterialfv(GL_FRONT_AND_BACK,  GL_SPECULAR,    specular,   0);
+            gl.glMaterialfv(GL_FRONT_AND_BACK,  GL_DIFFUSE,     diffuse,    0);
+            gl.glMateriali(GL_FRONT_AND_BACK,   GL_SHININESS,   getShine());
+            gl.glColor4fv(diffuse, 0);
+        }
     }
 
     /**
      * Represents a Robot, to be implemented according to the Assignments.
      */
     private class Robot {
-        class GlColor {
-            float r, g, b, a;
-            GlColor(float r, float g, float b, float a) {
-                this.r = r;
-                this.g = g;
-                this.b = b;
-                this.a = a;
-            }
-
-            GlColor(float r, float g, float b) {
-                this(r, g, b, 1.f);
-            }
-
-            void set(GL2 gl) {
-                gl.glColor4f(r, g, b, a);
-            }
-        }
-
         /**
          * The material from which this robot is built.
          */
-        private final Material material;
+        private final Material material = null;
 
-        /*GlColor baseColor       = new GlColor(1.0f, 0.2f, 0.3f);
-        GlColor headColor       = new GlColor(0.4f, 0.4f, 0.4f);
-        GlColor neckColor       = new GlColor(0.5f, 0.4f, 0.4f);
-        GlColor shoulderColor   = new GlColor(0.4f, 0.4f, 0.4f);
-        GlColor chestColor      = new GlColor(0.4f, 0.4f, 0.4f);
-        GlColor hipColor        = new GlColor(0.0f, 0.4f, 0.4f);
+        Material headColor = null;
+        Material neckColor = null;
+        Material shoulderColor = null;
+        Material chestColor = null;
+        Material hipColor = null;
 
-        GlColor legColor        = new GlColor(0.f, 0.f, 1.f);
+        Material legColor = null;
 
-        GlColor [] singleLegColor = new GlColor[] {
+        Material [] singleLegColor = new Material[] {
             legColor,
             legColor
         };
-        GlColor [][] legPartColor = new GlColor[][] {
+
+        Material [][] legPartColor = new Material[][] {
             singleLegColor,
             singleLegColor,
         };
 
-        GlColor [][] legJointColor = new GlColor[][] {
+        Material [][] legJointColor = new Material[][] {
             singleLegColor,
             singleLegColor,
         };
 
-        GlColor [] footColor = new GlColor[] {
-            legColor,
-            legColor,
-        };*/
-        
-        
-        GlColor baseColor       = new GlColor(0.0f, 0.0f, 0.0f);
-        GlColor headColor       = new GlColor(0.0f, 0.0f, 0.0f);
-        GlColor neckColor       = new GlColor(0.0f, 0.0f, 0.0f);
-        GlColor shoulderColor   = new GlColor(0.0f, 0.0f, 0.0f);
-        GlColor chestColor      = new GlColor(0.0f, 0.0f, 0.0f);
-        GlColor hipColor        = new GlColor(0.0f, 0.0f, 0.0f);
+        Material[][] armPartColor   = legPartColor;
+        Material[][] armJointColor  = legJointColor;
 
-        GlColor legColor        = new GlColor(0.0f, 0.0f, 0.0f);
-
-        GlColor [] singleLegColor = new GlColor[] {
-            legColor,
-            legColor
-        };
-        GlColor [][] legPartColor = new GlColor[][] {
-            singleLegColor,
-            singleLegColor,
-        };
-
-        GlColor [][] legJointColor = new GlColor[][] {
-            singleLegColor,
-            singleLegColor,
-        };
-
-        GlColor [] footColor = new GlColor[] {
+        Material [] footColor = new Material[] {
             legColor,
             legColor,
         };
-        
-        
+
+        void setDefaultMaterial(Material material) {
+            headColor           = headColor         == this.material ? material : headColor;
+            neckColor           = neckColor         == this.material ? material : neckColor;
+            shoulderColor       = shoulderColor     == this.material ? material : shoulderColor;
+            chestColor          = chestColor        == this.material ? material : chestColor;
+            hipColor            = hipColor          == this.material ? material : hipColor;
+            legColor            = legColor          == this.material ? material : legColor;
+            singleLegColor[0]   = singleLegColor[0] == this.material ? material : singleLegColor[0];
+            singleLegColor[1]   = singleLegColor[1] == this.material ? material : singleLegColor[1];
+            footColor[0]        = footColor[0]      == this.material ? material : footColor[0];
+            footColor[1]        = footColor[1]      == this.material ? material : footColor[1];
+        }
+
         /**
          * Constructs the robot with initial parameters.
          */
         public Robot(Material material /* add other parameters that characterize this robot */) {
-            this.material = material;
+            setDefaultMaterial(material);
 
-            // code goes here ...
+        }
+
+        Robot setHeadMaterial(Material material) {
+            this.headColor = material;
+            return this;
         }
 
         /**
@@ -507,37 +489,17 @@ public class RobotRace extends Base {
             final float LEG_HEIGHT              = LEG_WIDTH * 0.8f;
             final float FEET_HEIGHT             = KNEE_JOINT_HEIGHT;
             final float FEET_WIDTH              = LEG_WIDTH;
-            
-            final float TORSO_RELATIVE_HEIGHT = 2*LEG_PART_LENGTH+TORSO_HEIGHT/2+TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC)+KNEE_JOINT_HEIGHT/2; 
-            
-            int shine = 0;
-            
-            if (material == material.GOLD)   {
-                shine = (int)Math.round(0.4*128);
-            }
-            else if (material == material.SILVER) {
-                shine = (int)Math.round(0.4*128);
-            }
-            else if (material == material.WOOD)   {
-                shine = (int)Math.round(0.1*128);
-            }
-            else if (material == material.ORANGE) {
-                shine = (int)Math.round(0.25*128);
-            }
-            
+
+            final float TORSO_RELATIVE_HEIGHT = 2*LEG_PART_LENGTH+TORSO_HEIGHT/2+TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC)+KNEE_JOINT_HEIGHT/2;
+
 //             gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_LINE );
-            
-            gl.glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, material.specular,0);
-            gl.glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, material.diffuse, 0);
-            gl.glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, shine);
-            gl.glColor4fv(material.diffuse,0);
-                       
-            gl.glPushMatrix();    
+
+            gl.glPushMatrix();
                 gl.glTranslatef(0.f, 0.f, TORSO_RELATIVE_HEIGHT);
                 gl.glPushMatrix();//chest
                     gl.glTranslatef(0.f, TORSO_THICKNESS/2, 0.f);
                     gl.glRotatef(90, 1.f, 0.f, 0.f);
-                    //chestColor.set(gl);
+                    chestColor.set(gl);
                     if(stickFigure) {
                         gl.glBegin(gl.GL_LINES);
                             gl.glVertex3f(0.f, (TORSO_HEIGHT+SHOULDER_HEIGHT)/2, TORSO_THICKNESS/2);
@@ -560,7 +522,7 @@ public class RobotRace extends Base {
                         gl.glTranslatef(0.f, 0.f, -TORSO_HEIGHT/2-TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                         gl.glTranslatef(-TORSO_BOTTOM_WIDTH/2, 0.f, 0.f);
                         gl.glRotatef(90, 0.f, 1.f, 0.f);
-                        //hipColor.set(gl);
+                        hipColor.set(gl);
                         if(stickFigure) {
                             gl.glBegin(gl.GL_LINES);
                                 gl.glVertex3f(0.f, 0.f, 0);
@@ -571,7 +533,6 @@ public class RobotRace extends Base {
                         }
                     gl.glPopMatrix();
 
-                    //baseColor.set(gl);
                     gl.glTranslatef(0.f, 0.f, -TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                     for(int i = 0; i < 2; i++)
                     {
@@ -584,7 +545,7 @@ public class RobotRace extends Base {
                                 gl.glPushMatrix();
                                     gl.glTranslatef(0.f, 0.f, -LEG_PART_LENGTH/2);
                                     gl.glScalef(LEG_WIDTH, LEG_HEIGHT, LEG_PART_LENGTH);
-                                    //legPartColor[i][j].set(gl);
+                                    legPartColor[i][j].set(gl);
                                     if(stickFigure) {
                                         gl.glBegin(gl.GL_LINES);
                                             gl.glVertex3f(0.f, 0.f, 0.f);
@@ -600,7 +561,7 @@ public class RobotRace extends Base {
                                 gl.glPushMatrix();
                                     gl.glTranslatef(-KNEE_JOINT_WIDTH/2, 0.f, 0.f);
                                     gl.glRotatef(90, 0.f, 1.f, 0.f);
-                                    //legJointColor[i][j].set(gl);
+                                    legJointColor[i][j].set(gl);
                                     if(stickFigure) {
                                         gl.glBegin(gl.GL_LINES);
                                             gl.glVertex3f(0.f, 0.f, 0.f);
@@ -624,7 +585,7 @@ public class RobotRace extends Base {
                              *  =========/==
                              *  O        x=1
                              */
-                            //footColor[i].set(gl);
+                            footColor[i].set(gl);
                             gl.glBegin(stickFigure ? gl.GL_LINE_STRIP : gl.GL_TRIANGLE_STRIP);
                                 // Left side
                                 gl.glVertex3f(0.f, 0.f, 0.f);
@@ -663,7 +624,7 @@ public class RobotRace extends Base {
                 gl.glPushMatrix();
                     gl.glTranslatef(-SHOULDER_WIDTH/2, 0.f, 0.f);
                     gl.glRotatef(90, 0.f, 1.f, 0.f);
-                    //shoulderColor.set(gl);
+                    shoulderColor.set(gl);
                     if(stickFigure) {
                         gl.glBegin(gl.GL_LINES);
                             gl.glVertex3f(0.f, 0.f, 0.f);
@@ -674,7 +635,7 @@ public class RobotRace extends Base {
                     }
                 gl.glPopMatrix();
                 gl.glPushMatrix();
-                    //neckColor.set(gl);
+                    neckColor.set(gl);
                     if(stickFigure) {
                         gl.glBegin(gl.GL_LINES);
                             gl.glVertex3f(0.f, 0.f, 0.f);
@@ -687,7 +648,7 @@ public class RobotRace extends Base {
                 
                 gl.glPushMatrix();
                     gl.glTranslatef(0.f, 0.f, NECK_HEIGHT+SHOULDER_HEIGHT/2);
-                    //headColor.set(gl);
+                    headColor.set(gl);
                     if(stickFigure) {
                         gl.glBegin(gl.GL_LINES);
                             gl.glVertex3f(0.f, 0.f, 0.f);
@@ -701,6 +662,7 @@ public class RobotRace extends Base {
                 for(int i = 0; i < 2; i++)
                 {
                     gl.glPushMatrix();
+                        shoulderColor.set(gl);
                         if(i == 1) gl.glScalef(-1.f, 1.f, 1.f);
                         gl.glTranslatef(SHOULDER_WIDTH/2, 0.f, 0.f);
                         gl.glPushMatrix();
@@ -726,6 +688,7 @@ public class RobotRace extends Base {
                         gl.glTranslatef(-SHOULDER_JOINT_WIDTH/2, 0.f, 0.f);
                         for(int j = 0; j < 2; j++)
                         {
+                            armPartColor[i][j].set(gl);
                             gl.glPushMatrix();
                                 gl.glTranslatef(0.f, 0.f, -ARM_PART_LENGTH/2);
                                 gl.glScalef(ARM_WIDTH, ARM_HEIGHT, ARM_PART_LENGTH);
@@ -738,6 +701,8 @@ public class RobotRace extends Base {
                                 glut.glutSolidCube(1.f);
                                 }
                             gl.glPopMatrix();
+
+                            armJointColor[i][j].set(gl);
                             gl.glTranslatef(0.f, 0.f, -ARM_PART_LENGTH);
                             gl.glPushMatrix();
                                 gl.glTranslatef(-ELBOW_JOINT_WIDTH/2, 0.f, 0.f);
