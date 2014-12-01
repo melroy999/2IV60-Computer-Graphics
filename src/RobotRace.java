@@ -64,7 +64,7 @@ public class RobotRace extends Base {
 
         // Create a new array of four robots
         robots = new Robot[] {
-            new Robot(Material.GOLD).setHeadMaterial(Material.SILVER),
+            new Robot(Material.GOLD),
             new Robot(Material.SILVER),
             new Robot(Material.WOOD),
             new Robot(Material.ORANGE)
