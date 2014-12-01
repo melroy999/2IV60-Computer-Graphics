@@ -67,13 +67,13 @@ public class RobotRace extends Base {
         robots = new Robot[] {
             /// Instantiate swag robot
             new Robot(Material.GOLD).setNeckModifier(2.f),
-            
+
             // Instantiate bender, kiss my shiny metal ass
             new Robot(Material.SILVER),
-            
+
             // Instantiate oldschool robot
             new Robot(Material.WOOD).setNeckModifier(0.5f),
-            
+
             // Hey look at me, I'm an annoying orange robot!
             new Robot(Material.ORANGE)
         };
@@ -117,7 +117,7 @@ public class RobotRace extends Base {
         gl.glEnable(GL_COLOR_MATERIAL);
         gl.glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
-        // Enable textures. 
+        // Enable textures.
         gl.glEnable(GL_TEXTURE_2D);
         gl.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
         gl.glBindTexture(GL_TEXTURE_2D, 0);
@@ -174,9 +174,9 @@ public class RobotRace extends Base {
         gl.glLoadIdentity();
 
         // Set the perspective.
-        
+
         float aspectRatio = (float) gs.w / (float) gs.h;
-        
+
         // Calculate the view height from the aspect ratio
         float vHeight = gs.vWidth / aspectRatio;
 
@@ -231,10 +231,10 @@ public class RobotRace extends Base {
         {
             // Calculate the direction that is being looked at
             Vector viewDirection    = eyePosition.subtract(gs.cnt);
-            
+
             // Calculate a vector to the left (relative to the eye)
             Vector leftDirection    = viewDirection.cross(camera.up).normalized();
-            
+
             // Calculate a vector upwards (relative to the eye)
             Vector upDirection      = leftDirection.cross(viewDirection).normalized();
 
@@ -245,7 +245,7 @@ public class RobotRace extends Base {
 
             // Calculate the position of the light
             Vector leftUp = eyePosition.add(leftUpDirection);
-            
+
             // Update the light's properties
             float lightPosition[] = { (float)leftUp.x(), (float)leftUp.y(), (float)leftUp.z(), 0 };
             gl.glLightfv(gl.GL_LIGHT1, gl.GL_POSITION, lightPosition, 0);
@@ -276,16 +276,16 @@ public class RobotRace extends Base {
             gl.glEnable(GL_LIGHTING);
         }
 
-        // Keep the matrixes clean 
+        // Keep the matrixes clean
         gl.glPushMatrix();
-        
+
             // Draw all robots
             for(Robot bob : robots) {
                 // Draw bob, all our robots are named bob
                 bob.draw(gs.showStick);
                 gl.glTranslatef(1f, 0f, 0f);
             }
-        
+
         gl.glPopMatrix();
 
         // Draw race track
@@ -349,7 +349,7 @@ public class RobotRace extends Base {
 
                 // Draw the tip
                 glut.glutSolidCone(CONE_SIZE, CONE_LENGTH, 50, 51);
-                
+
             gl.glPopMatrix();
         }
 
@@ -474,7 +474,7 @@ public class RobotRace extends Base {
             legColor,
             legColor,
         };
-        
+
         float neckHeightModifier = 1.f;
 
         /**
@@ -513,7 +513,7 @@ public class RobotRace extends Base {
             this.headColor = material;
             return this;
         }
-        
+
         /**
          * Set the neck modifier
          * @param neckHeightModifier The modifier to set on the neck
@@ -548,15 +548,14 @@ public class RobotRace extends Base {
             final float TORSO_BOTTOM_HEIGHT     = 1.5f  *VAKJE;
             final float TORSO_BOTTOM_WIDTH      = 0.95f *TORSO_HEIGHT;
             final float FEET_LENGTH             = 2.f   *VAKJE;
-            
+
             final int PRECISION                 = 40;
             final int PRECISION2                = PRECISION+1;
-            
-            
+
             final float ARM_WIDTH               = SHOULDER_JOINT_WIDTH * 0.8f;
             final float ELBOW_JOINT_WIDTH       = SHOULDER_JOINT_WIDTH;
             final float ARM_HEIGHT              = ARM_WIDTH * 0.8f;
-            
+
             final float LEG_WIDTH               = ARM_WIDTH;
             final float KNEE_JOINT_WIDTH        = ELBOW_JOINT_WIDTH;
             final float KNEE_JOINT_HEIGHT       = SHOUlDER_JOINT_HEIGHT;
@@ -567,11 +566,16 @@ public class RobotRace extends Base {
             final float TORSO_RELATIVE_HEIGHT   = 2*LEG_PART_LENGTH+TORSO_HEIGHT/2+TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC)+KNEE_JOINT_HEIGHT/2;
 
             gl.glPushMatrix();
+                // Move up till torso level
                 gl.glTranslatef(0.f, 0.f, TORSO_RELATIVE_HEIGHT);
-                gl.glPushMatrix();//chest
+
+                // Draw the torso
+                gl.glPushMatrix();
                     gl.glTranslatef(0.f, TORSO_THICKNESS/2, 0.f);
                     gl.glRotatef(90, 1.f, 0.f, 0.f);
+
                     chestColor.set(gl);
+
                     if(stickFigure) {
                         gl.glBegin(gl.GL_LINES);
                             gl.glVertex3f(0.f, (TORSO_HEIGHT+SHOULDER_HEIGHT)/2, TORSO_THICKNESS/2);
@@ -587,13 +591,14 @@ public class RobotRace extends Base {
                         glut.glutSolidCylinder(TORSO_HEIGHT/2, TORSO_THICKNESS, PRECISION, PRECISION2);
                     }
                 gl.glPopMatrix();
-                
+
                 gl.glPushMatrix();
-                    
+                    // Draw the hips
                     gl.glPushMatrix();
                         gl.glTranslatef(0.f, 0.f, -TORSO_HEIGHT/2-TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                         gl.glTranslatef(-TORSO_BOTTOM_WIDTH/2, 0.f, 0.f);
                         gl.glRotatef(90, 0.f, 1.f, 0.f);
+
                         hipColor.set(gl);
                         if(stickFigure) {
                             gl.glBegin(gl.GL_LINES);
@@ -601,23 +606,32 @@ public class RobotRace extends Base {
                                 gl.glVertex3f(0.f, 0.f, TORSO_BOTTOM_WIDTH);
                             gl.glEnd();
                         } else {
-                        glut.glutSolidCylinder(TORSO_BOTTOM_HEIGHT/2, TORSO_BOTTOM_WIDTH, PRECISION, PRECISION2);
+                            glut.glutSolidCylinder(TORSO_BOTTOM_HEIGHT/2, TORSO_BOTTOM_WIDTH, PRECISION, PRECISION2);
                         }
                     gl.glPopMatrix();
 
+                    // Draw the legs
                     gl.glTranslatef(0.f, 0.f, -TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                     for(int i = 0; i < 2; i++)
                     {
                         gl.glPushMatrix();
                             gl.glTranslatef(0.f, 0.f, -TORSO_HEIGHT/2);
-                            if(i == 1) gl.glScalef(-1.f, 1.f, 1.f);
+
+                            // Mirror to the other side on the 2nd arm
+                            if(i == 1) {
+                                gl.glScalef(-1.f, 1.f, 1.f);
+                            }
+
                             gl.glTranslatef(TORSO_BOTTOM_WIDTH/2-3*LEG_WIDTH/4,0.f,0.f);
                             for(int j = 0; j < 2; j++)
                             {
+                                // Draw a  leg part
                                 gl.glPushMatrix();
                                     gl.glTranslatef(0.f, 0.f, -LEG_PART_LENGTH/2);
                                     gl.glScalef(LEG_WIDTH, LEG_HEIGHT, LEG_PART_LENGTH);
+
                                     legPartColor[i][j].set(gl);
+
                                     if(stickFigure) {
                                         gl.glBegin(gl.GL_LINES);
                                             gl.glVertex3f(0.f, 0.f, 0.f);
@@ -626,10 +640,13 @@ public class RobotRace extends Base {
                                             gl.glVertex3f(0.f, 0.f, -0.5f);
                                         gl.glEnd();
                                     } else {
-                                    glut.glutSolidCube(1.f);
+                                        glut.glutSolidCube(1.f);
                                     }
                                 gl.glPopMatrix();
+
                                 gl.glTranslatef(0.f, 0.f, -LEG_PART_LENGTH);
+
+                                // Draw a leg joint
                                 gl.glPushMatrix();
                                     gl.glTranslatef(-KNEE_JOINT_WIDTH/2, 0.f, 0.f);
                                     gl.glRotatef(90, 0.f, 1.f, 0.f);
@@ -644,11 +661,16 @@ public class RobotRace extends Base {
                                     }
                                 gl.glPopMatrix();
                             }
-                            //TODO gl.glRotatef(45, 1.f, 0.f, 0.f);
+
+                            // Draw a foot
                             gl.glRotatef(90, 0.f, 0.f, 1.f);
                             gl.glTranslatef(0.f, -KNEE_JOINT_WIDTH/2.5f, -KNEE_JOINT_HEIGHT/2);
                             gl.glScalef(FEET_LENGTH, FEET_WIDTH, FEET_HEIGHT);
-                            /* z=1  __ ==\
+
+                            footColor[i].set(gl);
+
+                            /* Feet look like this:
+                             * z=1  __ ==\
                              *  \==--      \
                              *  | \   ---    \
                              *  |   \    ---   \
@@ -657,8 +679,9 @@ public class RobotRace extends Base {
                              *  =========/==
                              *  O        x=1
                              */
-                            footColor[i].set(gl);
-                            gl.glBegin(stickFigure ? gl.GL_LINE_STRIP : gl.GL_TRIANGLE_STRIP);
+
+                             // Draw a stick figure or a triangle strip depending on the mode
+                             gl.glBegin(stickFigure ? gl.GL_LINE_STRIP : gl.GL_TRIANGLE_STRIP);
                                 // Left side
                                 gl.glNormal3f(0.f, -1.f, 0.f); gl.glVertex3f(0.f, 0.f, 0.f);
                                 gl.glNormal3f((float)Math.sqrt(2), -1.f, (float)Math.sqrt(2)); gl.glVertex3f(1.f, 0.f, 0.f);
@@ -680,6 +703,7 @@ public class RobotRace extends Base {
                                 gl.glNormal3f(0.f, 0.f, -1.f); gl.glVertex3f(1.f, 0.f, 0.f);
                                 gl.glNormal3f(0.f, 0.f, -1.f); gl.glVertex3f(1.f, 1.f, 0.f);
 
+                                // Stick figure needs additional vertexes
                                 if(stickFigure) {
                                     gl.glVertex3f(1.f, 0.f, 0.f);
                                     gl.glVertex3f(1.f, 1.f, 0.f);
@@ -691,12 +715,15 @@ public class RobotRace extends Base {
                         gl.glPopMatrix();
                     }
                 gl.glPopMatrix();
-                
+
+                // Draw the shoulders
                 gl.glTranslatef(0.f, 0.f, TORSO_HEIGHT/2+SHOULDER_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC));
                 gl.glPushMatrix();
                     gl.glTranslatef(-SHOULDER_WIDTH/2, 0.f, 0.f);
                     gl.glRotatef(90, 0.f, 1.f, 0.f);
+
                     shoulderColor.set(gl);
+
                     if(stickFigure) {
                         gl.glBegin(gl.GL_LINES);
                             gl.glVertex3f(0.f, 0.f, 0.f);
@@ -706,8 +733,11 @@ public class RobotRace extends Base {
                         glut.glutSolidCylinder(SHOULDER_HEIGHT/2, SHOULDER_WIDTH, PRECISION, PRECISION2);
                     }
                 gl.glPopMatrix();
+
+                //Draw the neck
                 gl.glPushMatrix();
                     neckColor.set(gl);
+
                     if(stickFigure) {
                         gl.glBegin(gl.GL_LINES);
                             gl.glVertex3f(0.f, 0.f, 0.f);
@@ -717,10 +747,13 @@ public class RobotRace extends Base {
                         glut.glutSolidCylinder(NECK_WIDTH/2 ,NECK_HEIGHT+SHOULDER_HEIGHT/2, PRECISION, PRECISION2);
                     }
                 gl.glPopMatrix();
-                
+
+                // Draw the head
                 gl.glPushMatrix();
                     gl.glTranslatef(0.f, 0.f, NECK_HEIGHT+SHOULDER_HEIGHT/2);
+
                     headColor.set(gl);
+
                     if(stickFigure) {
                         gl.glBegin(gl.GL_LINES);
                             gl.glVertex3f(0.f, 0.f, 0.f);
@@ -730,15 +763,24 @@ public class RobotRace extends Base {
                         glut.glutSolidCylinder(HEAD_WIDTH/2, HEAD_HEIGHT, PRECISION, PRECISION2);
                     }
                 gl.glPopMatrix();
-                
+
+                // Draw the arms
                 for(int i = 0; i < 2; i++)
                 {
                     gl.glPushMatrix();
                         shoulderColor.set(gl);
-                        if(i == 1) gl.glScalef(-1.f, 1.f, 1.f);
+
+                        // Mirror the 2nd arm
+                        if(i == 1) {
+                            gl.glScalef(-1.f, 1.f, 1.f);
+                        }
+
                         gl.glTranslatef(SHOULDER_WIDTH/2, 0.f, 0.f);
+
+                        // Draw the shoulder joint
                         gl.glPushMatrix();
                             gl.glRotatef(90, 0.f, 1.f, 0.f);
+
                             if(stickFigure) {
                                 gl.glBegin(gl.GL_LINES);
                                     gl.glVertex3f(0.f, 0.f, 0.f);
@@ -748,37 +790,50 @@ public class RobotRace extends Base {
                                 glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, SHOULDER_JOINT_WIDTH, PRECISION, PRECISION2);
                             }
                         gl.glPopMatrix();
+
                         gl.glTranslatef(SHOULDER_JOINT_WIDTH, 0.f, 0.f);
+
+                        // Draw the shoulder joint joint end
                         if(stickFigure) {
                             gl.glBegin(gl.GL_LINES);
                                 gl.glVertex3f(0.f, 0.f, -SHOUlDER_JOINT_HEIGHT/3);
                                 gl.glVertex3f(0.f, 0.f, SHOUlDER_JOINT_HEIGHT/3);
                             gl.glEnd();
                         } else {
-                            glut.glutSolidSphere(SHOUlDER_JOINT_HEIGHT/3, PRECISION, PRECISION2); //TODO: give seperate variable
+                            glut.glutSolidSphere(SHOUlDER_JOINT_HEIGHT/3, PRECISION, PRECISION2);
                         }
+
                         gl.glTranslatef(-SHOULDER_JOINT_WIDTH/2, 0.f, 0.f);
+
+                        // Draw the actual arms
                         for(int j = 0; j < 2; j++)
                         {
                             armPartColor[i][j].set(gl);
+
+                            // Draw the arm part
                             gl.glPushMatrix();
                                 gl.glTranslatef(0.f, 0.f, -ARM_PART_LENGTH/2);
                                 gl.glScalef(ARM_WIDTH, ARM_HEIGHT, ARM_PART_LENGTH);
+
                                 if(stickFigure) {
                                     gl.glBegin(gl.GL_LINES);
                                         gl.glVertex3f(0.f, 0.f, -1.f);
                                         gl.glVertex3f(0.f, 0.f, 1.f);
                                     gl.glEnd();
                                 } else {
-                                glut.glutSolidCube(1.f);
+                                    glut.glutSolidCube(1.f);
                                 }
                             gl.glPopMatrix();
 
                             armJointColor[i][j].set(gl);
+
                             gl.glTranslatef(0.f, 0.f, -ARM_PART_LENGTH);
+
+                            // Draw the arm joint
                             gl.glPushMatrix();
                                 gl.glTranslatef(-ELBOW_JOINT_WIDTH/2, 0.f, 0.f);
                                 gl.glRotatef(90, 0.f, 1.f, 0.f);
+
                                 if(stickFigure) {
                                     gl.glBegin(gl.GL_LINES);
                                         gl.glVertex3f(0.f, 0.f, 0.f);
@@ -791,7 +846,7 @@ public class RobotRace extends Base {
                         }
                     gl.glPopMatrix();
                 }
-            gl.glPopMatrix();         
+            gl.glPopMatrix();
         }
     }
 
@@ -839,7 +894,7 @@ public class RobotRace extends Base {
             } else {
                 setDefaultMode();
             }
-        }   
+        }
 
         /**
          * Computes {@code eye}, {@code center}, and {@code up}, based on the
