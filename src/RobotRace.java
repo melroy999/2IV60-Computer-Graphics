@@ -574,7 +574,7 @@ public class RobotRace extends Base {
                             }
                             //TODO gl.glRotatef(45, 1.f, 0.f, 0.f);
                             gl.glRotatef(90, 0.f, 0.f, 1.f);
-                            gl.glTranslatef(0.f, -KNEE_JOINT_WIDTH/2, -KNEE_JOINT_HEIGHT/2);
+                            gl.glTranslatef(0.f, -KNEE_JOINT_WIDTH/2.5f, -KNEE_JOINT_HEIGHT/2);
                             gl.glScalef(FEET_LENGTH, FEET_WIDTH, FEET_HEIGHT);
                             /* z=1  __ ==\
                              *  \==--      \
