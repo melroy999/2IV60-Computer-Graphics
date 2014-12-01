@@ -588,25 +588,25 @@ public class RobotRace extends Base {
                             footColor[i].set(gl);
                             gl.glBegin(stickFigure ? gl.GL_LINE_STRIP : gl.GL_TRIANGLE_STRIP);
                                 // Left side
-                                gl.glVertex3f(0.f, 0.f, 0.f);
-                                gl.glVertex3f(1.f, 0.f, 0.f);
-                                gl.glVertex3f(0.f, 0.f, 1.f);
+                                gl.glNormal3f(0.f, -1.f, 0.f); gl.glVertex3f(0.f, 0.f, 0.f);
+                                gl.glNormal3f((float)Math.sqrt(2), -1.f, (float)Math.sqrt(2)); gl.glVertex3f(1.f, 0.f, 0.f);
+                                gl.glNormal3f((float)Math.sqrt(2), -1.f, (float)Math.sqrt(2)); gl.glVertex3f(0.f, 0.f, 1.f);
 
                                 //Front quad
-                                gl.glVertex3f(1.f, 1.f, 0.f);
-                                gl.glVertex3f(0.f, 1.f, 1.f);
+                                gl.glNormal3f((float)Math.sqrt(2), 1.f, (float)Math.sqrt(2)); gl.glVertex3f(1.f, 1.f, 0.f);
+                                gl.glNormal3f((float)Math.sqrt(2)-1.f, 1.f, (float)Math.sqrt(2)); gl.glVertex3f(0.f, 1.f, 1.f);
 
                                 //Right side
-                                gl.glVertex3f(0.f, 1.f, 0.f);
+                                gl.glNormal3f(-1.f, 1.f, 0.f); gl.glVertex3f(0.f, 1.f, 0.f);
 
                                 //Back side
-                                gl.glVertex3f(0.f, 0.f, 1.f);
-                                gl.glVertex3f(0.f, 0.f, 0.f);
-                                gl.glVertex3f(0.f, 1.f, 0.f);
+                                gl.glNormal3f(-1.f, 0.f, 0.f); gl.glVertex3f(0.f, 0.f, 1.f);
+                                gl.glNormal3f(-1.f, 0.f, -1.f); gl.glVertex3f(0.f, 0.f, 0.f);
+                                gl.glNormal3f(-1.f, 0.f, -1.f); gl.glVertex3f(0.f, 1.f, 0.f);
 
                                 //Bottom side
-                                gl.glVertex3f(1.f, 0.f, 0.f);
-                                gl.glVertex3f(1.f, 1.f, 0.f);
+                                gl.glNormal3f(0.f, 0.f, -1.f); gl.glVertex3f(1.f, 0.f, 0.f);
+                                gl.glNormal3f(0.f, 0.f, -1.f); gl.glVertex3f(1.f, 1.f, 0.f);
 
                                 if(stickFigure) {
                                     gl.glVertex3f(1.f, 0.f, 0.f);
