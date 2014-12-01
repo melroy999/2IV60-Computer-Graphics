@@ -1,4 +1,6 @@
-
+/**
+ * RobotRace
+ */
 import javax.media.opengl.GL;
 import static javax.media.opengl.GL2.*;
 import javax.media.opengl.GL2;
@@ -38,7 +40,6 @@ import robotrace.Vector;
  * additional textured primitives to the GLUT object.
  */
 public class RobotRace extends Base {
-
     /**
      * Array of the four robots.
      */
@@ -64,9 +65,16 @@ public class RobotRace extends Base {
 
         // Create a new array of four robots
         robots = new Robot[] {
-            new Robot(Material.GOLD),
+            /// Instantiate swag robot
+            new Robot(Material.GOLD).setNeckModifier(2.f),
+            
+            // Instantiate bender, kiss my shiny metal ass
             new Robot(Material.SILVER),
-            new Robot(Material.WOOD),
+            
+            // Instantiate oldschool robot
+            new Robot(Material.WOOD).setNeckModifier(0.5f),
+            
+            // Hey look at me, I'm an annoying orange robot!
             new Robot(Material.ORANGE)
         };
 
@@ -116,32 +124,34 @@ public class RobotRace extends Base {
 
         // Enable lightning
         gl.glEnable(GL_LIGHTING);
+
+        // Create an ambient light
         gl.glEnable(GL_LIGHT0);
-
         {
-            // Create light components
-            float ambientLight[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-            float diffuseLight[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-            float specularLight[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+            // Configuration
+            float ambientLight[]    = { 0.2f,   0.2f,   0.2f,   1.0f };
+            float diffuseLight[]    = { 0.8f,   0.8f,   0.8f,   1.0f };
+            float specularLight[]   = { 0.5f,   0.5f,   0.5f,   1.0f };
 
-            // Assign created components to GL_LIGHT0
+            // Setup the light with the configuration specified above.
             gl.glLightfv(gl.GL_LIGHT0, gl.GL_AMBIENT, ambientLight, 0);
             gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, diffuseLight, 0);
             gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, specularLight, 0);
         }
-        
+
+        // Create a positional light
         gl.glEnable(GL_LIGHT1);
         {
-            // Create light components
-            float ambientLight[] = { 0f, 0f, 0f, 0f};
-            float diffuseLight[] = { 1f, 0.8f, 0.8f, 1.0f };
-            float specularLight[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+            // Configuration
+            float ambientLight[]    = { 0f,     0f,     0f,     0f};
+            float diffuseLight[]    = { 1f,     0.8f,   0.8f,   1.0f };
+            float specularLight[]   = { 0.5f,   0.5f,   0.5f,   1.0f };
 
-            // Assign created components to GL_LIGHT0
+            // Set up the positional light with the configuration specified above
             gl.glLightfv(gl.GL_LIGHT1, gl.GL_AMBIENT, ambientLight, 0);
             gl.glLightfv(gl.GL_LIGHT1, gl.GL_DIFFUSE, diffuseLight, 0);
             gl.glLightfv(gl.GL_LIGHT1, gl.GL_SPECULAR, specularLight, 0);
-        
+            // Position is changed every camera update.
         }
 
         // Try to load four textures, add more if you like.
@@ -164,13 +174,39 @@ public class RobotRace extends Base {
         gl.glLoadIdentity();
 
         // Set the perspective.
-        // Modify this to meet the requirements in the assignment.
-        float vHeight = gs.vWidth / ((float) gs.w / (float) gs.h);
+        
+        float aspectRatio = (float) gs.w / (float) gs.h;
+        
+        // Calculate the view height from the aspect ratio
+        float vHeight = gs.vWidth / aspectRatio;
 
-        float fovY = (float) Math.atan2((0.5f * vHeight), gs.vDist) * 2f;
-        fovY = (float) Math.toDegrees(fovY);
+        // Calculate vertical fov
+        //        /|
+        //      /  | (2)
+        //    /    |
+        //  /(1)   |
+        //  =======|
+        //  \  (3) |
+        //    \    |
+        //      \  |
+        //        \|
+        //
+        // (1): 1/2 fovY
+        // (2): 1/2 vHeight
+        // (3): vDist
+        float fovY = (float)Math.atan(
+            vHeight/(
+                2.f * gs.vDist
+            )
+        ) * 2.f;
 
-        glu.gluPerspective(fovY, (float) gs.w / (float) gs.h, 0.1 * gs.vDist, 100 * gs.vDist);
+        // Initialize perspective from calculated values
+        glu.gluPerspective(
+            (float) Math.toDegrees(fovY),
+            aspectRatio,
+            0.1 * gs.vDist,
+            100 * gs.vDist
+        );
 
         // Set camera.
         gl.glMatrixMode(GL_MODELVIEW);
@@ -179,27 +215,38 @@ public class RobotRace extends Base {
         // Update the view according to the camera mode
         camera.update(gs.camMode);
 
+        // Calculate the eye position from the center point and viewing angles
         Vector eyePosition = new Vector (
             gs.vDist * Math.cos(gs.phi) * Math.sin(gs.theta) + gs.cnt.x(),
             gs.vDist * Math.cos(gs.phi) * Math.cos(gs.theta) + gs.cnt.y(),
             gs.vDist * Math.sin(gs.phi) + gs.cnt.z());
 
-
+        // Initializing the viewing matrix
         glu.gluLookAt(
             eyePosition.x(),    eyePosition.y(),    eyePosition.z(),
             gs.cnt.x(),         gs.cnt.y(),         gs.cnt.z(),
             camera.up.x(),      camera.up.y(),      camera.up.z());
 
+        // Update the light
         {
+            // Calculate the direction that is being looked at
             Vector viewDirection    = eyePosition.subtract(gs.cnt);
+            
+            // Calculate a vector to the left (relative to the eye)
             Vector leftDirection    = viewDirection.cross(camera.up).normalized();
+            
+            // Calculate a vector upwards (relative to the eye)
             Vector upDirection      = leftDirection.cross(viewDirection).normalized();
 
+            // Calculate the direction the light is relative to the camera
             Vector leftUpDirection  = leftDirection.add(upDirection)
                                                    .normalized()
                                                    .scale(1.1f);
 
+            // Calculate the position of the light
             Vector leftUp = eyePosition.add(leftUpDirection);
+            
+            // Update the light's properties
             float lightPosition[] = { (float)leftUp.x(), (float)leftUp.y(), (float)leftUp.z(), 0 };
             gl.glLightfv(gl.GL_LIGHT1, gl.GL_POSITION, lightPosition, 0);
          }
@@ -223,47 +270,29 @@ public class RobotRace extends Base {
 
         // Draw the axis frame
         if (gs.showAxes) {
+            // Axes should not be affected by light
+            gl.glDisable(GL_LIGHTING);
             drawAxisFrame();
+            gl.glEnable(GL_LIGHTING);
         }
 
-        // Set color to black.
-        gl.glColor3f(0f, 0f, 0f);
-         
-        // Draw the first robot
-        robots[0].draw(gs.showStick);
+        // Keep the matrixes clean 
+        gl.glPushMatrix();
         
-        gl.glTranslatef(1f, 0f, 0f);
+            // Draw all robots
+            for(Robot bob : robots) {
+                // Draw bob, all our robots are named bob
+                bob.draw(gs.showStick);
+                gl.glTranslatef(1f, 0f, 0f);
+            }
         
-        robots[1].draw(gs.showStick);
-        
-        gl.glTranslatef(1f, 0f, 0f);
-        
-        robots[2].draw(gs.showStick);
-        
-        gl.glTranslatef(1f, 0f, 0f);
-        
-        robots[3].draw(gs.showStick);
+        gl.glPopMatrix();
 
         // Draw race track
         raceTrack.draw(gs.trackNr);
 
         // Draw terrain
         terrain.draw();
-/*
-        // Unit box around origin.
-        glut.glutWireCube(1f);
-
-        // Move in x-direction.
-        gl.glTranslatef(2f, 0f, 0f);
-
-        // Rotate 30 degrees, around z-axis.
-        gl.glRotatef(30f, 0f, 0f, 1f);
-
-        // Scale in z-direction.
-        gl.glScalef(1f, 1f, 2f);
-
-        // Translated, rotated, scaled box.
-        glut.glutWireCube(1f);*/
     }
 
     /**
@@ -271,12 +300,14 @@ public class RobotRace extends Base {
      * (yellow).
      */
     public void drawAxisFrame() {
+        // Configuration
         final float CONE_LENGTH = 0.25f;
         final float CONE_SIZE   = CONE_LENGTH * 0.2f;
         final float AXIS_LENGTH = 1f;
         final float LINE_LENGTH = AXIS_LENGTH - CONE_LENGTH;
         final float LINE_WIDTH = 0.015f;
 
+        // All the axis are drawn by us
         Vector [] directions = {
             Vector.X,
             Vector.Y,
@@ -285,43 +316,53 @@ public class RobotRace extends Base {
 
 
         for (Vector direction : directions) {
+            // Set the color, colors match the directions
             gl.glColor4d(direction.x(), direction.y(), direction.z(), 1.);
 
             gl.glPushMatrix();
+                // Move to the center position
                 gl.glTranslated(
                     direction.x() * LINE_LENGTH/2,
                     direction.y() * LINE_LENGTH/2,
                     direction.z() * LINE_LENGTH/2);
 
                 gl.glPushMatrix();
+                    // Scale to the line length on the direction
+                    // And line width on other directions
                     gl.glScaled(
                         LINE_LENGTH * direction.x() + (1.f - direction.x()) * LINE_WIDTH,
                         LINE_LENGTH * direction.y() + (1.f - direction.y()) * LINE_WIDTH,
                         LINE_LENGTH * direction.z() + (1.f - direction.z()) * LINE_WIDTH);
 
+                    // Draw the "line"
                     glut.glutSolidCube(1f);
                 gl.glPopMatrix();
 
+                // Move to the end of the line
                 gl.glTranslated(
                     direction.x() * LINE_LENGTH/2,
                     direction.y() * LINE_LENGTH/2,
                     direction.z() * LINE_LENGTH/2);
 
+                // Rotate in the correct direction
                 gl.glRotated(90f, -direction.y(), direction.x(), direction.z());
 
+                // Draw the tip
                 glut.glutSolidCone(CONE_SIZE, CONE_LENGTH, 50, 51);
+                
             gl.glPopMatrix();
         }
 
+        // Draw the origin
         gl.glColor4f(255, 255, 0, 1);
         glut.glutSolidSphere(0.05f, 50, 51);
     }
 
     /**
      * Materials that can be used for the robots.
+     * Source: http://devernay.free.fr/cours/opengl/materials.html
      */
     public enum Material {
-        /** source from numbers used: http://devernay.free.fr/cours/opengl/materials.html **/
         /**
          * Gold material properties. Modify the default values to make it look
          * like gold.
@@ -367,6 +408,9 @@ public class RobotRace extends Base {
             this.specular = specular;
         }
 
+        /**
+         * @return The shine shininess
+         */
         public int getShine() {
             switch(this) {
                 case GOLD:      return (int)Math.round(0.4*128);
@@ -377,10 +421,16 @@ public class RobotRace extends Base {
             }
         }
 
+        /**
+         * Set the material
+         * @param gl The context to set it on
+         */
         public void set(GL2 gl) {
+            // OpenGL, Do the thing!
             gl.glMaterialfv(GL_FRONT_AND_BACK,  GL_SPECULAR,    specular,   0);
             gl.glMaterialfv(GL_FRONT_AND_BACK,  GL_DIFFUSE,     diffuse,    0);
             gl.glMateriali(GL_FRONT_AND_BACK,   GL_SHININESS,   getShine());
+            // Nooo, not the thing!
             gl.glColor4fv(diffuse, 0);
         }
     }
@@ -392,7 +442,7 @@ public class RobotRace extends Base {
         /**
          * The material from which this robot is built.
          */
-        private final Material material = null;
+        private Material material = null;
 
         Material headColor = null;
         Material neckColor = null;
@@ -424,7 +474,13 @@ public class RobotRace extends Base {
             legColor,
             legColor,
         };
+        
+        float neckHeightModifier = 1.f;
 
+        /**
+         * Change the materials that are set to the default material
+         * @param material The material to change to
+         */
         void setDefaultMaterial(Material material) {
             headColor           = headColor         == this.material ? material : headColor;
             neckColor           = neckColor         == this.material ? material : neckColor;
@@ -436,18 +492,35 @@ public class RobotRace extends Base {
             singleLegColor[1]   = singleLegColor[1] == this.material ? material : singleLegColor[1];
             footColor[0]        = footColor[0]      == this.material ? material : footColor[0];
             footColor[1]        = footColor[1]      == this.material ? material : footColor[1];
+            this.material = material;
         }
 
         /**
          * Constructs the robot with initial parameters.
+         * @param material The default material
          */
-        public Robot(Material material /* add other parameters that characterize this robot */) {
+        public Robot(Material material) {
             setDefaultMaterial(material);
 
         }
 
-        Robot setHeadMaterial(Material material) {
+        /**
+         * Set the material of the head
+         * @param material The material to set it to
+         * @return this for method chaining
+         */
+        public Robot setHeadMaterial(Material material) {
             this.headColor = material;
+            return this;
+        }
+        
+        /**
+         * Set the neck modifier
+         * @param neckHeightModifier The modifier to set on the neck
+         * @return this for method chaining
+         */
+        public Robot setNeckModifier(float neckHeightModifier) {
+            this.neckHeightModifier = neckHeightModifier;
             return this;
         }
 
@@ -456,6 +529,7 @@ public class RobotRace extends Base {
          */
         public void draw(boolean stickFigure) {
 
+            // The mother of all magic numbers
             final float VAKJE                   = 0.1f;
             final float SHOULDER_OVERLAP_MAGIC  = 1.f;
 
@@ -463,7 +537,7 @@ public class RobotRace extends Base {
             final float TORSO_THICKNESS         = 1.5f  *VAKJE;
             final float SHOULDER_HEIGHT         = 2     *VAKJE;
             final float SHOULDER_WIDTH          = TORSO_HEIGHT;
-            final float NECK_HEIGHT             = 1     *VAKJE;
+            final float NECK_HEIGHT             = 1     *VAKJE  *neckHeightModifier;
             final float NECK_WIDTH              = 0.5f  *VAKJE;
             final float HEAD_HEIGHT             = 3     *VAKJE;
             final float HEAD_WIDTH              = 2     *VAKJE;
@@ -473,15 +547,15 @@ public class RobotRace extends Base {
             final float LEG_PART_LENGTH         = 5     *VAKJE;
             final float TORSO_BOTTOM_HEIGHT     = 1.5f  *VAKJE;
             final float TORSO_BOTTOM_WIDTH      = 0.95f *TORSO_HEIGHT;
-            final float FEET_LENGTH             = 2.f   *VAKJE; // TODO look up
+            final float FEET_LENGTH             = 2.f   *VAKJE;
             
-            final int PRECISION               = 40;
-            final int PRECISION2               = PRECISION+1;
+            final int PRECISION                 = 40;
+            final int PRECISION2                = PRECISION+1;
             
             
             final float ARM_WIDTH               = SHOULDER_JOINT_WIDTH * 0.8f;
             final float ELBOW_JOINT_WIDTH       = SHOULDER_JOINT_WIDTH;
-            final float ARM_HEIGHT             = ARM_WIDTH * 0.8f;
+            final float ARM_HEIGHT              = ARM_WIDTH * 0.8f;
             
             final float LEG_WIDTH               = ARM_WIDTH;
             final float KNEE_JOINT_WIDTH        = ELBOW_JOINT_WIDTH;
@@ -490,9 +564,7 @@ public class RobotRace extends Base {
             final float FEET_HEIGHT             = KNEE_JOINT_HEIGHT;
             final float FEET_WIDTH              = LEG_WIDTH;
 
-            final float TORSO_RELATIVE_HEIGHT = 2*LEG_PART_LENGTH+TORSO_HEIGHT/2+TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC)+KNEE_JOINT_HEIGHT/2;
-
-//             gl.glPolygonMode( gl.GL_FRONT_AND_BACK, gl.GL_LINE );
+            final float TORSO_RELATIVE_HEIGHT   = 2*LEG_PART_LENGTH+TORSO_HEIGHT/2+TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC)+KNEE_JOINT_HEIGHT/2;
 
             gl.glPushMatrix();
                 gl.glTranslatef(0.f, 0.f, TORSO_RELATIVE_HEIGHT);
