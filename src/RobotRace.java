@@ -958,15 +958,58 @@ public class RobotRace extends Base {
             // code goes here ...
         }
 
+        float x = 0.f;
         /**
          * Draws this track, based on the selected track number.
          */
         public void draw(int trackNr) {
-
+            x+=0.2;
+            gl.glDisable(gl.GL_LIGHTING);
             // The test track is selected
             if (0 == trackNr) {
-                // code goes here ...
-                // The O-track is selected
+                gl.glBegin(gl.GL_TRIANGLE_STRIP);
+                    final double STEP = 0.01;
+                    for(int j = 0; j < 4; j++) {
+                        for(double i = -STEP; i <= 1; i += STEP) {
+                            Vector initialPoint = getPoint(i),
+                                   point = initialPoint;
+                            if(j == 1) {
+                                point = getLower(point);
+                            } else if (j == 2) {
+                                point = getOuter(point);
+                            }
+                            gl.glColor3d(
+                                    Math.sin(i*2*Math.PI+x)/2+.5,
+                                    Math.sin(i*4*Math.PI+x)/2+.5,
+                                    Math.sin(i*8*Math.PI+x)/2+.5);
+                            if(i==0) {
+                                gl.glNormal3f(0.f, 0.f, 1.f);
+                            } else if(i == 1) {
+                                gl.glNormal3f(0.f, 0.f, -1.f);
+                            } else {
+                                Vector outsideDirection = point.subtract(initialPoint);
+                                if(i == 3) {
+                                    outsideDirection.scale(-1);
+                                }
+                                gl.glNormal3d(outsideDirection.x(), outsideDirection.y(), outsideDirection.z());
+                            }
+                            gl.glVertex3d(point.x(), point.y(), point.z());
+                            Vector outerPoint = (j == 2 || j == 3) ? getLower(point) : getOuter(point);
+                            if(i==0) {
+                                gl.glNormal3f(0.f, 0.f, 1.f);
+                            } else if(i == 1) {
+                                gl.glNormal3f(0.f, 0.f, -1.f);
+                            } else if(i == 2) {
+                                Vector outsideDirection = point.subtract(initialPoint);
+                                if(i == 3) {
+                                    outsideDirection.scale(-1);
+                                }
+                                gl.glNormal3d(outsideDirection.x(), outsideDirection.y(), outsideDirection.z());
+                            }
+                            gl.glVertex3d(outerPoint.x(), outerPoint.y(), outerPoint.z());
+                        }
+                    }
+                gl.glEnd();
             } else if (1 == trackNr) {
                 // code goes here ...
                 // The L-track is selected
@@ -979,20 +1022,31 @@ public class RobotRace extends Base {
             } else if (4 == trackNr) {
                 // code goes here ...
             }
+            
+            gl.glEnable(gl.GL_LIGHTING);
+        }
+        
+        Vector getLower(Vector initialPosition) {
+            return initialPosition.add(new Vector(0, 0, -2));
+        }
+        
+        Vector getOuter(Vector initialPosition) {
+            Vector directionVector = initialPosition.normalized().scale(4);
+            return initialPosition.add(new Vector(directionVector.x(), directionVector.y(), 0));
         }
 
         /**
          * Returns the position of the curve at 0 <= {@code t} <= 1.
          */
         public Vector getPoint(double t) {
-            return Vector.O; // <- code goes here
+            return new Vector(10*Math.cos(2* Math.PI * t),14*Math.sin(2* Math.PI * t),1);
         }
 
         /**
          * Returns the tangent of the curve at 0 <= {@code t} <= 1.
          */
         public Vector getTangent(double t) {
-            return Vector.O; // <- code goes here
+            return new Vector(-20*Math.PI*Math.sin(2*Math.PI * t),28*Math.PI*Math.cos(2*Math.PI * t),0);
         }
     }
 
