@@ -280,10 +280,24 @@ public class RobotRace extends Base {
         gl.glPushMatrix();
 
             // Draw all robots
-            for(Robot bob : robots) {
+            for(Robot bob : new Robot[] { robots[0] }) {
                 // Draw bob, all our robots are named bob
+                float t = gs.tAnim/10;
+                Vector position = raceTrack.getPoint(t);
+                Vector tangent = raceTrack.getTangent(t);
+                position = position.add(
+                        tangent.cross(Vector.Z).normalized().scale(.5f)
+                );
+                gl.glTranslated(position.x(), position.y(), position.z());
+
+                gl.glRotatef(
+                    (float)Math.toDegrees(
+                        Math.atan(tangent.y() / tangent.x())
+                    ) + (tangent.x() < 0 ? 90 : -90),
+                    0.f, 0.f, 1.f
+                );
                 bob.draw(gs.showStick);
-                gl.glTranslatef(1f, 0f, 0f);
+                //gl.glTranslatef(1f, 0f, 0f);
             }
 
         gl.glPopMatrix();
