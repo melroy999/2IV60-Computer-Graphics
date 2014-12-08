@@ -296,12 +296,12 @@ public class RobotRace extends Base {
                     0.f, 0.f, 1.f
                 );
                 bob.draw(gs.showStick);
-                //gl.glTranslatef(1f, 0f, 0f);
             gl.glPopMatrix();
         }
 
-
+        
         // Draw race track
+        Material.GOLD.set(gl);
         raceTrack.draw(gs.trackNr);
 
         // Draw terrain
@@ -977,13 +977,13 @@ public class RobotRace extends Base {
          */
         public void draw(int trackNr) {
             x+=0.2;
-            gl.glDisable(gl.GL_LIGHTING);
+            
             // The test track is selected
             if (0 == trackNr) {
                 gl.glBegin(gl.GL_TRIANGLE_STRIP);
                     final double STEP = 0.01;
                     for(int j = 0; j < 4; j++) {
-                        for(double i = -STEP; i <= 1; i += STEP) {
+                        for(double i = -3*STEP; i <= 1; i += STEP) {
                             Vector initialPoint = getPoint(i),
                                    point = initialPoint;
                             if(j == 1) {
@@ -1035,8 +1035,6 @@ public class RobotRace extends Base {
             } else if (4 == trackNr) {
                 // code goes here ...
             }
-            
-            gl.glEnable(gl.GL_LIGHTING);
         }
         
         Vector getLower(Vector initialPosition) {
