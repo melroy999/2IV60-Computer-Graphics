@@ -1077,14 +1077,28 @@ public class RobotRace extends Base {
          * Draws the terrain.
          */
         public void draw() {
-            // code goes here ...
+            float z = 0;
+            final float STEP = 0.2f;
+            for(float x = -20;x<=20;x+=STEP)
+            {
+                gl.glBegin(GL_TRIANGLE_STRIP);
+                for(float y = -20;y<=20;y+=STEP)
+                {
+                    z = heightAt(x, y);
+                    gl.glVertex3f(x, y, z);
+                    z = heightAt(x+STEP, y);
+                    gl.glVertex3f(x+STEP, y, z);
+                    //System.out.println(new Vector(x, y, z));
+                }
+                gl.glEnd();
+            }
         }
 
         /**
          * Computes the elevation of the terrain at ({@code x}, {@code y}).
          */
         public float heightAt(float x, float y) {
-            return 0; // <- code goes here
+            return (float)(0.6*Math.cos(0.3*x+0.2*y)+0.4*Math.cos(x-0.5*y));
         }
     }
 
