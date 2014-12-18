@@ -442,6 +442,7 @@ public class RobotRace extends Base {
             // OpenGL, Do the thing!
             gl.glMaterialfv(GL_FRONT_AND_BACK,  GL_SPECULAR,    specular,   0);
             gl.glMaterialfv(GL_FRONT_AND_BACK,  GL_DIFFUSE,     diffuse,    0);
+            gl.glMaterialfv(GL_FRONT_AND_BACK,  GL_AMBIENT,     diffuse,    0);
             gl.glMateriali(GL_FRONT_AND_BACK,   GL_SHININESS,   getShine());
             // Nooo, not the thing!
             gl.glColor4fv(diffuse, 0);
