@@ -217,8 +217,8 @@ public class RobotRace extends Base {
 
         // Calculate the eye position from the center point and viewing angles
         Vector eyePosition = new Vector (
-            gs.vDist * Math.cos(gs.phi) * Math.sin(gs.theta) + gs.cnt.x(),
-            gs.vDist * Math.cos(gs.phi) * Math.cos(gs.theta) + gs.cnt.y(),
+            gs.vDist * Math.cos(gs.phi) * Math.cos(gs.theta) + gs.cnt.x(),
+            gs.vDist * Math.cos(gs.phi) * Math.sin(gs.theta) + gs.cnt.y(),
             gs.vDist * Math.sin(gs.phi) + gs.cnt.z());
 
         // Initializing the viewing matrix
