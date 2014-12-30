@@ -1,6 +1,7 @@
 /**
  * RobotRace
  */
+import java.awt.Color;
 import javax.media.opengl.GL;
 import static javax.media.opengl.GL2.*;
 import javax.media.opengl.GL2;
@@ -1066,7 +1067,14 @@ public class RobotRace extends Base {
      * Implementation of the terrain.
      */
     private class Terrain {
-
+        float gridSize = 20;
+        
+        Color[] colors = {
+            new Color(0,255,0),
+            new Color(255,255,0),
+            new Color(0,0,255),
+        };
+        
         /**
          * Can be used to set up a display list.
          */
@@ -1079,37 +1087,26 @@ public class RobotRace extends Base {
          */
         public void draw() {
             float z = 0;
+
             Vector v;
             final float STEP = 0.2f;
             for(float x = -20;x<=20;x+=STEP)
             {
-                gl.glBegin(GL_TRIANGLE_STRIP);
-                
-                for(float y = -20;y<=20;y+=STEP)
+                gl.glBegin(GL_TRIANGLE_STRIP);        
+                for(float y = -gridSize;y<=gridSize;y+=STEP)
                 {
                     z = heightAt(x, y);
-                    setColorByHeight(z);
-                    v = getTerrainTangent(x,y);
+                    v = getTerrainTangent(x,y).normalized();
                     gl.glNormal3d(v.x(),v.y(),v.z());
                     gl.glVertex3f(x, y, z);
                     
                     
                     z = heightAt(x+STEP, y);
-                    setColorByHeight(z);
-                    v = getTerrainTangent(x+STEP,y);
+                    v = getTerrainTangent(x+STEP,y).normalized();
                     gl.glNormal3d(v.x(),v.y(),v.z());
                     gl.glVertex3f(x+STEP, y, z);
                 }
                 gl.glEnd();
-            }
-        }
-        
-        public void setColorByHeight(float z){
-            if(z>0){
-                gl.glColor3d(0,1,0);
-            }
-            else{
-                gl.glColor3d(0,0,1);
             }
         }
 
