@@ -1083,15 +1083,30 @@ public class RobotRace extends Base {
             for(float x = -20;x<=20;x+=STEP)
             {
                 gl.glBegin(GL_TRIANGLE_STRIP);
+                
                 for(float y = -20;y<=20;y+=STEP)
                 {
                     z = heightAt(x, y);
+                    setColorByHeight(z);
+                    gl.glNormal3d(x, y, z);
                     gl.glVertex3f(x, y, z);
+                    
+                    
                     z = heightAt(x+STEP, y);
+                    setColorByHeight(z);
+                    gl.glNormal3d(x, y, z);
                     gl.glVertex3f(x+STEP, y, z);
-                    //System.out.println(new Vector(x, y, z));
                 }
                 gl.glEnd();
+            }
+        }
+        
+        public void setColorByHeight(float z){
+            if(z>0){
+                gl.glColor3d(0,1,0);
+            }
+            else{
+                gl.glColor3d(0,0,1);
             }
         }
 
