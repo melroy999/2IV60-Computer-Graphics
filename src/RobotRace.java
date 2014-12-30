@@ -1079,6 +1079,7 @@ public class RobotRace extends Base {
          */
         public void draw() {
             float z = 0;
+            Vector v;
             final float STEP = 0.2f;
             for(float x = -20;x<=20;x+=STEP)
             {
@@ -1088,13 +1089,15 @@ public class RobotRace extends Base {
                 {
                     z = heightAt(x, y);
                     setColorByHeight(z);
-                    gl.glNormal3d(x, y, z);
+                    v = getTerrainTangent(x,y);
+                    gl.glNormal3d(v.x(),v.y(),v.z());
                     gl.glVertex3f(x, y, z);
                     
                     
                     z = heightAt(x+STEP, y);
                     setColorByHeight(z);
-                    gl.glNormal3d(x, y, z);
+                    v = getTerrainTangent(x+STEP,y);
+                    gl.glNormal3d(v.x(),v.y(),v.z());
                     gl.glVertex3f(x+STEP, y, z);
                 }
                 gl.glEnd();
@@ -1115,6 +1118,12 @@ public class RobotRace extends Base {
          */
         public float heightAt(float x, float y) {
             return (float)(0.6*Math.cos(0.3*x+0.2*y)+0.4*Math.cos(x-0.5*y));
+        }
+        
+        public Vector getTerrainTangent(float x, float y){
+            Vector du = new Vector(1,0,-0.18*Math.sin(0.3*x+0.2*y)-0.4*Math.sin(x-0.5*y));
+            Vector dv = new Vector(0,1,-0.12*Math.sin(0.3*x+0.2*y)-0.2*Math.sin(0.5*y-x));
+            return du.cross(dv);
         }
     }
 
