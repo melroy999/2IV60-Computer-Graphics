@@ -69,16 +69,16 @@ public class RobotRace extends Base {
         // Create a new array of four robots
         robots = new Robot[] {
             /// Instantiate swag robot
-            new Robot(Material.GOLD).setNeckModifier(2.f),
+            new Robot(Material.GOLD).setNeckModifier(2.f).setSpeed(15),
 
             // Instantiate bender, kiss my shiny metal ass
-            new Robot(Material.SILVER),
+            new Robot(Material.SILVER).setSpeed(4),
 
             // Instantiate oldschool robot
-            new Robot(Material.WOOD).setNeckModifier(0.5f),
+            new Robot(Material.WOOD).setNeckModifier(0.5f).setSpeed(11),
 
             // Hey look at me, I'm an annoying orange robot!
-            new Robot(Material.ORANGE)
+            new Robot(Material.ORANGE).setSpeed(9)
         };
 
         // Initialize the camera
@@ -258,8 +258,6 @@ public class RobotRace extends Base {
                         tangent.cross(Vector.Z).normalized().scale(.5f+i++)
                 );
                 
-                
-                
                 gl.glTranslated(position.x(), position.y(), position.z());
 
                 gl.glRotatef(
@@ -268,7 +266,6 @@ public class RobotRace extends Base {
                 );
                 
                 bob.draw(gs.showStick);   
-                bob.setLocOri(position,tangent);
                 
             gl.glPopMatrix();
         }
@@ -438,12 +435,11 @@ public class RobotRace extends Base {
     private class Robot {
         /**
          * The material from which this robot is built.
-         */
-        Vector position;
-        Vector orientation;
-        
+         */        
         private Material material = null;
 
+        int speedModifier = 10;
+        
         Material headColor = null;
         Material neckColor = null;
         Material shoulderColor = null;
@@ -504,12 +500,13 @@ public class RobotRace extends Base {
 
         }
         
-        public Vector getPos(){
-            return position;
+        public Robot setSpeed(int speed){
+            this.speedModifier = speed;
+            return this;
         }
         
-        public Vector getOrientation(){
-            return orientation;
+        public int getSpeed(int speed){
+            return speedModifier;
         }
 
         /**
@@ -539,10 +536,6 @@ public class RobotRace extends Base {
         /**
          * Draws this robot (as a {@code stickfigure} if specified).
          */
-        public void setLocOri(Vector position, Vector tangent){
-            this.position = position;
-            this.orientation = tangent; 
-        }
         
         public void draw(boolean stickFigure) {
 
@@ -972,8 +965,11 @@ public class RobotRace extends Base {
          * helicopter mode.
          */
         private void setHelicopterMode() {
+            int robot = 1;
             float t = gs.tAnim/10;
             Vector position = raceTrack.getPoint(t);
+            Vector tangent = raceTrack.getTangent(t);
+            position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robot));
             
             center = position;
             //eye = robots[0].getOrientation().normalized().add(up);
@@ -985,10 +981,12 @@ public class RobotRace extends Base {
          * motorcycle mode.
          */
         private void setMotorCycleMode() {
+            int robot = 1;
             float t = gs.tAnim/10;
-            Vector position = raceTrack.getPoint(t);
+            Vector position = raceTrack.getPoint(t);      
             Vector tangent = raceTrack.getTangent(t);
-            
+            position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robot));
+                    
             center = position.add(Vector.Z.scale(1.5));       
             eye = center.add(tangent.cross(Vector.Z).normalized().scale(-2.5));
             // code goes here ...
@@ -999,9 +997,11 @@ public class RobotRace extends Base {
          * first person mode.
          */
         private void setFirstPersonMode() {
+            int robot = 1;
             float t = gs.tAnim/10;
             Vector position = raceTrack.getPoint(t);
             Vector tangent = raceTrack.getTangent(t);
+            position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robot));
             
             eye = position.add(Vector.Z.scale(1));        
             center = eye.add(tangent.normalized().scale(1));
