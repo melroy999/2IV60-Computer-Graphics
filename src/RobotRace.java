@@ -69,16 +69,16 @@ public class RobotRace extends Base {
         // Create a new array of four robots
         robots = new Robot[] {
             /// Instantiate swag robot
-            new Robot(Material.GOLD).setNeckModifier(2.f).setSpeed(15),
+            new Robot(Material.GOLD).setNeckModifier(2.f).setSpeed(50f),
 
             // Instantiate bender, kiss my shiny metal ass
-            new Robot(Material.SILVER).setSpeed(4),
+            new Robot(Material.SILVER).setSpeed(56f),
 
             // Instantiate oldschool robot
-            new Robot(Material.WOOD).setNeckModifier(0.5f).setSpeed(11),
+            new Robot(Material.WOOD).setNeckModifier(0.5f).setSpeed(51f),
 
             // Hey look at me, I'm an annoying orange robot!
-            new Robot(Material.ORANGE).setSpeed(9)
+            new Robot(Material.ORANGE).setSpeed(53f)
         };
 
         // Initialize the camera
@@ -382,7 +382,13 @@ public class RobotRace extends Base {
         
         WATER(
         new float[]{0.50754f, 0.50754f, 0.50754f, 0.5f},
-        new float[]{0.508273f, 0.508273f, 0.508273f, 0.3f});
+        new float[]{0.508273f, 0.508273f, 0.508273f, 0.3f}),
+        
+        LEAF(
+                new float[]{0.0f, 0.2f, 0.0f, 1.0f},
+                new float[]{0.0f, 0.1f, 0.0f, 1.0f});
+        /* 
+        
         /**
          * The diffuse RGBA reflectance of the material.
          */
@@ -410,6 +416,7 @@ public class RobotRace extends Base {
                 case WOOD:      return (int)Math.round(0.1*128);
                 case ORANGE:    return (int)Math.round(0.25*128);
                 case WATER:     return (int)Math.round(0.7*128);
+                case LEAF:      return (int)Math.round(0.05*128);
                 default:        return 0;
             }
         }
@@ -438,7 +445,7 @@ public class RobotRace extends Base {
          */        
         private Material material = null;
 
-        int speedModifier = 10;
+        float speedModifier = 80;
         
         Material headColor = null;
         Material neckColor = null;
@@ -500,12 +507,12 @@ public class RobotRace extends Base {
 
         }
         
-        public Robot setSpeed(int speed){
+        public Robot setSpeed(float speed){
             this.speedModifier = speed;
             return this;
         }
         
-        public int getSpeed(){
+        public float getSpeed(){
             return speedModifier;
         }
 
@@ -1132,8 +1139,8 @@ public class RobotRace extends Base {
      * Implementation of the terrain.
      */
     private class Terrain {
-        float gridSize = 20;
-        float step = 0.25f;
+        float gridSize = 30;
+        float step = 0.35f;
         float waterHeight = 0f;
         PerlinNoise perlin;    
         int OneDColorId;
@@ -1163,7 +1170,7 @@ public class RobotRace extends Base {
             OneDColorId = create1DTexture(colors);
             RobotRace.Material.BLANK.set(gl);
             gl.glEnable(GL_TEXTURE_1D);
-            for(float x = -20;x<=20;x+=step)
+            for(float x = -gridSize;x<=gridSize;x+=step)
             {       
                 for(float y = -gridSize;y<=gridSize;y+=step)
                 {
@@ -1235,6 +1242,8 @@ public class RobotRace extends Base {
                 gl.glDisable(GL_BLEND);
             
             gl.glEnd();
+            
+            (new Tree()).draw(0, 0, 0);
         }
 
         /**
@@ -1297,6 +1306,39 @@ public class RobotRace extends Base {
                 n = n.scale(-1);//wrong direction, make it face the other way
             }
             return n.normalized();
+        }
+    }
+    
+    private class Tree {
+        //Types: pine, oak?
+        int levels;
+        float treeHeight;
+        float leafHeight;
+        float treeWidth;
+        float logWidth;
+        float offset;
+        
+        public Tree(){
+            levels = 3;
+            treeHeight = 3.0f;
+            leafHeight = 2.5f;
+            treeWidth = 2.0f;
+            logWidth = 0.1f;
+            offset = leafHeight/((levels*2)-1);
+        }
+        
+        public void draw(float x, float y, float z){
+            gl.glPushMatrix();
+                gl.glTranslatef(x, y, z);
+                RobotRace.Material.WOOD.set(gl);
+                glut.glutSolidCylinder(logWidth, treeHeight-(leafHeight*0.8f), 50, 51);
+                gl.glTranslatef(0, 0, treeHeight-leafHeight);
+                RobotRace.Material.LEAF.set(gl);
+                for(int i=0; i<levels; i++){
+                    glut.glutSolidCone((1-(i*offset)/treeHeight)*(treeWidth/2), offset*2, 50, 51);
+                    gl.glTranslatef(0, 0, offset);
+                }          
+            gl.glPopMatrix();
         }
     }
 
