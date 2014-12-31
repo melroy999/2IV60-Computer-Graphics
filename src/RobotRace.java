@@ -253,12 +253,23 @@ public class RobotRace extends Base {
                 float t = gs.tAnim/10;
                 Vector position = raceTrack.getPoint(t);
                 Vector tangent = raceTrack.getTangent(t);
+                
                 position = position.add(
                         tangent.cross(Vector.Z).normalized().scale(.5f+i++)
                 );
                 
+                
+                
+                gl.glTranslated(position.x(), position.y(), position.z());
+
+                gl.glRotatef(
+                    (float)Math.toDegrees(Math.atan(tangent.y() / tangent.x())) + (tangent.x() < 0 ? 90 : -90),
+                    0.f, 0.f, 1.f
+                );
+                
+                bob.draw(gs.showStick);   
                 bob.setLocOri(position,tangent);
-                bob.draw(gs.showStick);
+                
             gl.glPopMatrix();
         }
 
@@ -530,13 +541,7 @@ public class RobotRace extends Base {
          */
         public void setLocOri(Vector position, Vector tangent){
             this.position = position;
-            this.orientation = tangent;
-            gl.glTranslated(position.x(), position.y(), position.z());
-
-                gl.glRotatef(
-                    (float)Math.toDegrees(Math.atan(tangent.y() / tangent.x())) + (tangent.x() < 0 ? 90 : -90),
-                    0.f, 0.f, 1.f
-            ); 
+            this.orientation = tangent; 
         }
         
         public void draw(boolean stickFigure) {
@@ -885,6 +890,8 @@ public class RobotRace extends Base {
          * camera mode.
          */
         
+        
+        
         public void update(int mode) {
             robots[0].toString();
 
@@ -965,12 +972,12 @@ public class RobotRace extends Base {
          * helicopter mode.
          */
         private void setHelicopterMode() {
-            center = robots[0].getPos();
+            float t = gs.tAnim/10;
+            Vector position = raceTrack.getPoint(t);
+            
+            center = position;
             //eye = robots[0].getOrientation().normalized().add(up);
             eye = center.add(up.scale(10)).add(Vector.X.normalized());
-            gl.glPushMatrix();
-            glut.glutSolidSphere(0.05f, 50, 51);
-            gl.glPopMatrix();
         }
 
         /**
@@ -978,7 +985,12 @@ public class RobotRace extends Base {
          * motorcycle mode.
          */
         private void setMotorCycleMode() {
-            center = robots[0].getPos();
+            float t = gs.tAnim/10;
+            Vector position = raceTrack.getPoint(t);
+            Vector tangent = raceTrack.getTangent(t);
+            
+            center = position.add(Vector.Z.scale(1.5));       
+            eye = center.add(tangent.cross(Vector.Z).normalized().scale(-2.5));
             // code goes here ...
         }
 
@@ -987,7 +999,12 @@ public class RobotRace extends Base {
          * first person mode.
          */
         private void setFirstPersonMode() {
-            center = robots[0].getPos();
+            float t = gs.tAnim/10;
+            Vector position = raceTrack.getPoint(t);
+            Vector tangent = raceTrack.getTangent(t);
+            
+            eye = position.add(Vector.Z.scale(1));        
+            center = eye.add(tangent.normalized().scale(1));
             // code goes here ...
         }
     }
