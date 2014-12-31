@@ -406,7 +406,15 @@ public class RobotRace extends Base {
          */
         ORANGE(
         new float[]{1f, 0.5f, 0f, 1.0f},
-        new float[]{1f, 0.5f, 0f, 1.0f});
+        new float[]{1f, 0.5f, 0f, 1.0f}),
+        
+        BLANK(
+        new float[]{1.0f, 1.0f, 1.0f, 1.0f},
+        new float[]{1f, 0.5f, 0f, 1.0f}),
+        
+        WATER(
+        new float[]{0.50754f, 0.50754f, 0.50754f, 0.5f},
+        new float[]{0.508273f, 0.508273f, 0.508273f, 0.3f});
         /**
          * The diffuse RGBA reflectance of the material.
          */
@@ -433,6 +441,7 @@ public class RobotRace extends Base {
                 case SILVER:    return (int)Math.round(0.4*128);
                 case WOOD:      return (int)Math.round(0.1*128);
                 case ORANGE:    return (int)Math.round(0.25*128);
+                case WATER:     return (int)Math.round(0.7*128);
                 default:        return 0;
             }
         }
@@ -1070,33 +1079,31 @@ public class RobotRace extends Base {
      */
     private class Terrain {
         float gridSize = 20;
-        float step = 0.3f;
-        float waterHeight = 0;
+        float step = 0.25f;
+        float waterHeight = 0f;
         PerlinNoise perlin;    
         int OneDColorId;
         Color[] colors = {
-            new Color(0,0,255),//blue
-            new Color(255,255,0),//yellow
-            new Color(0,255,0),//green
-            //new Color(0,170,0),//green
+            new Color(0,0,255,255),//blue
+            new Color(255,255,0,255),//yellow
+            new Color(0,255,0,255),//green
+            new Color(0,150,0,255),//dark green
         };
         
         /**
          * Can be used to set up a display list.
          */
         public Terrain() {
-            perlin = new PerlinNoise(123332321, 4, 6.0);
+            perlin = new PerlinNoise(123332321, 4, 5.0);
         }
 
         /**
          * Draws the terrain.
          */
         public void draw() {
-            float z;
-            Vector v;
-            
             OneDColorId = create1DTexture(colors);
-            gl.glColor3d(1,1,1);
+            //gl.glColor3d(1,1,1);
+            RobotRace.Material.BLANK.set(gl);
             gl.glEnable(GL_TEXTURE_1D);
             for(float x = -20;x<=20;x+=step)
             {       
@@ -1106,6 +1113,17 @@ public class RobotRace extends Base {
                     float lowerRightCorner = heightAt(x+step,y);
                     float upperLeftCorner = heightAt(x,y+step);
                     float upperRightCorner = heightAt(x+step,y+step);
+                    
+                    /*
+                     *             ulc - - - - - - urc
+                     *              |             / |
+                     *              |    diag  /    |
+                     *     vertical |       /       |
+                     *              |    /          |
+                     *              | /             |
+                     *             llc - - - - - - lrc
+                     *                  horizontal
+                     */
                     
                     Vector diagonal = new Vector(step, step, upperRightCorner-lowerLeftCorner);
                     Vector horizontal = new Vector(step,0, lowerRightCorner-lowerLeftCorner);
@@ -1141,21 +1159,6 @@ public class RobotRace extends Base {
                         setColorAtHeight(upperRightCorner);
                         gl.glVertex3d(x+step, y+step, upperRightCorner);
                     gl.glEnd();
-                    
-                    /*z = heightAt(x, y);                 
-                    v = getTerrainTangent(x,y).normalized();
-                    gl.glNormal3d(v.x(),v.y(),v.z());
-                    
-                    setColorAtHeight(z);
-                    gl.glVertex3f(x, y, z);
-                    
-                    
-                    z = heightAt(x+step, y);
-                    v = getTerrainTangent(x+step,y).normalized();
-                    gl.glNormal3d(v.x(),v.y(),v.z());
-                    
-                    setColorAtHeight(z);
-                    gl.glVertex3f(x+step, y, z);*/
                 }
                 gl.glEnd();
             }
@@ -1165,11 +1168,11 @@ public class RobotRace extends Base {
             
                 gl.glEnable(GL_BLEND);
                 gl.glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
-                    gl.glColor4d(0.5, 0.5, 0.8, 0.8);
-                    gl.glVertex3d(-gridSize,-gridSize,0);
-                    gl.glVertex3d(gridSize,-gridSize,0);
-                    gl.glVertex3d(gridSize,gridSize,0);
-                    gl.glVertex3d(-gridSize,gridSize,0);
+                    RobotRace.Material.WATER.set(gl);
+                    gl.glVertex3d(-gridSize,-gridSize,waterHeight);
+                    gl.glVertex3d(gridSize,-gridSize,waterHeight);
+                    gl.glVertex3d(gridSize,gridSize,waterHeight);
+                    gl.glVertex3d(-gridSize,gridSize,waterHeight);
                 gl.glDisable(GL_BLEND);
             
             gl.glEnd();
@@ -1187,39 +1190,37 @@ public class RobotRace extends Base {
             ByteBuffer byteBuffer = ByteBuffer.allocateDirect(colors.length*4).order(ByteOrder.nativeOrder());
             for(Color color: colors){
                 int pixel = color.getRGB();
-                byteBuffer.put((byte)((pixel >> 16) & 0xFF));//Red component
-                byteBuffer.put((byte)((pixel >> 8) & 0xFF));//Green component
+                byteBuffer.put((byte)((pixel >>> 16) & 0xFF));//Red component
+                byteBuffer.put((byte)((pixel >>> 8) & 0xFF));//Green component
                 byteBuffer.put((byte)(pixel & 0xFF));//Blue component
-                byteBuffer.put((byte)((pixel >> 24) & 0xFF));//Alpha component
+                byteBuffer.put((byte)(pixel >>> 24));//Alpha component
             }
             byteBuffer.flip();
             
             gl.glBindTexture(GL_TEXTURE_1D, textureId[0]);
-            gl.glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, colors.length, 0, GL_RGBA, GL_UNSIGNED_BYTE, byteBuffer);
+            gl.glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, colors.length, 0, GL_RGBA, GL_UNSIGNED_BYTE, byteBuffer);
             gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             gl.glBindTexture(GL_TEXTURE_1D, 0);
-            
-            gl.glDisable(GL_TEXTURE_1D);
-            gl.glEnable(GL_TEXTURE_2D);
             
             return textureId[0];
         }
         
         public float heightAt(float x, float y) {
-            return (float) (perlin.noise2d(x,y) * 5.0);
+            return (float)(perlin.noise2d(x,y) * 5.0);
         }
         
         public void setColorAtHeight(float z){
-            float max = (float)((double)((colors.length)/2.0)-0.5);//round
+            float max = ((colors.length)/2.0f)-0.5f;
+            //System.out.println(max);
             if(z > max){
                 z = max;
             }
             else if(z < -0.5f){
                 z = -0.5f;
             }
-            z += 0.5;
-            z /= max+0.5;
+            z += 0.5f;
+            z /= max+0.5f;//get a number from 0 to 1
             gl.glTexCoord1d(z);
         }
         
@@ -1239,5 +1240,9 @@ public class RobotRace extends Base {
     public static void main(String args[]) {
         RobotRace robotRace = new RobotRace();
         robotRace.run();
+    }
+    
+    public RaceTrack getTrack(){
+        return raceTrack;
     }
 }
