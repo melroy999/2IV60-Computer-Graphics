@@ -1039,6 +1039,7 @@ public class RobotRace extends Base {
          */
         private Vector[] controlPointsCustomTrack;
 
+        private int trackNr = 0;
         /**
          * Constructs the race track, sets up display lists.
          */
@@ -1050,7 +1051,9 @@ public class RobotRace extends Base {
         /**
          * Draws this track, based on the selected track number.
          */
+        
         public void draw(int trackNr) {
+            this.trackNr = trackNr;
             x+=0.2;
             
             // The test track is selected
@@ -1134,16 +1137,56 @@ public class RobotRace extends Base {
         public Vector getTangent(double t) {
             return new Vector(-20*Math.PI*Math.sin(2*Math.PI * t),28*Math.PI*Math.cos(2*Math.PI * t),0);
         }
+        
+        public boolean isOnTrack(float x, float y){
+            if(trackNr==0){
+                float f = pointFunctionalValue(x, y);
+                if(f<2.1 && f>0.8){
+                    return true;
+                }
+                return false;
+            }
+            else{
+                return false;
+            }    
+        }
+        
+        public float pointFunctionalValue(float x, float y){
+            if(trackNr==0){
+                return (float)(Math.pow(x,2)/100+Math.pow(y,2)/196);
+            }
+            else{
+                return 1;
+            }
+        }
+        
+        public float changeHeight(float x, float y, float height){
+            if(height > 0.5){
+                if(!raceTrack.isOnTrack(x,y)){
+                    float f = pointFunctionalValue(x,y);
+                    if(f<0.8 && f>0.2){
+                         height = height*0.5f;      
+                    } 
+                    else if (f>2.1 && f<3){
+                         height = height*0.5f; 
+                    }
+                }
+                else{
+                    height = 0.5f;
+                }
+            }
+            return height;
+        }
     }
 
     /**
      * Implementation of the terrain.
      */
     private class Terrain {
-        float gridSize = 30;
-        float step = 0.35f;
+        float gridSize = 20;
+        float step = 0.5f;
         float waterHeight = 0f;
-        int treeCount = 20;
+        int treeCount = 15;
         PerlinNoise perlin;    
         int OneDColorId;
         ArrayList<Tree> trees;
@@ -1164,7 +1207,12 @@ public class RobotRace extends Base {
          */
         public Terrain() {
             perlin = new PerlinNoise(123332321, 4, 5.0);
-            trees = new ArrayList<Tree>();
+            generateTrees();
+                   
+        }
+        
+        public void generateTrees(){
+           trees = new ArrayList<Tree>();
             for(int i = 0; i < treeCount ; i++){
                 float x = 0;
                 float y = 0;
@@ -1172,10 +1220,12 @@ public class RobotRace extends Base {
                 while(z < 0.5f){
                     x = (float)(gridSize*(1-Math.random()*2));
                     y = (float)(gridSize*(1-Math.random()*2));
-                    z = heightAt(x, y);
+                    if(!raceTrack.isOnTrack(x,y)){
+                       z = heightAt(x, y); 
+                    }
                 }
                 trees.add(new Tree(x,y,z));//random positions.
-            }        
+            }   
         }
 
         /**
@@ -1292,7 +1342,13 @@ public class RobotRace extends Base {
         }
         
         public float heightAt(float x, float y) {
-            return (float)(perlin.noise2d(x,y) * terrainHeightLevel);
+            float height = (float)(perlin.noise2d(x,y) * terrainHeightLevel);
+            return heightCorrection(x,y,height);
+        }
+        
+        public float heightCorrection(float x, float y, float z){
+            z=raceTrack.changeHeight(x, y, z);
+            return z;
         }
         
         public void setColorAtHeight(float z){
@@ -1337,6 +1393,7 @@ public class RobotRace extends Base {
         float x;
         float y;
         float z;
+        int precision = 20;
         
         public Tree(float x, float y, float z){
             levels = 3+Math.round((float)Math.random()*7);
@@ -1358,7 +1415,7 @@ public class RobotRace extends Base {
                 gl.glTranslatef(0, 0, z+logHeight);
                 RobotRace.Material.LEAF.set(gl);
                 for(int i=0; i<levels; i++){
-                    glut.glutSolidCone((1-(i*offset)/(logHeight+leafHeight))*(treeWidth/2), offset*2, 50, 51);
+                    glut.glutSolidCone((1-(i*offset)/(logHeight+leafHeight))*(treeWidth/2), offset*2, precision, precision+1);
                     gl.glTranslatef(0, 0, offset);
                 }          
             gl.glPopMatrix();
