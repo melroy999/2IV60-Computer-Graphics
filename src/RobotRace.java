@@ -1084,10 +1084,14 @@ public class RobotRace extends Base {
         PerlinNoise perlin;    
         int OneDColorId;
         Color[] colors = {
-            new Color(0,0,255,255),//blue
-            new Color(255,255,0,255),//yellow
-            new Color(0,255,0,255),//green
-            new Color(0,150,0,255),//dark green
+            new Color(0,0,255),//blue
+            new Color(255,255,0),//yellow
+            new Color(0,255,0),//green
+            new Color(0,150,0),//dark green
+            new Color(0,100,0),//darker dark green
+            new Color(0,100,0),//darker dark green
+            new Color(0,50,0),//even darker darker dark green
+            new Color(0,50,0),//as dark as previous one.
         };
         
         /**
@@ -1102,7 +1106,6 @@ public class RobotRace extends Base {
          */
         public void draw() {
             OneDColorId = create1DTexture(colors);
-            //gl.glColor3d(1,1,1);
             RobotRace.Material.BLANK.set(gl);
             gl.glEnable(GL_TEXTURE_1D);
             for(float x = -20;x<=20;x+=step)
@@ -1212,20 +1215,28 @@ public class RobotRace extends Base {
         
         public void setColorAtHeight(float z){
             float max = ((colors.length)/2.0f)-0.5f;
-            //System.out.println(max);
-            if(z > max){
-                z = max;
+                
+            if(z > max*2){
+                z = max-0.5f;
+                z += 1f;
+                z /= max*2+1f;//get a number from 0 to 1, to avoid repeating texture
+                gl.glTexCoord1d(z);
             }
             else if(z < -0.5f){
-                z = -0.5f;
+                z = -0.45f;
+                z += 0.5f;
+                z /= max+0.5f;//get a number from 0 to 1, to avoid repeating texture
+                gl.glTexCoord1d(z);
             }
-            z += 0.5f;
-            z /= max+0.5f;//get a number from 0 to 1
-            gl.glTexCoord1d(z);
+            else{        
+                z += 1f;
+                z /= max*2+1f;//get a number from 0 to 1, to avoid repeating texture
+                gl.glTexCoord1d(z);
+            }
         }
         
         public Vector getNormal(Vector a, Vector b){
-            Vector n = a.cross(b);
+            Vector n = a.cross(b);//cross product of the two vectors is the normal of the plane the two vectors represent.
             if(n.z()<0){
                 n = n.scale(-1);//wrong direction, make it face the other way
             }
