@@ -4,6 +4,7 @@
 import java.awt.Color;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import javax.media.opengl.GL;
 import static javax.media.opengl.GL2.*;
 import javax.media.opengl.GL2;
@@ -1142,8 +1143,10 @@ public class RobotRace extends Base {
         float gridSize = 30;
         float step = 0.35f;
         float waterHeight = 0f;
+        int treeCount = 20;
         PerlinNoise perlin;    
         int OneDColorId;
+        ArrayList<Tree> trees;
         float terrainHeightLevel = 5.0f;
         Color[] colors = {
             new Color(0,0,255),//blue
@@ -1161,6 +1164,12 @@ public class RobotRace extends Base {
          */
         public Terrain() {
             perlin = new PerlinNoise(123332321, 4, 5.0);
+            trees = new ArrayList<Tree>();
+            for(int i = 0; i < treeCount ; i++){
+                float x = (float)(gridSize*(1-Math.random()*2));
+                float y = (float)(gridSize*(1-Math.random()*2));
+                trees.add(new Tree(x,y,heightAt(x, y)));//random positions.
+            }        
         }
 
         /**
@@ -1243,7 +1252,9 @@ public class RobotRace extends Base {
             
             gl.glEnd();
             
-            (new Tree()).draw(0, 0, 0);
+            for(int i = 0; i < treeCount; i++){
+                trees.get(i).draw();
+            }
         }
 
         /**
@@ -1252,7 +1263,7 @@ public class RobotRace extends Base {
         public int create1DTexture(Color[] colors){
             gl.glDisable(GL_TEXTURE_2D);
             gl.glEnable(GL_TEXTURE_1D);
-            int[] textureId = new int[]{-1};
+            int[] textureId = new int[1];
             
             gl.glGenTextures(1 , textureId , 0);
             ByteBuffer byteBuffer = ByteBuffer.allocateDirect(colors.length*4).order(ByteOrder.nativeOrder());
@@ -1312,30 +1323,36 @@ public class RobotRace extends Base {
     private class Tree {
         //Types: pine, oak?
         int levels;
-        float treeHeight;
+        float logHeight;
         float leafHeight;
         float treeWidth;
         float logWidth;
         float offset;
+        float x;
+        float y;
+        float z;
         
-        public Tree(){
-            levels = 3;
-            treeHeight = 3.0f;
-            leafHeight = 2.5f;
-            treeWidth = 2.0f;
-            logWidth = 0.1f;
+        public Tree(float x, float y, float z){
+            levels = 3+Math.round((float)Math.random()*7);
+            logHeight = 0.2f +(float)Math.random()*1.0f;
+            treeWidth = 1.5f + (0.10f+(float)Math.random()*0.10f)*levels;
+            logWidth = 0.1f + (float)Math.random()*0.1f;
+            leafHeight = (0.75f + (float)Math.random()*0.4f)*levels;
             offset = leafHeight/((levels*2)-1);
+            this.x = x;
+            this.y = y;
+            this.z = z;
         }
         
-        public void draw(float x, float y, float z){
+        public void draw(){
             gl.glPushMatrix();
                 gl.glTranslatef(x, y, z);
                 RobotRace.Material.WOOD.set(gl);
-                glut.glutSolidCylinder(logWidth, treeHeight-(leafHeight*0.8f), 50, 51);
-                gl.glTranslatef(0, 0, treeHeight-leafHeight);
+                glut.glutSolidCylinder(logWidth/2, logHeight*1.1f, 50, 51);
+                gl.glTranslatef(0, 0, logHeight);
                 RobotRace.Material.LEAF.set(gl);
                 for(int i=0; i<levels; i++){
-                    glut.glutSolidCone((1-(i*offset)/treeHeight)*(treeWidth/2), offset*2, 50, 51);
+                    glut.glutSolidCone((1-(i*offset)/(logHeight+leafHeight))*(treeWidth/2), offset*2, 50, 51);
                     gl.glTranslatef(0, 0, offset);
                 }          
             gl.glPopMatrix();
