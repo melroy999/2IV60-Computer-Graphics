@@ -2,6 +2,8 @@
  * RobotRace
  */
 import java.awt.Color;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import javax.media.opengl.GL;
 import static javax.media.opengl.GL2.*;
 import javax.media.opengl.GL2;
@@ -1068,59 +1070,165 @@ public class RobotRace extends Base {
      */
     private class Terrain {
         float gridSize = 20;
-        
+        float step = 0.3f;
+        float waterHeight = 0;
+        PerlinNoise perlin;    
+        int OneDColorId;
         Color[] colors = {
-            new Color(0,255,0),
-            new Color(255,255,0),
-            new Color(0,0,255),
+            new Color(0,0,255),//blue
+            new Color(255,255,0),//yellow
+            new Color(0,255,0),//green
+            //new Color(0,170,0),//green
         };
         
         /**
          * Can be used to set up a display list.
          */
         public Terrain() {
-            // code goes here ...
+            perlin = new PerlinNoise(123332321, 4, 6.0);
         }
 
         /**
          * Draws the terrain.
          */
         public void draw() {
-            float z = 0;
-
+            float z;
             Vector v;
-            final float STEP = 0.2f;
-            for(float x = -20;x<=20;x+=STEP)
-            {
-                gl.glBegin(GL_TRIANGLE_STRIP);        
-                for(float y = -gridSize;y<=gridSize;y+=STEP)
+            
+            OneDColorId = create1DTexture(colors);
+            gl.glColor3d(1,1,1);
+            gl.glEnable(GL_TEXTURE_1D);
+            for(float x = -20;x<=20;x+=step)
+            {       
+                for(float y = -gridSize;y<=gridSize;y+=step)
                 {
-                    z = heightAt(x, y);
+                    float lowerLeftCorner = heightAt(x,y);
+                    float lowerRightCorner = heightAt(x+step,y);
+                    float upperLeftCorner = heightAt(x,y+step);
+                    float upperRightCorner = heightAt(x+step,y+step);
+                    
+                    Vector diagonal = new Vector(step, step, upperRightCorner-lowerLeftCorner);
+                    Vector horizontal = new Vector(step,0, lowerRightCorner-lowerLeftCorner);
+                    Vector vertical = new Vector(0, step, upperLeftCorner-lowerLeftCorner);
+                    
+                    Vector normal1 = getNormal(diagonal,horizontal);
+                    Vector normal2 = getNormal(diagonal,vertical);
+                    
+                    gl.glBindTexture(GL_TEXTURE_1D, OneDColorId);
+                    gl.glBegin(GL_TRIANGLES); 
+                        gl.glNormal3d(normal1.x(), normal1.y(), normal1.z());//set the normal for this triangle
+                    
+                        setColorAtHeight(lowerLeftCorner);
+                        gl.glVertex3d(x, y, lowerLeftCorner);
+                    
+                        setColorAtHeight(lowerRightCorner);
+                        gl.glVertex3d(x + step, y, lowerRightCorner);
+                    
+                        setColorAtHeight(upperRightCorner);
+                        gl.glVertex3d(x+step, y+step, upperRightCorner);
+                    gl.glEnd();
+                    
+                    gl.glBindTexture(GL_TEXTURE_1D, OneDColorId);
+                    gl.glBegin(GL_TRIANGLES); 
+                        gl.glNormal3d(normal2.x(), normal2.y(), normal2.z());//set the normal for this triangle
+                    
+                        setColorAtHeight(lowerLeftCorner);
+                        gl.glVertex3d(x, y, lowerLeftCorner);
+                    
+                        setColorAtHeight(upperLeftCorner);
+                        gl.glVertex3d(x, y + step, upperLeftCorner);
+                    
+                        setColorAtHeight(upperRightCorner);
+                        gl.glVertex3d(x+step, y+step, upperRightCorner);
+                    gl.glEnd();
+                    
+                    /*z = heightAt(x, y);                 
                     v = getTerrainTangent(x,y).normalized();
                     gl.glNormal3d(v.x(),v.y(),v.z());
+                    
+                    setColorAtHeight(z);
                     gl.glVertex3f(x, y, z);
                     
                     
-                    z = heightAt(x+STEP, y);
-                    v = getTerrainTangent(x+STEP,y).normalized();
+                    z = heightAt(x+step, y);
+                    v = getTerrainTangent(x+step,y).normalized();
                     gl.glNormal3d(v.x(),v.y(),v.z());
-                    gl.glVertex3f(x+STEP, y, z);
+                    
+                    setColorAtHeight(z);
+                    gl.glVertex3f(x+step, y, z);*/
                 }
                 gl.glEnd();
             }
+            gl.glDisable(GL_TEXTURE_1D);
+            
+            gl.glBegin(GL_QUADS);
+            
+                gl.glEnable(GL_BLEND);
+                gl.glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+                    gl.glColor4d(0.5, 0.5, 0.8, 0.8);
+                    gl.glVertex3d(-gridSize,-gridSize,0);
+                    gl.glVertex3d(gridSize,-gridSize,0);
+                    gl.glVertex3d(gridSize,gridSize,0);
+                    gl.glVertex3d(-gridSize,gridSize,0);
+                gl.glDisable(GL_BLEND);
+            
+            gl.glEnd();
         }
 
         /**
          * Computes the elevation of the terrain at ({@code x}, {@code y}).
          */
-        public float heightAt(float x, float y) {
-            return (float)(0.6*Math.cos(0.3*x+0.2*y)+0.4*Math.cos(x-0.5*y));
+        public int create1DTexture(Color[] colors){
+            gl.glDisable(GL_TEXTURE_2D);
+            gl.glEnable(GL_TEXTURE_1D);
+            int[] textureId = new int[]{-1};
+            
+            gl.glGenTextures(1 , textureId , 0);
+            ByteBuffer byteBuffer = ByteBuffer.allocateDirect(colors.length*4).order(ByteOrder.nativeOrder());
+            for(Color color: colors){
+                int pixel = color.getRGB();
+                byteBuffer.put((byte)((pixel >> 16) & 0xFF));//Red component
+                byteBuffer.put((byte)((pixel >> 8) & 0xFF));//Green component
+                byteBuffer.put((byte)(pixel & 0xFF));//Blue component
+                byteBuffer.put((byte)((pixel >> 24) & 0xFF));//Alpha component
+            }
+            byteBuffer.flip();
+            
+            gl.glBindTexture(GL_TEXTURE_1D, textureId[0]);
+            gl.glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, colors.length, 0, GL_RGBA, GL_UNSIGNED_BYTE, byteBuffer);
+            gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            gl.glBindTexture(GL_TEXTURE_1D, 0);
+            
+            gl.glDisable(GL_TEXTURE_1D);
+            gl.glEnable(GL_TEXTURE_2D);
+            
+            return textureId[0];
         }
         
-        public Vector getTerrainTangent(float x, float y){
-            Vector du = new Vector(1,0,-0.18*Math.sin(0.3*x+0.2*y)-0.4*Math.sin(x-0.5*y));
-            Vector dv = new Vector(0,1,-0.12*Math.sin(0.3*x+0.2*y)-0.2*Math.sin(0.5*y-x));
-            return du.cross(dv);
+        public float heightAt(float x, float y) {
+            return (float) (perlin.noise2d(x,y) * 5.0);
+        }
+        
+        public void setColorAtHeight(float z){
+            float max = (float)((double)((colors.length)/2.0)-0.5);//round
+            if(z > max){
+                z = max;
+            }
+            else if(z < -0.5f){
+                z = -0.5f;
+            }
+            z += 0.5;
+            z /= max+0.5;
+            gl.glTexCoord1d(z);
+        }
+        
+        public Vector getNormal(Vector a, Vector b){
+            Vector n = a.cross(b);
+            if(n.z()<0){
+                n = n.scale(-1);//wrong direction, make it face the other way
+            }
+            return n.normalized();
         }
     }
 
