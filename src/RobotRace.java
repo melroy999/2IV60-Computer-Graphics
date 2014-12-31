@@ -219,40 +219,6 @@ public class RobotRace extends Base {
         camera.update(gs.camMode);
 
         // Calculate the eye position from the center point and viewing angles
-        Vector eyePosition = new Vector (
-            gs.vDist * Math.cos(gs.phi) * Math.cos(gs.theta) + gs.cnt.x(),
-            gs.vDist * Math.cos(gs.phi) * Math.sin(gs.theta) + gs.cnt.y(),
-            gs.vDist * Math.sin(gs.phi) + gs.cnt.z());
-
-        // Initializing the viewing matrix
-        glu.gluLookAt(
-            eyePosition.x(),    eyePosition.y(),    eyePosition.z(),
-            gs.cnt.x(),         gs.cnt.y(),         gs.cnt.z(),
-            camera.up.x(),      camera.up.y(),      camera.up.z());
-
-        // Update the light
-        {
-            // Calculate the direction that is being looked at
-            Vector viewDirection    = eyePosition.subtract(gs.cnt);
-
-            // Calculate a vector to the left (relative to the eye)
-            Vector leftDirection    = viewDirection.cross(camera.up).normalized();
-
-            // Calculate a vector upwards (relative to the eye)
-            Vector upDirection      = leftDirection.cross(viewDirection).normalized();
-
-            // Calculate the direction the light is relative to the camera
-            Vector leftUpDirection  = leftDirection.add(upDirection)
-                                                   .normalized()
-                                                   .scale(1.1f);
-
-            // Calculate the position of the light
-            Vector leftUp = eyePosition.add(leftUpDirection);
-
-            // Update the light's properties
-            float lightPosition[] = { (float)leftUp.x(), (float)leftUp.y(), (float)leftUp.z(), 0 };
-            gl.glLightfv(gl.GL_LIGHT1, gl.GL_POSITION, lightPosition, 0);
-         }
     }
 
     /**
@@ -290,14 +256,8 @@ public class RobotRace extends Base {
                 position = position.add(
                         tangent.cross(Vector.Z).normalized().scale(.5f+i++)
                 );
-                gl.glTranslated(position.x(), position.y(), position.z());
-
-                gl.glRotatef(
-                    (float)Math.toDegrees(
-                        Math.atan(tangent.y() / tangent.x())
-                    ) + (tangent.x() < 0 ? 90 : -90),
-                    0.f, 0.f, 1.f
-                );
+                
+                bob.setLocOri(position,tangent);
                 bob.draw(gs.showStick);
             gl.glPopMatrix();
         }
@@ -468,6 +428,9 @@ public class RobotRace extends Base {
         /**
          * The material from which this robot is built.
          */
+        Vector position;
+        Vector orientation;
+        
         private Material material = null;
 
         Material headColor = null;
@@ -529,6 +492,14 @@ public class RobotRace extends Base {
             setDefaultMaterial(material);
 
         }
+        
+        public Vector getPos(){
+            return position;
+        }
+        
+        public Vector getOrientation(){
+            return orientation;
+        }
 
         /**
          * Set the material of the head
@@ -549,10 +520,25 @@ public class RobotRace extends Base {
             this.neckHeightModifier = neckHeightModifier;
             return this;
         }
+        
+        /*public Vector getPos(){
+            return new Vector(posX,posY,posZ);
+        }*/
 
         /**
          * Draws this robot (as a {@code stickfigure} if specified).
          */
+        public void setLocOri(Vector position, Vector tangent){
+            this.position = position;
+            this.orientation = tangent;
+            gl.glTranslated(position.x(), position.y(), position.z());
+
+                gl.glRotatef(
+                    (float)Math.toDegrees(Math.atan(tangent.y() / tangent.x())) + (tangent.x() < 0 ? 90 : -90),
+                    0.f, 0.f, 1.f
+            ); 
+        }
+        
         public void draw(boolean stickFigure) {
 
             // The mother of all magic numbers
@@ -590,7 +576,7 @@ public class RobotRace extends Base {
             final float FEET_WIDTH              = LEG_WIDTH;
 
             final float TORSO_RELATIVE_HEIGHT   = 2*LEG_PART_LENGTH+TORSO_HEIGHT/2+TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC)+KNEE_JOINT_HEIGHT/2;
-
+        
             gl.glPushMatrix();
                 // Move up till torso level
                 gl.glTranslatef(0.f, 0.f, TORSO_RELATIVE_HEIGHT);
@@ -898,9 +884,16 @@ public class RobotRace extends Base {
          * Updates the camera viewpoint and direction based on the selected
          * camera mode.
          */
+        
         public void update(int mode) {
             robots[0].toString();
 
+            Vector eyePosition = new Vector (
+            gs.vDist * Math.cos(gs.phi) * Math.cos(gs.theta) + gs.cnt.x(),
+            gs.vDist * Math.cos(gs.phi) * Math.sin(gs.theta) + gs.cnt.y(),
+            gs.vDist * Math.sin(gs.phi) + gs.cnt.z()
+            );
+            
             // Helicopter mode
             if (1 == mode) {
                 setHelicopterMode();
@@ -918,7 +911,44 @@ public class RobotRace extends Base {
                 // code goes here...
                 // Default mode
             } else {
-                setDefaultMode();
+                //setDefaultMode();
+                glu.gluLookAt(
+                eyePosition.x(),    eyePosition.y(),    eyePosition.z(),
+                gs.cnt.x(),         gs.cnt.y(),         gs.cnt.z(),
+                camera.up.x(),      camera.up.y(),      camera.up.z());
+            }
+            
+            
+
+        // Initializing the viewing matrix
+            
+
+        // Update the light
+            {
+            // Calculate the direction that is being looked at
+            Vector viewDirection    = eyePosition.subtract(gs.cnt);
+
+            // Calculate a vector to the left (relative to the eye)
+            Vector leftDirection    = viewDirection.cross(camera.up).normalized();
+
+            // Calculate a vector upwards (relative to the eye)
+            Vector upDirection      = leftDirection.cross(viewDirection).normalized();
+
+            // Calculate the direction the light is relative to the camera
+            Vector leftUpDirection  = leftDirection.add(upDirection)
+                                                   .normalized()
+                                                   .scale(1.1f);
+
+            // Calculate the position of the light
+            Vector leftUp = eyePosition.add(leftUpDirection);
+
+            // Update the light's properties
+            float lightPosition[] = { (float)leftUp.x(), (float)leftUp.y(), (float)leftUp.z(), 0 };
+            gl.glLightfv(gl.GL_LIGHT1, gl.GL_POSITION, lightPosition, 0);
+            }
+            
+            if(mode!=0){
+                glu.gluLookAt(eye.x(),eye.y(),eye.z(),center.x(),center.y(),center.z(),up.x(),up.y(),up.z());
             }
         }
 
@@ -935,7 +965,12 @@ public class RobotRace extends Base {
          * helicopter mode.
          */
         private void setHelicopterMode() {
-            // code goes here ...
+            center = robots[0].getPos();
+            //eye = robots[0].getOrientation().normalized().add(up);
+            eye = center.add(up.scale(10)).add(Vector.X.normalized());
+            gl.glPushMatrix();
+            glut.glutSolidSphere(0.05f, 50, 51);
+            gl.glPopMatrix();
         }
 
         /**
@@ -943,6 +978,7 @@ public class RobotRace extends Base {
          * motorcycle mode.
          */
         private void setMotorCycleMode() {
+            center = robots[0].getPos();
             // code goes here ...
         }
 
@@ -951,6 +987,7 @@ public class RobotRace extends Base {
          * first person mode.
          */
         private void setFirstPersonMode() {
+            center = robots[0].getPos();
             // code goes here ...
         }
     }
@@ -1083,6 +1120,7 @@ public class RobotRace extends Base {
         float waterHeight = 0f;
         PerlinNoise perlin;    
         int OneDColorId;
+        float terrainHeightLevel = 5.0f;
         Color[] colors = {
             new Color(0,0,255),//blue
             new Color(255,255,0),//yellow
@@ -1132,12 +1170,11 @@ public class RobotRace extends Base {
                     Vector horizontal = new Vector(step,0, lowerRightCorner-lowerLeftCorner);
                     Vector vertical = new Vector(0, step, upperLeftCorner-lowerLeftCorner);
                     
-                    Vector normal1 = getNormal(diagonal,horizontal);
-                    Vector normal2 = getNormal(diagonal,vertical);
+                    Vector normal = getNormal(diagonal,horizontal);
                     
                     gl.glBindTexture(GL_TEXTURE_1D, OneDColorId);
                     gl.glBegin(GL_TRIANGLES); 
-                        gl.glNormal3d(normal1.x(), normal1.y(), normal1.z());//set the normal for this triangle
+                        gl.glNormal3d(normal.x(), normal.y(), normal.z());//set the normal for this triangle
                     
                         setColorAtHeight(lowerLeftCorner);
                         gl.glVertex3d(x, y, lowerLeftCorner);
@@ -1146,12 +1183,14 @@ public class RobotRace extends Base {
                         gl.glVertex3d(x + step, y, lowerRightCorner);
                     
                         setColorAtHeight(upperRightCorner);
-                        gl.glVertex3d(x+step, y+step, upperRightCorner);
+                        gl.glVertex3d(x + step, y + step, upperRightCorner);
                     gl.glEnd();
+                    
+                    normal = getNormal(diagonal,vertical);
                     
                     gl.glBindTexture(GL_TEXTURE_1D, OneDColorId);
                     gl.glBegin(GL_TRIANGLES); 
-                        gl.glNormal3d(normal2.x(), normal2.y(), normal2.z());//set the normal for this triangle
+                        gl.glNormal3d(normal.x(), normal.y(), normal.z());//set the normal for this triangle
                     
                         setColorAtHeight(lowerLeftCorner);
                         gl.glVertex3d(x, y, lowerLeftCorner);
@@ -1160,7 +1199,7 @@ public class RobotRace extends Base {
                         gl.glVertex3d(x, y + step, upperLeftCorner);
                     
                         setColorAtHeight(upperRightCorner);
-                        gl.glVertex3d(x+step, y+step, upperRightCorner);
+                        gl.glVertex3d(x + step, y + step, upperRightCorner);
                     gl.glEnd();
                 }
                 gl.glEnd();
@@ -1210,16 +1249,16 @@ public class RobotRace extends Base {
         }
         
         public float heightAt(float x, float y) {
-            return (float)(perlin.noise2d(x,y) * 5.0);
+            return (float)(perlin.noise2d(x,y) * terrainHeightLevel);
         }
         
         public void setColorAtHeight(float z){
             float max = ((colors.length)/2.0f)-0.5f;
                 
             if(z > max*2){
-                z = max-0.5f;
+                z = max-1f;
                 z += 1f;
-                z /= max*2+1f;//get a number from 0 to 1, to avoid repeating texture
+                z /= max*2+1f;//get a number between 0 and 1, to avoid repeating texture
                 gl.glTexCoord1d(z);
             }
             else if(z < -0.5f){
@@ -1230,7 +1269,7 @@ public class RobotRace extends Base {
             }
             else{        
                 z += 1f;
-                z /= max*2+1f;//get a number from 0 to 1, to avoid repeating texture
+                z /= max*2+1f;//get a number between 0 and 1, to avoid repeating texture
                 gl.glTexCoord1d(z);
             }
         }
