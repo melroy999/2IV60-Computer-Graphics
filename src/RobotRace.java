@@ -1340,7 +1340,7 @@ public class RobotRace extends Base {
         
         public Tree(float x, float y, float z){
             levels = 3+Math.round((float)Math.random()*7);
-            logHeight = 0.2f +(float)Math.random()*1.0f;
+            logHeight = 0.2f +(float)Math.random()*0.5f;
             treeWidth = 1.5f + (0.10f+(float)Math.random()*0.10f)*levels;
             logWidth = 0.2f + (float)Math.random()*0.2f;
             leafHeight = (0.75f + (float)Math.random()*0.4f)*levels;
@@ -1352,10 +1352,10 @@ public class RobotRace extends Base {
         
         public void draw(){
             gl.glPushMatrix();
-                gl.glTranslatef(x, y, z);
+                gl.glTranslatef(x, y, 0);
                 RobotRace.Material.WOOD.set(gl);
-                glut.glutSolidCylinder(logWidth/2, logHeight*1.1f, 50, 51);
-                gl.glTranslatef(0, 0, logHeight);
+                glut.glutSolidCylinder(logWidth/2, z+logHeight+0.1f, 50, 51);
+                gl.glTranslatef(0, 0, z+logHeight);
                 RobotRace.Material.LEAF.set(gl);
                 for(int i=0; i<levels; i++){
                     glut.glutSolidCone((1-(i*offset)/(logHeight+leafHeight))*(treeWidth/2), offset*2, 50, 51);
