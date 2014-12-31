@@ -250,7 +250,7 @@ public class RobotRace extends Base {
         for(Robot bob : robots) {
             gl.glPushMatrix();
                 // Draw bob, all our robots are named bob
-                float t = gs.tAnim/10;
+                float t = gs.tAnim/robots[i].getSpeed();
                 Vector position = raceTrack.getPoint(t);
                 Vector tangent = raceTrack.getTangent(t);
                 
@@ -505,7 +505,7 @@ public class RobotRace extends Base {
             return this;
         }
         
-        public int getSpeed(int speed){
+        public int getSpeed(){
             return speedModifier;
         }
 
@@ -966,7 +966,7 @@ public class RobotRace extends Base {
          */
         private void setHelicopterMode() {
             int robot = 1;
-            float t = gs.tAnim/10;
+            float t = gs.tAnim/robots[robot].getSpeed();
             Vector position = raceTrack.getPoint(t);
             Vector tangent = raceTrack.getTangent(t);
             position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robot));
@@ -982,7 +982,7 @@ public class RobotRace extends Base {
          */
         private void setMotorCycleMode() {
             int robot = 1;
-            float t = gs.tAnim/10;
+            float t = gs.tAnim/robots[robot].getSpeed();
             Vector position = raceTrack.getPoint(t);      
             Vector tangent = raceTrack.getTangent(t);
             position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robot));
@@ -998,7 +998,7 @@ public class RobotRace extends Base {
          */
         private void setFirstPersonMode() {
             int robot = 1;
-            float t = gs.tAnim/10;
+            float t = gs.tAnim/robots[robot].getSpeed();
             Vector position = raceTrack.getPoint(t);
             Vector tangent = raceTrack.getTangent(t);
             position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robot));
