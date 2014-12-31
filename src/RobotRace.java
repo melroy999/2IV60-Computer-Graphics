@@ -1166,9 +1166,15 @@ public class RobotRace extends Base {
             perlin = new PerlinNoise(123332321, 4, 5.0);
             trees = new ArrayList<Tree>();
             for(int i = 0; i < treeCount ; i++){
-                float x = (float)(gridSize*(1-Math.random()*2));
-                float y = (float)(gridSize*(1-Math.random()*2));
-                trees.add(new Tree(x,y,heightAt(x, y)));//random positions.
+                float x = 0;
+                float y = 0;
+                float z = 0;
+                while(z < 0.5f){
+                    x = (float)(gridSize*(1-Math.random()*2));
+                    y = (float)(gridSize*(1-Math.random()*2));
+                    z = heightAt(x, y);
+                }
+                trees.add(new Tree(x,y,z));//random positions.
             }        
         }
 
@@ -1336,7 +1342,7 @@ public class RobotRace extends Base {
             levels = 3+Math.round((float)Math.random()*7);
             logHeight = 0.2f +(float)Math.random()*1.0f;
             treeWidth = 1.5f + (0.10f+(float)Math.random()*0.10f)*levels;
-            logWidth = 0.1f + (float)Math.random()*0.1f;
+            logWidth = 0.2f + (float)Math.random()*0.2f;
             leafHeight = (0.75f + (float)Math.random()*0.4f)*levels;
             offset = leafHeight/((levels*2)-1);
             this.x = x;
