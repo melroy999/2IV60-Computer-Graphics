@@ -60,6 +60,8 @@ public class RobotRace extends Base {
      * Instance of the terrain.
      */
     private final Terrain terrain;
+    
+    private int viewMode = 0;
 
     /**
      * Constructs this robot race by initializing robots, camera, track, and
@@ -891,9 +893,12 @@ public class RobotRace extends Base {
          * camera mode.
          */
         
+        public int robot = 0;
         
         
         public void update(int mode) {
+            
+            
             robots[0].toString();
 
             Vector eyePosition = new Vector (
@@ -904,21 +909,47 @@ public class RobotRace extends Base {
             
             // Helicopter mode
             if (1 == mode) {
+                if(viewMode!=mode){
+                    gs.vDist = 10;
+                    viewMode = mode;
+                }
                 setHelicopterMode();
 
                 // Motor cycle mode
             } else if (2 == mode) {
+                if(viewMode!=mode){
+                    gs.vDist = 5;
+                    viewMode = mode;
+                }
                 setMotorCycleMode();
 
                 // First person mode
             } else if (3 == mode) {
+                if(viewMode!=mode){
+                    gs.vDist = 5;
+                    viewMode = mode;
+                    for(int i = 0; i < robots.length ; i++){
+                        float speed = robots[i].getSpeed();
+                        if(speed>robots[robot].getSpeed()){
+                            robot = i;
+                        }
+                    }
+                }
                 setFirstPersonMode();
 
                 // Auto mode
             } else if (4 == mode) {
+                if(viewMode!=mode){
+                    gs.vDist = 12;
+                    viewMode = mode;           
+                }
                 // code goes here...
                 // Default mode
             } else {
+                if(viewMode!=mode){
+                    gs.vDist = 25;
+                    viewMode = mode;
+                }
                 //setDefaultMode();
                 glu.gluLookAt(
                 eyePosition.x(),    eyePosition.y(),    eyePosition.z(),
@@ -973,7 +1004,6 @@ public class RobotRace extends Base {
          * helicopter mode.
          */
         private void setHelicopterMode() {
-            int robot = 1;
             float t = gs.tAnim/robots[robot].getSpeed();
             Vector position = raceTrack.getPoint(t);
             Vector tangent = raceTrack.getTangent(t);
@@ -989,7 +1019,6 @@ public class RobotRace extends Base {
          * motorcycle mode.
          */
         private void setMotorCycleMode() {
-            int robot = 1;
             float t = gs.tAnim/robots[robot].getSpeed();
             Vector position = raceTrack.getPoint(t);      
             Vector tangent = raceTrack.getTangent(t);
@@ -1005,14 +1034,13 @@ public class RobotRace extends Base {
          * first person mode.
          */
         private void setFirstPersonMode() {
-            int robot = 1;
             float t = gs.tAnim/robots[robot].getSpeed();
             Vector position = raceTrack.getPoint(t);
             Vector tangent = raceTrack.getTangent(t);
             position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robot));
             
-            eye = position.add(Vector.Z.scale(1));        
-            center = eye.add(tangent.normalized().scale(1));
+            eye = position.add(Vector.Z.scale(2));        
+            center = eye.add(tangent.normalized().scale(0.5));
             // code goes here ...
         }
     }
@@ -1183,8 +1211,8 @@ public class RobotRace extends Base {
      * Implementation of the terrain.
      */
     private class Terrain {
-        float gridSize = 20;
-        float step = 0.5f;
+        float gridSize = 25;
+        float step = 0.25f;
         float waterHeight = 0f;
         int treeCount = 15;
         PerlinNoise perlin;    
@@ -1197,7 +1225,7 @@ public class RobotRace extends Base {
             new Color(0,255,0),//green
             new Color(0,150,0),//dark green
             new Color(0,100,0),//darker dark green
-            new Color(0,100,0),//darker dark green
+            new Color(0,100,0),//same darker dark green
             new Color(0,50,0),//even darker darker dark green
             new Color(0,50,0),//as dark as previous one.
         };
@@ -1396,7 +1424,7 @@ public class RobotRace extends Base {
         int precision = 20;
         
         public Tree(float x, float y, float z){
-            levels = 3+Math.round((float)Math.random()*7);
+            levels = 3+Math.round((float)Math.random()*3);
             logHeight = 0.2f +(float)Math.random()*0.5f;
             treeWidth = 1.5f + (0.10f+(float)Math.random()*0.10f)*levels;
             logWidth = 0.2f + (float)Math.random()*0.2f;
