@@ -1260,7 +1260,7 @@ public class RobotRace extends Base {
          * Draws the terrain.
          */
         public void draw() {
-            OneDColorId = create1DTexture(colors);
+            OneDColorId = create1DTexture(colors); // XXX - TODO - Resource leak? is this freed anywhere? -> Better just change the texture
             RobotRace.Material.BLANK.set(gl);
             gl.glEnable(GL_TEXTURE_1D);
             for(float x = -gridSize;x<=gridSize;x+=step)
@@ -1319,22 +1319,19 @@ public class RobotRace extends Base {
                         gl.glVertex3d(x + step, y + step, upperRightCorner);
                     gl.glEnd();
                 }
-                gl.glEnd();
             }
             gl.glDisable(GL_TEXTURE_1D);
             
-            gl.glBegin(GL_QUADS);
-            
-                gl.glEnable(GL_BLEND);
-                gl.glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+            gl.glEnable(GL_BLEND);
+            gl.glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+                gl.glBegin(GL_QUADS);
                     RobotRace.Material.WATER.set(gl);
                     gl.glVertex3d(-gridSize,-gridSize,waterHeight);
                     gl.glVertex3d(gridSize,-gridSize,waterHeight);
                     gl.glVertex3d(gridSize,gridSize,waterHeight);
                     gl.glVertex3d(-gridSize,gridSize,waterHeight);
-                gl.glDisable(GL_BLEND);
-            
-            gl.glEnd();
+                gl.glEnd();
+            gl.glDisable(GL_BLEND);
             
             for(int i = 0; i < treeCount; i++){
                 trees.get(i).draw();
