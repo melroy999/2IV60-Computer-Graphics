@@ -161,10 +161,12 @@ public class RobotRace extends Base {
         }
 
         // Try to load four textures, add more if you like.
-        track = loadTexture("track.jpg");
-        brick = loadTexture("brick.jpg");
-        head = loadTexture("head.jpg");
-        torso = loadTexture("torso.jpg");
+        gl.glEnable(GL_TEXTURE_2D);
+            track = loadTexture("track.png");
+            brick = loadTexture("brick.jpg");
+            head = loadTexture("head.jpg");
+            torso = loadTexture("torso.jpg");
+        gl.glDisable(GL_TEXTURE_2D);
     }
 
     /**
@@ -1096,9 +1098,18 @@ public class RobotRace extends Base {
             
             // The test track is selected
             if (0 == trackNr) {
-                gl.glBegin(gl.GL_TRIANGLE_STRIP);
-                    final double STEP = 0.01;
-                    for(int j = 0; j < 4; j++) {
+                final double STEP = 0.01;
+                for(int j = 0; j < 4; j++) {
+                    if(j == 0) {
+                        gl.glEnable(gl.GL_TEXTURE_2D);
+
+                        track.bind(gl);
+
+                        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+                        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+                    }
+
+                    gl.glBegin(gl.GL_TRIANGLE_STRIP);
                         for(double i = -3*STEP; i <= 1; i += STEP) {
                             Vector initialPoint = getPoint(i),
                                    point = initialPoint;
@@ -1107,7 +1118,9 @@ public class RobotRace extends Base {
                             } else if (j == 2) {
                                 point = getOuter(point);
                             }
-                            gl.glColor3d(
+
+                            float texcoordy = (float)(i * 100) - x;
+                            if(j != 0) gl.glColor3d(
                                     Math.sin(i*2*Math.PI+x)/2+.5,
                                     Math.sin(i*4*Math.PI+x)/2+.5,
                                     Math.sin(i*8*Math.PI+x)/2+.5);
@@ -1122,7 +1135,9 @@ public class RobotRace extends Base {
                                 }
                                 gl.glNormal3d(outsideDirection.x(), outsideDirection.y(), outsideDirection.z());
                             }
+                            if(j == 0) gl.glTexCoord2f(0.f, texcoordy);
                             gl.glVertex3d(point.x(), point.y(), point.z());
+
                             Vector outerPoint = (j == 2 || j == 3) ? getLower(point) : getOuter(point);
                             if(i==0) {
                                 gl.glNormal3f(0.f, 0.f, 1.f);
@@ -1135,10 +1150,12 @@ public class RobotRace extends Base {
                                 }
                                 gl.glNormal3d(outsideDirection.x(), outsideDirection.y(), outsideDirection.z());
                             }
+                            if(j == 0) gl.glTexCoord2f(1.f, texcoordy);
                             gl.glVertex3d(outerPoint.x(), outerPoint.y(), outerPoint.z());
                         }
-                    }
-                gl.glEnd();
+                    gl.glEnd();
+                    if(j == 0) gl.glDisable(gl.GL_TEXTURE_2D);
+                }
             } else if (1 == trackNr) {
                 // code goes here ...
                 // The L-track is selected
