@@ -268,7 +268,7 @@ public class RobotRace extends Base {
                     0.f, 0.f, 1.f
                 );
                 
-                bob.draw(gs.showStick);   
+                bob.draw(gs.showStick, t);
                 
             gl.glPopMatrix();
         }
@@ -547,7 +547,8 @@ public class RobotRace extends Base {
          * Draws this robot (as a {@code stickfigure} if specified).
          */
         
-        public void draw(boolean stickFigure) {
+        public void draw(boolean stickFigure, float t) {
+            t *= 70 * Math.PI;
 
             // The mother of all magic numbers
             final float VAKJE                   = 0.1f;
@@ -636,8 +637,10 @@ public class RobotRace extends Base {
                     {
                         gl.glPushMatrix();
                             gl.glTranslatef(0.f, 0.f, -TORSO_HEIGHT/2);
+                            double r = 25 * Math.sin(t) * (i == 0 ? 1 : -1);
+                            gl.glRotatef((float)r, 1.f, 0.f, 0.f);
 
-                            // Mirror to the other side on the 2nd arm
+                            // Mirror to the other side on the 2nd leg
                             if(i == 1) {
                                 gl.glScalef(-1.f, 1.f, 1.f);
                             }
