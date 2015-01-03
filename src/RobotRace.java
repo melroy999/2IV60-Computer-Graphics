@@ -1239,7 +1239,7 @@ public class RobotRace extends Base {
      */
     private class Terrain {
         float gridSize = 25;
-        float step = 0.25f;
+        float step = 0.5f;
         float waterHeight = 0f;
         int treeCount = 15;
         PerlinNoise perlin;    
