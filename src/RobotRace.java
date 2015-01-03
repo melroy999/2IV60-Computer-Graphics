@@ -1219,10 +1219,10 @@ public class RobotRace extends Base {
         float waterHeight = 0f;
         int treeCount = 15;
         PerlinNoise perlin;    
-        int OneDColorId;
+        int OneDColorId = -1;
         ArrayList<Tree> trees;
         float terrainHeightLevel = 5.0f;
-        Color[] colors = {
+        private Color[] colors = {
             new Color(0,0,255),//blue
             new Color(255,255,0),//yellow
             new Color(0,255,0),//green
@@ -1263,66 +1263,65 @@ public class RobotRace extends Base {
          * Draws the terrain.
          */
         public void draw() {
-            OneDColorId = create1DTexture(colors); // XXX - TODO - Resource leak? is this freed anywhere? -> Better just change the texture
+            OneDColorId = OneDColorId == -1 ? create1DTexture() : OneDColorId;
             RobotRace.Material.BLANK.set(gl);
             gl.glEnable(GL_TEXTURE_1D);
-            for(float x = -gridSize;x<=gridSize;x+=step)
-            {       
-                for(float y = -gridSize;y<=gridSize;y+=step)
+                gl.glBindTexture(GL_TEXTURE_1D, OneDColorId);
+                for(float x = -gridSize;x<=gridSize;x+=step)
                 {
-                    float lowerLeftCorner = heightAt(x,y);
-                    float lowerRightCorner = heightAt(x+step,y);
-                    float upperLeftCorner = heightAt(x,y+step);
-                    float upperRightCorner = heightAt(x+step,y+step);
-                    
-                    /*
-                     *             ulc - - - - - - urc
-                     *              |             / |
-                     *              |    diag  /    |
-                     *     vertical |       /       |
-                     *              |    /          |
-                     *              | /             |
-                     *             llc - - - - - - lrc
-                     *                  horizontal
-                     */
-                    
-                    Vector diagonal = new Vector(step, step, upperRightCorner-lowerLeftCorner);
-                    Vector horizontal = new Vector(step,0, lowerRightCorner-lowerLeftCorner);
-                    Vector vertical = new Vector(0, step, upperLeftCorner-lowerLeftCorner);
-                    
-                    Vector normal = getNormal(diagonal,horizontal);
-                    
-                    gl.glBindTexture(GL_TEXTURE_1D, OneDColorId);
-                    gl.glBegin(GL_TRIANGLES); 
-                        gl.glNormal3d(normal.x(), normal.y(), normal.z());//set the normal for this triangle
-                    
-                        setColorAtHeight(lowerLeftCorner);
-                        gl.glVertex3d(x, y, lowerLeftCorner);
-                    
-                        setColorAtHeight(lowerRightCorner);
-                        gl.glVertex3d(x + step, y, lowerRightCorner);
-                    
-                        setColorAtHeight(upperRightCorner);
-                        gl.glVertex3d(x + step, y + step, upperRightCorner);
-                    gl.glEnd();
-                    
-                    normal = getNormal(diagonal,vertical);
-                    
-                    gl.glBindTexture(GL_TEXTURE_1D, OneDColorId);
-                    gl.glBegin(GL_TRIANGLES); 
-                        gl.glNormal3d(normal.x(), normal.y(), normal.z());//set the normal for this triangle
-                    
-                        setColorAtHeight(lowerLeftCorner);
-                        gl.glVertex3d(x, y, lowerLeftCorner);
-                    
-                        setColorAtHeight(upperLeftCorner);
-                        gl.glVertex3d(x, y + step, upperLeftCorner);
-                    
-                        setColorAtHeight(upperRightCorner);
-                        gl.glVertex3d(x + step, y + step, upperRightCorner);
-                    gl.glEnd();
+                    for(float y = -gridSize;y<=gridSize;y+=step)
+                    {
+                        float lowerLeftCorner = heightAt(x,y);
+                        float lowerRightCorner = heightAt(x+step,y);
+                        float upperLeftCorner = heightAt(x,y+step);
+                        float upperRightCorner = heightAt(x+step,y+step);
+
+                        /*
+                        *             ulc - - - - - - urc
+                        *              |             / |
+                        *              |    diag  /    |
+                        *     vertical |       /       |
+                        *              |    /          |
+                        *              | /             |
+                        *             llc - - - - - - lrc
+                        *                  horizontal
+                        */
+
+                        Vector diagonal = new Vector(step, step, upperRightCorner-lowerLeftCorner);
+                        Vector horizontal = new Vector(step,0, lowerRightCorner-lowerLeftCorner);
+                        Vector vertical = new Vector(0, step, upperLeftCorner-lowerLeftCorner);
+
+                        Vector normal = getNormal(diagonal,horizontal);
+
+                        gl.glBegin(GL_TRIANGLES);
+                            gl.glNormal3d(normal.x(), normal.y(), normal.z());//set the normal for this triangle
+
+                            setColorAtHeight(lowerLeftCorner);
+                            gl.glVertex3d(x, y, lowerLeftCorner);
+
+                            setColorAtHeight(lowerRightCorner);
+                            gl.glVertex3d(x + step, y, lowerRightCorner);
+
+                            setColorAtHeight(upperRightCorner);
+                            gl.glVertex3d(x + step, y + step, upperRightCorner);
+                        gl.glEnd();
+
+                        normal = getNormal(diagonal,vertical);
+
+                        gl.glBegin(GL_TRIANGLES);
+                            gl.glNormal3d(normal.x(), normal.y(), normal.z());//set the normal for this triangle
+
+                            setColorAtHeight(lowerLeftCorner);
+                            gl.glVertex3d(x, y, lowerLeftCorner);
+
+                            setColorAtHeight(upperLeftCorner);
+                            gl.glVertex3d(x, y + step, upperLeftCorner);
+
+                            setColorAtHeight(upperRightCorner);
+                            gl.glVertex3d(x + step, y + step, upperRightCorner);
+                        gl.glEnd();
+                    }
                 }
-            }
             gl.glDisable(GL_TEXTURE_1D);
             
             gl.glEnable(GL_BLEND);
@@ -1341,15 +1340,23 @@ public class RobotRace extends Base {
             }
         }
 
-        /**
-         * Computes the elevation of the terrain at ({@code x}, {@code y}).
-         */
-        public int create1DTexture(Color[] colors){
-            gl.glDisable(GL_TEXTURE_2D);
-            gl.glEnable(GL_TEXTURE_1D);
+        private int create1DTexture() {
             int[] textureId = new int[1];
-            
-            gl.glGenTextures(1 , textureId , 0);
+
+            gl.glEnable(GL_TEXTURE_1D);
+                gl.glGenTextures(1 , textureId , 0);
+            gl.glDisable(GL_TEXTURE_1D);
+
+            uploadColors(textureId[0]);
+
+            return textureId[0];
+        }
+
+        /**
+         * Uploads the colors to a 1D texture.
+         * @param textureId The OpenGL texture to upload the colors to
+         */
+        public void uploadColors(int textureId) {
             ByteBuffer byteBuffer = ByteBuffer.allocateDirect(colors.length*4).order(ByteOrder.nativeOrder());
             for(Color color: colors){
                 int pixel = color.getRGB();
@@ -1359,14 +1366,28 @@ public class RobotRace extends Base {
                 byteBuffer.put((byte)(pixel >>> 24));//Alpha component
             }
             byteBuffer.flip();
-            
-            gl.glBindTexture(GL_TEXTURE_1D, textureId[0]);
-            gl.glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, colors.length, 0, GL_RGBA, GL_UNSIGNED_BYTE, byteBuffer);
-            gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            gl.glBindTexture(GL_TEXTURE_1D, 0);
-            
-            return textureId[0];
+
+            gl.glEnable(GL_TEXTURE_1D);
+                gl.glBindTexture(GL_TEXTURE_1D, textureId);
+                gl.glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, colors.length, 0, GL_RGBA, GL_UNSIGNED_BYTE, byteBuffer);
+                gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            gl.glDisable(GL_TEXTURE_1D);
+        }
+
+        public void setColors(Color [] colors, boolean upload) {
+            this.colors = colors;
+            if(upload) {
+                uploadColors(OneDColorId);
+            }
+        }
+
+        public void setColors(Color [] colors) {
+            setColors(colors, true);
+        }
+
+        public Color [] getColors() {
+            return colors;
         }
         
         public float heightAt(float x, float y) {
