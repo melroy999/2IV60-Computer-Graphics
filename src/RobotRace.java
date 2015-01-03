@@ -51,6 +51,11 @@ public class RobotRace extends Base {
     /**
      * Instance of the camera.
      */
+    private final Camera mainCamera;
+    private final Camera screenCamera;
+    /**
+     * Currentyl active camera
+     */
     private final Camera camera;
     /**
      * Instance of the race track.
@@ -84,8 +89,11 @@ public class RobotRace extends Base {
             new Robot(Material.ORANGE).setSpeed(53f)
         };
 
-        // Initialize the camera
-        camera = new Camera();
+        // Initialize the cameras
+        mainCamera = new Camera();
+        camera = mainCamera;
+
+        screenCamera = new Camera();
 
         // Initialize the race track
         raceTrack = new RaceTrack();
@@ -223,7 +231,39 @@ public class RobotRace extends Base {
         // Update the view according to the camera mode
         camera.update(gs.camMode);
 
-        // Calculate the eye position from the center point and viewing angles
+        // Initialize the viewing matrix
+
+        glu.gluLookAt(
+            camera.eye.x(),    camera.eye.y(),    camera.eye.z(),
+            camera.center.x(), camera.center.y(), camera.center.z(),
+            camera.up.x(),     camera.up.y(),     camera.up.z());
+
+
+
+        // Update the light only for the main camera
+        if(camera == mainCamera)
+        {
+            // Calculate the direction that is being looked at
+            Vector viewDirection    = camera.eye.subtract(gs.cnt);
+
+            // Calculate a vector to the left (relative to the eye)
+            Vector leftDirection    = viewDirection.cross(camera.up).normalized();
+
+            // Calculate a vector upwards (relative to the eye)
+            Vector upDirection      = leftDirection.cross(viewDirection).normalized();
+
+            // Calculate the direction the light is relative to the camera
+            Vector leftUpDirection  = leftDirection.add(upDirection)
+                                                .normalized()
+                                                .scale(1.1f);
+
+            // Calculate the position of the light
+            Vector leftUp = camera.eye.add(leftUpDirection);
+
+            // Update the light's properties
+            float lightPosition[] = { (float)leftUp.x(), (float)leftUp.y(), (float)leftUp.z(), 0 };
+            gl.glLightfv(gl.GL_LIGHT1, gl.GL_POSITION, lightPosition, 0);
+        }
     }
 
     /**
@@ -886,7 +926,6 @@ public class RobotRace extends Base {
      * Implementation of a camera with a position and orientation.
      */
     private class Camera {
-
         /**
          * The position of the camera.
          */
@@ -909,14 +948,10 @@ public class RobotRace extends Base {
         
         
         public void update(int mode) {
-            
-            
-            robots[0].toString();
-
-            Vector eyePosition = new Vector (
-            gs.vDist * Math.cos(gs.phi) * Math.cos(gs.theta) + gs.cnt.x(),
-            gs.vDist * Math.cos(gs.phi) * Math.sin(gs.theta) + gs.cnt.y(),
-            gs.vDist * Math.sin(gs.phi) + gs.cnt.z()
+            eye = new Vector (
+                gs.vDist * Math.cos(gs.phi) * Math.cos(gs.theta) + gs.cnt.x(),
+                gs.vDist * Math.cos(gs.phi) * Math.sin(gs.theta) + gs.cnt.y(),
+                gs.vDist * Math.sin(gs.phi) + gs.cnt.z()
             );
             
             // Helicopter mode
@@ -927,7 +962,7 @@ public class RobotRace extends Base {
                 }
                 setHelicopterMode();
 
-                // Motor cycle mode
+            // Motor cycle mode
             } else if (2 == mode) {
                 if(viewMode!=mode){
                     gs.vDist = 5;
@@ -935,7 +970,7 @@ public class RobotRace extends Base {
                 }
                 setMotorCycleMode();
 
-                // First person mode
+            // First person mode
             } else if (3 == mode) {
                 if(viewMode!=mode){
                     gs.vDist = 5;
@@ -949,57 +984,21 @@ public class RobotRace extends Base {
                 }
                 setFirstPersonMode();
 
-                // Auto mode
+            // Auto mode
             } else if (4 == mode) {
                 if(viewMode!=mode){
                     gs.vDist = 12;
                     viewMode = mode;           
                 }
-                // code goes here...
-                // Default mode
+
+            // Default mode
             } else {
                 if(viewMode!=mode){
                     gs.vDist = 25;
                     viewMode = mode;
                 }
+                center = gs.cnt;
                 //setDefaultMode();
-                glu.gluLookAt(
-                eyePosition.x(),    eyePosition.y(),    eyePosition.z(),
-                gs.cnt.x(),         gs.cnt.y(),         gs.cnt.z(),
-                camera.up.x(),      camera.up.y(),      camera.up.z());
-            }
-            
-            
-
-        // Initializing the viewing matrix
-            
-
-        // Update the light
-            {
-            // Calculate the direction that is being looked at
-            Vector viewDirection    = eyePosition.subtract(gs.cnt);
-
-            // Calculate a vector to the left (relative to the eye)
-            Vector leftDirection    = viewDirection.cross(camera.up).normalized();
-
-            // Calculate a vector upwards (relative to the eye)
-            Vector upDirection      = leftDirection.cross(viewDirection).normalized();
-
-            // Calculate the direction the light is relative to the camera
-            Vector leftUpDirection  = leftDirection.add(upDirection)
-                                                   .normalized()
-                                                   .scale(1.1f);
-
-            // Calculate the position of the light
-            Vector leftUp = eyePosition.add(leftUpDirection);
-
-            // Update the light's properties
-            float lightPosition[] = { (float)leftUp.x(), (float)leftUp.y(), (float)leftUp.z(), 0 };
-            gl.glLightfv(gl.GL_LIGHT1, gl.GL_POSITION, lightPosition, 0);
-            }
-            
-            if(mode!=0){
-                glu.gluLookAt(eye.x(),eye.y(),eye.z(),center.x(),center.y(),center.z(),up.x(),up.y(),up.z());
             }
         }
 
