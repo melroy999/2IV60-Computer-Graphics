@@ -544,11 +544,14 @@ public class RobotRace extends Base {
         }*/
 
         /**
-         * Draws this robot (as a {@code stickfigure} if specified).
+         * Draws the robot
+         * @param stickFigure Whether to draw this robot as a stick figure
+         * @param t The position in the cycle (0 - 1), used for animation.
          */
         
         public void draw(boolean stickFigure, float t) {
-            t *= 70 * Math.PI;
+            // The magic number, TODO: calculate this somehow
+            t *= 100 * Math.PI;
 
             // The mother of all magic numbers
             final float VAKJE                   = 0.1f;
@@ -683,6 +686,10 @@ public class RobotRace extends Base {
                                         glut.glutSolidCylinder(KNEE_JOINT_HEIGHT/2, KNEE_JOINT_WIDTH, PRECISION, PRECISION2);
                                     }
                                 gl.glPopMatrix();
+
+                                if(j == 0) {
+                                    gl.glRotatef((float)-Math.abs(r) * 1.2f, 1.f, 0.f, 0.f);
+                                }
                             }
 
                             // Draw a foot
