@@ -945,6 +945,9 @@ public class RobotRace extends Base {
          */
         
         public int robot = 0;
+        public int robotFPV = 0;
+        long startTime;
+        int interval = 6000;//in miliseconds
         
         
         public void update(int mode) {
@@ -958,7 +961,9 @@ public class RobotRace extends Base {
             if (1 == mode) {
                 if(viewMode!=mode){
                     gs.vDist = 10;
+                    gs.vWidth = 10+(int)(Math.random()*10);
                     viewMode = mode;
+                    robot = (int)(Math.random()*4);
                 }
                 setHelicopterMode();
 
@@ -966,7 +971,9 @@ public class RobotRace extends Base {
             } else if (2 == mode) {
                 if(viewMode!=mode){
                     gs.vDist = 5;
+                    gs.vWidth = 10+(int)(Math.random()*10);
                     viewMode = mode;
+                    robot = (int)(Math.random()*4);
                 }
                 setMotorCycleMode();
 
@@ -974,11 +981,12 @@ public class RobotRace extends Base {
             } else if (3 == mode) {
                 if(viewMode!=mode){
                     gs.vDist = 5;
+                    gs.vWidth = 10+(int)(Math.random()*10);
                     viewMode = mode;
                     for(int i = 0; i < robots.length ; i++){
                         float speed = robots[i].getSpeed();
-                        if(speed>robots[robot].getSpeed()){
-                            robot = i;
+                        if(speed>=robots[robotFPV].getSpeed()){
+                            robotFPV = i;
                         }
                     }
                 }
@@ -988,8 +996,31 @@ public class RobotRace extends Base {
             } else if (4 == mode) {
                 if(viewMode!=mode){
                     gs.vDist = 12;
-                    viewMode = mode;           
+                    viewMode = mode;
+                    startTime = System.currentTimeMillis();
+                    for(int i = 0; i < robots.length ; i++){
+                        float speed = robots[i].getSpeed();
+                        if(speed>=robots[robotFPV].getSpeed()){
+                            robotFPV = i;
+                        }
+                    }
                 }
+                
+                if(System.currentTimeMillis() - startTime < interval){
+                    setHelicopterMode();//number from 0-3, to choose a robot.
+                }
+                else if(System.currentTimeMillis() - startTime < 2*interval){
+                    setMotorCycleMode();
+                }
+                else if(System.currentTimeMillis() - startTime < 3*interval){
+                    setFirstPersonMode();
+                }
+                else{
+                    startTime = System.currentTimeMillis();
+                    setHelicopterMode();//number from 0-3, to choose a robot.
+                }
+                
+                
 
             // Default mode
             } else {
@@ -1036,7 +1067,7 @@ public class RobotRace extends Base {
             position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robot));
                     
             center = position.add(Vector.Z.scale(1.5));       
-            eye = center.add(tangent.cross(Vector.Z).normalized().scale(-2.5));
+            eye = center.add(tangent.cross(Vector.Z).normalized().scale(-1.75*(robot+1)));
             // code goes here ...
         }
 
@@ -1045,10 +1076,10 @@ public class RobotRace extends Base {
          * first person mode.
          */
         private void setFirstPersonMode() {
-            float t = gs.tAnim/robots[robot].getSpeed();
+            float t = gs.tAnim/robots[robotFPV].getSpeed();
             Vector position = raceTrack.getPoint(t);
             Vector tangent = raceTrack.getTangent(t);
-            position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robot));
+            position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robotFPV));
             
             eye = position.add(Vector.Z.scale(2));        
             center = eye.add(tangent.normalized().scale(0.5));
