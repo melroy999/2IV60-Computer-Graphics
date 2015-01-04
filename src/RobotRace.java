@@ -53,20 +53,21 @@ public class RobotRace extends Base {
      */
     private final Camera mainCamera;
     private final Camera screenCamera;
+
     /**
      * Currentyl active camera
      */
-    private final Camera camera;
+    private Camera camera;
+
     /**
      * Instance of the race track.
      */
     private final RaceTrack raceTrack;
+
     /**
      * Instance of the terrain.
      */
     private final Terrain terrain;
-    
-    private int viewMode = 0;
 
     /**
      * Constructs this robot race by initializing robots, camera, track, and
@@ -175,6 +176,12 @@ public class RobotRace extends Base {
             head = loadTexture("head.jpg");
             torso = loadTexture("torso.jpg");
         gl.glDisable(GL_TEXTURE_2D);
+
+        // setup cameras
+        mainCamera.frameBuffer = new FrameBuffer(0);
+        screenCamera.frameBuffer = new FrameBuffer();
+        screenCamera.frameBuffer.create();
+        screenCamera.onChangeMode(3);
     }
 
     /**
@@ -183,7 +190,10 @@ public class RobotRace extends Base {
     @Override
     public void setView() {
         // Select part of window.
-        gl.glViewport(0, 0, gs.w, gs.h);
+        Dimensions dimensions = camera.frameBuffer.getDimensions();
+        float vDist = camera.getViewingDistance();
+
+        gl.glViewport(0, 0, dimensions.w(), dimensions.h());
 
         // Set projection matrix.
         gl.glMatrixMode(GL_PROJECTION);
@@ -191,10 +201,18 @@ public class RobotRace extends Base {
 
         // Set the perspective.
 
-        float aspectRatio = (float) gs.w / (float) gs.h;
+        float aspectRatio = (float) dimensions.w() / (float) dimensions.h();
+
+        float fovY, vHeight;
 
         // Calculate the view height from the aspect ratio
-        float vHeight = gs.vWidth / aspectRatio;
+        if(camera == mainCamera) {
+            vHeight = gs.vWidth / aspectRatio;
+
+        // Calculate the view height from the horizontal fov
+        } else {
+            vHeight = (float)Math.tan(camera.getFov()/2.f) * (2.f*vDist);
+        }
 
         // Calculate vertical fov
         //        /|
@@ -210,9 +228,9 @@ public class RobotRace extends Base {
         // (1): 1/2 fovY
         // (2): 1/2 vHeight
         // (3): vDist
-        float fovY = (float)Math.atan(
+        fovY = (float)Math.atan(
             vHeight/(
-                2.f * gs.vDist
+                2.f * vDist
             )
         ) * 2.f;
 
@@ -220,16 +238,22 @@ public class RobotRace extends Base {
         glu.gluPerspective(
             (float) Math.toDegrees(fovY),
             aspectRatio,
-            0.1 * gs.vDist,
-            100 * gs.vDist
+            0.1 * vDist,
+            100 * vDist
         );
 
         // Set camera.
         gl.glMatrixMode(GL_MODELVIEW);
         gl.glLoadIdentity();
 
+        // Initialize camera modes on change
+        if (camera == mainCamera && camera == mainCamera && camera.getMode() != gs.camMode) {
+            camera.onChangeMode(gs.camMode);
+        }
+
         // Update the view according to the camera mode
-        camera.update(gs.camMode);
+        camera.update(gs.theta, gs.phi);
+
 
         // Initialize the viewing matrix
 
@@ -244,7 +268,7 @@ public class RobotRace extends Base {
         if(camera == mainCamera)
         {
             // Calculate the direction that is being looked at
-            Vector viewDirection    = camera.eye.subtract(gs.cnt);
+            Vector viewDirection    = camera.eye.subtract(camera.center);
 
             // Calculate a vector to the left (relative to the eye)
             Vector leftDirection    = viewDirection.cross(camera.up).normalized();
@@ -271,6 +295,18 @@ public class RobotRace extends Base {
      */
     @Override
     public void drawScene() {
+        drawAs(mainCamera);
+        drawAs(screenCamera);
+//         mainCamera.frameBuffer.bind();
+    }
+
+    public void drawAs(Camera cam) {
+        if(cam != camera) {
+            camera = cam;
+            camera.frameBuffer.bind();
+            setView();
+        }
+
         // Background color.
         gl.glClearColor(1f, 1f, 1f, 0f);
 
@@ -282,13 +318,39 @@ public class RobotRace extends Base {
 
         gl.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-        // Draw the axis frame
-        if (gs.showAxes) {
-            // Axes should not be affected by light
-            gl.glDisable(GL_LIGHTING);
-            drawAxisFrame();
-            gl.glEnable(GL_LIGHTING);
-        }
+        // Axes should not be affected by light
+        gl.glDisable(GL_LIGHTING);
+
+            gl.glEnable(GL_TEXTURE_2D);
+                gl.glColor3f(1.f, 1.f, 1.f);
+
+                screenCamera.frameBuffer.bindColorBuffer();
+
+                gl.glPushMatrix();
+                    Dimensions textureDimensions = screenCamera.frameBuffer.getDimensions();
+                    Vector screenPosition = raceTrack.getPoint(0).add(new Vector(0, 0, 2));
+                    Vector outerScreenPosition = raceTrack.getOuter(screenPosition);
+                    Vector screenDelta = outerScreenPosition.subtract(screenPosition);
+                    gl.glTranslated(screenPosition.x(), screenPosition.y(), screenPosition.z());
+                    gl.glScaled(
+                        screenDelta.x(),
+                        textureDimensions.w()/textureDimensions.w()*screenDelta.x(),
+                        1.f
+                    );
+                    gl.glBegin(GL_QUADS);
+                        gl.glTexCoord2d(0.f, 0.f); gl.glVertex3f(0.f, 0.f, 0.f);
+                        gl.glTexCoord2d(1.f, 0.f); gl.glVertex3f(1.f, 0.f, 0.f);
+                        gl.glTexCoord2d(1.f, 1.f); gl.glVertex3f(1.f, 0.f, 1.f);
+                        gl.glTexCoord2d(0.f, 1.f); gl.glVertex3f(0.f, 0.f, 1.f);
+                    gl.glEnd();
+                gl.glPopMatrix();
+            gl.glDisable(GL_TEXTURE_2D);
+
+            // Draw the axis frame
+            if (gs.showAxes) {
+                drawAxisFrame();
+            }
+        gl.glEnable(GL_LIGHTING);
 
         // Draw all robots
         int i = 0;
@@ -922,6 +984,110 @@ public class RobotRace extends Base {
         }
     }
 
+    public class Dimensions {
+        private int w, h;
+        public Dimensions() {
+            this(-1, -1);
+        }
+        public Dimensions(int w, int h) {
+            set(w, h);
+        }
+        public int w() {
+            return w;
+        }
+        public int h() {
+            return h;
+        }
+        public void set(int w, int h) {
+            this.w = w;
+            this.h = h;
+        }
+        public String toString() {
+            return "Dimensions{w:"+w+",h:"+h+"}";
+        }
+    }
+
+    public class FrameBuffer {
+        int handle = -1;
+        int colorBufferHandle = -1;
+        int deptBufferHandle = -1;
+        Dimensions dimensions = null;
+
+        FrameBuffer () {}
+
+        // Initialize from existing buffer (Such as 0, the primary screen buffer)
+        FrameBuffer (int handle) {
+            this.handle = handle;
+        }
+
+        public void create() {
+            {
+                int [] x = new int [1]; // Java is fun
+                gl.glGenFramebuffers(1, x, 0);
+                handle = x[0];
+            }
+
+            bind();
+
+            //Initialize color buffer
+            {
+                int [] x = new int [1];
+                gl.glGenTextures(1, x, 0);
+                colorBufferHandle = x[0];
+            }
+
+            bindColorBuffer();
+
+            dimensions = dimensions != null ? dimensions : new Dimensions(1024, 768);
+
+            // Give an empty image to OpenGL ( the last "0" )
+            gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dimensions.w(), dimensions.h(), 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+
+            // Poor filtering. Needed !
+            gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+            {
+                int [] x = new int [1];
+                gl.glGenRenderbuffers(1, x, 0);
+                deptBufferHandle = x[0];
+            }
+
+            bindDepthBuffer();
+
+            gl.glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, dimensions.w(), dimensions.h());
+            gl.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, deptBufferHandle);
+
+            // Set color buffer to primary storage
+            gl.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBufferHandle, 0);
+
+            // Set the list of draw buffers.
+            int [] drawBuffers = new int[1];
+            drawBuffers[0] = GL_COLOR_ATTACHMENT0;
+            gl.glDrawBuffers(1, drawBuffers, 0);
+
+            if(gl.glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+                throw new RuntimeException("Could not create camera buffer");
+            }
+        }
+
+        void bind() {
+            gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, handle);
+        }
+
+        void bindColorBuffer() {
+            gl.glBindTexture(gl.GL_TEXTURE_2D, colorBufferHandle);
+        }
+
+        void bindDepthBuffer() {
+            gl.glBindRenderbuffer(GL_RENDERBUFFER, deptBufferHandle);
+        }
+
+        Dimensions getDimensions() {
+            return dimensions == null ? new Dimensions(gs.w, gs.h) : dimensions;
+        }
+    }
+
     /**
      * Implementation of a camera with a position and orientation.
      */
@@ -939,73 +1105,116 @@ public class RobotRace extends Base {
          */
         public Vector up = Vector.Z;
 
+        private int mode = 0;
+        private int robot = 0;
+
+        public float fov = (float)Math.PI/2.f;
+
+        public FrameBuffer frameBuffer = null;
+        private float viewingDistance = 12;
+
+        public float getViewingDistance() {
+            // This is why we don't use global state ..
+            return this == mainCamera ? gs.vDist : viewingDistance;
+        }
+
+        public void setViewingDistance(int distance) {
+            if(this == mainCamera) {
+                gs.vDist = distance;
+            }
+            viewingDistance = distance;
+        }
+
+        public int getMode() {
+            return mode;
+        }
+
+        public void onChangeMode(int mode) {
+            if (-1 == mode) {
+            // Helicopter mode
+            } else if (1 == mode) {
+                setViewingDistance(10);
+                if(this == mainCamera) {
+                    gs.vWidth = 10+(int)(Math.random()*10);
+                }
+
+            // Motor cycle mode
+            } else if (2 == mode) {
+                setViewingDistance(5);
+
+                if(this == mainCamera) {
+                    gs.vWidth = 10+(int)(Math.random()*10);
+                }
+
+            // First person mode
+            } else if (3 == mode) {
+                if(this == mainCamera) {
+                    gs.vWidth = 10+(int)(Math.random()*10);
+                }
+
+                for(int i = 0; i < robots.length ; i++) {
+                    float speed = robots[i].getSpeed();
+                    if(speed>=robots[robotFPV].getSpeed()){
+                        robotFPV = i;
+                    }
+                }
+
+            // Auto mode
+            } else if (4 == mode) {
+                setViewingDistance(12);
+                startTime = System.currentTimeMillis();
+                for(int i = 0; i < robots.length ; i++) {
+                    float speed = robots[i].getSpeed();
+
+                    if(speed>=robots[robotFPV].getSpeed()) {
+                        robotFPV = i;
+                    }
+                }
+            // Default mode
+            } else {
+                setViewingDistance(25);
+            }
+
+            robot = (int)(Math.random()*robots.length);
+            this.mode = mode;
+        }
+
+        public float getFov() {
+            return fov;
+        }
+
+        public int robotFPV = 0;
+        long startTime;
+        int interval = 6000;//in miliseconds
+
+
         /**
          * Updates the camera viewpoint and direction based on the selected
          * camera mode.
          */
-        
-        public int robot = 0;
-        public int robotFPV = 0;
-        long startTime;
-        int interval = 6000;//in miliseconds
-        
-        
-        public void update(int mode) {
+        public void update(float theta, float phi) {
+            float vDist = getViewingDistance();
+
             eye = new Vector (
-                gs.vDist * Math.cos(gs.phi) * Math.cos(gs.theta) + gs.cnt.x(),
-                gs.vDist * Math.cos(gs.phi) * Math.sin(gs.theta) + gs.cnt.y(),
-                gs.vDist * Math.sin(gs.phi) + gs.cnt.z()
+                vDist * Math.cos(phi) * Math.cos(theta) + center.x(),
+                vDist * Math.cos(phi) * Math.sin(theta) + center.y(),
+                vDist * Math.sin(phi) + center.z()
             );
-            
+
             // Helicopter mode
             if (1 == mode) {
-                if(viewMode!=mode){
-                    gs.vDist = 10;
-                    gs.vWidth = 10+(int)(Math.random()*10);
-                    viewMode = mode;
-                    robot = (int)(Math.random()*4);
-                }
                 setHelicopterMode();
 
             // Motor cycle mode
             } else if (2 == mode) {
-                if(viewMode!=mode){
-                    gs.vDist = 5;
-                    gs.vWidth = 10+(int)(Math.random()*10);
-                    viewMode = mode;
-                    robot = (int)(Math.random()*4);
-                }
                 setMotorCycleMode();
 
             // First person mode
             } else if (3 == mode) {
-                if(viewMode!=mode){
-                    gs.vDist = 5;
-                    gs.vWidth = 10+(int)(Math.random()*10);
-                    viewMode = mode;
-                    for(int i = 0; i < robots.length ; i++){
-                        float speed = robots[i].getSpeed();
-                        if(speed>=robots[robotFPV].getSpeed()){
-                            robotFPV = i;
-                        }
-                    }
-                }
                 setFirstPersonMode();
 
             // Auto mode
             } else if (4 == mode) {
-                if(viewMode!=mode){
-                    gs.vDist = 12;
-                    viewMode = mode;
-                    startTime = System.currentTimeMillis();
-                    for(int i = 0; i < robots.length ; i++){
-                        float speed = robots[i].getSpeed();
-                        if(speed>=robots[robotFPV].getSpeed()){
-                            robotFPV = i;
-                        }
-                    }
-                }
-                
                 if(System.currentTimeMillis() - startTime < interval){
                     setHelicopterMode();//number from 0-3, to choose a robot.
                 }
@@ -1019,26 +1228,12 @@ public class RobotRace extends Base {
                     startTime = System.currentTimeMillis();
                     setHelicopterMode();//number from 0-3, to choose a robot.
                 }
-                
-                
 
             // Default mode
             } else {
-                if(viewMode!=mode){
-                    gs.vDist = 25;
-                    viewMode = mode;
-                }
+                assert(this == mainCamera);
                 center = gs.cnt;
-                //setDefaultMode();
             }
-        }
-
-        /**
-         * Computes {@code eye}, {@code center}, and {@code up}, based on the
-         * camera's default mode.
-         */
-        private void setDefaultMode() {
-            // code goes here ...
         }
 
         /**
