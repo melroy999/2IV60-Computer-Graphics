@@ -4,6 +4,7 @@
 import java.awt.Color;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import javax.media.opengl.GL;
 import static javax.media.opengl.GL2.*;
@@ -1464,7 +1465,7 @@ public class RobotRace extends Base {
      */
     private class Terrain {
         float gridSize = 25;
-        float step = 0.5f;
+        float step = 0.1f;
         float waterHeight = 0f;
         int treeCount = 15;
         PerlinNoise perlin;    
@@ -1481,6 +1482,11 @@ public class RobotRace extends Base {
             new Color(0,50,0),//even darker darker dark green
             new Color(0,50,0),//as dark as previous one.
         };
+        
+        private int vboTris = 0;
+        private int vbo = -1;
+        private static final int FLOAT_SIZE = 4; // 4 bytes per float
+        private static final int STRIDE = 4;
         
         /**
          * Can be used to set up a display list.
@@ -1507,6 +1513,122 @@ public class RobotRace extends Base {
                 trees.add(new Tree(x,y,z));//random positions.
             }   
         }
+        
+        private void createVBO() {
+            assert(vbo == -1);
+            int [] x = new int [1];
+            gl.glGenBuffers(1, x, 0);
+            vbo = x[0];
+        }
+        
+        void recomputeGeometry() {
+            /**
+             * VBO Layout (GL_TRIANGLES):
+             * <code>{ x, y, z, normalX, normalY, normalZ, textcoord, ... }</code>
+             */
+            ArrayList<Float> buf = new ArrayList<Float>();
+            
+            // Clear color
+            gl.glColor3f(1.0f, 1.0f, 1.0f);
+            
+            int nTris = 0;
+            for(float x = -gridSize;x<gridSize;x+=step)
+            {
+                for(float y = -gridSize;y<gridSize;y+=step)
+                {
+                    float lowerLeftCorner = heightAt(x,y);
+                    float lowerRightCorner = heightAt(x+step,y);
+                    float upperLeftCorner = heightAt(x,y+step);
+                    float upperRightCorner = heightAt(x+step,y+step);
+
+                    /*
+                    *             ulc - - - - - - urc
+                    *              |             / |
+                    *              |    diag  /    |
+                    *     vertical |       /       |
+                    *              |    /          |
+                    *              | /             |
+                    *             llc - - - - - - lrc
+                    *                  horizontal
+                    */
+
+                    Vector diagonal = new Vector(step, step, upperRightCorner-lowerLeftCorner);
+                    Vector horizontal = new Vector(step,0, lowerRightCorner-lowerLeftCorner);
+                    Vector vertical = new Vector(0, step, upperLeftCorner-lowerLeftCorner);
+
+                    Vector normal = getNormal(diagonal,horizontal);
+
+                    // Add lower left corner to VBO
+                    buf.add(x);                 buf.add(y);                 buf.add(lowerLeftCorner);
+//                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
+                    buf.add(getColorAtHeight(lowerLeftCorner));
+
+                    // Add lower right corner to VBO
+                    buf.add(x + step);          buf.add(y);                 buf.add(lowerRightCorner);
+//                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
+                    buf.add(getColorAtHeight(lowerRightCorner));
+
+                    // Add upper right corner to VBO
+                    buf.add(x + step);          buf.add(y + step);          buf.add(upperRightCorner);
+//                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
+                    buf.add(getColorAtHeight(upperRightCorner));
+
+                    normal = getNormal(diagonal,vertical);
+
+                    // Add lower left corner to VBO
+                    buf.add(x);                 buf.add(y);                 buf.add(lowerLeftCorner);
+//                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
+                    buf.add(getColorAtHeight(lowerLeftCorner));
+
+                    // Add upper left corner to VBO
+                    buf.add(x);                 buf.add(y + step);          buf.add(upperLeftCorner);
+//                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
+                    buf.add(getColorAtHeight(upperLeftCorner));
+
+                    // Add upper right corner to VBO
+                    buf.add(x + step);          buf.add(y + step);          buf.add(upperRightCorner);
+//                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
+                    buf.add(getColorAtHeight(upperRightCorner));
+                    
+                    nTris += 2 * 3;
+                }
+            }
+            
+            FloatBuffer vertexData = ByteBuffer.allocateDirect(buf.size()*FLOAT_SIZE)
+                    .order(ByteOrder.nativeOrder()).asFloatBuffer();
+            
+            for(float f : buf) {
+                vertexData.put(f);
+            }
+            
+            vertexData.rewind();
+            
+            vboTris = nTris;
+            
+            if(vbo == -1) {
+                createVBO();
+            }
+            
+            System.out.println("vbo="+vbo+"nTris="+nTris+"buf.size()="+buf.size());
+            
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo);
+            gl.glBufferData(gl.GL_ARRAY_BUFFER, buf.size() * FLOAT_SIZE, vertexData, gl.GL_STATIC_DRAW);
+        }
+        
+        private void enableVBO() {
+            if(vbo == -1) {
+                recomputeGeometry();
+            }
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo);
+            
+            gl.glVertexPointer(3, GL_FLOAT, STRIDE * FLOAT_SIZE, 0);
+            gl.glTexCoordPointer(1, GL_FLOAT, STRIDE * FLOAT_SIZE, (STRIDE - 1)*FLOAT_SIZE);
+            /*
+            gl.glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            gl.glNormalPointer(GL_FLOAT, 4, 3);
+            
+            gl.glEnableClientState(GL_NORMAL_ARRAY);*/
+        }
 
         /**
          * Draws the terrain.
@@ -1516,61 +1638,17 @@ public class RobotRace extends Base {
             RobotRace.Material.BLANK.set(gl);
             gl.glEnable(GL_TEXTURE_1D);
                 gl.glBindTexture(GL_TEXTURE_1D, OneDColorId);
-                for(float x = -gridSize;x<=gridSize;x+=step)
-                {
-                    for(float y = -gridSize;y<=gridSize;y+=step)
-                    {
-                        float lowerLeftCorner = heightAt(x,y);
-                        float lowerRightCorner = heightAt(x+step,y);
-                        float upperLeftCorner = heightAt(x,y+step);
-                        float upperRightCorner = heightAt(x+step,y+step);
 
-                        /*
-                        *             ulc - - - - - - urc
-                        *              |             / |
-                        *              |    diag  /    |
-                        *     vertical |       /       |
-                        *              |    /          |
-                        *              | /             |
-                        *             llc - - - - - - lrc
-                        *                  horizontal
-                        */
-
-                        Vector diagonal = new Vector(step, step, upperRightCorner-lowerLeftCorner);
-                        Vector horizontal = new Vector(step,0, lowerRightCorner-lowerLeftCorner);
-                        Vector vertical = new Vector(0, step, upperLeftCorner-lowerLeftCorner);
-
-                        Vector normal = getNormal(diagonal,horizontal);
-
-                        gl.glBegin(GL_TRIANGLES);
-                            gl.glNormal3d(normal.x(), normal.y(), normal.z());//set the normal for this triangle
-
-                            setColorAtHeight(lowerLeftCorner);
-                            gl.glVertex3d(x, y, lowerLeftCorner);
-
-                            setColorAtHeight(lowerRightCorner);
-                            gl.glVertex3d(x + step, y, lowerRightCorner);
-
-                            setColorAtHeight(upperRightCorner);
-                            gl.glVertex3d(x + step, y + step, upperRightCorner);
-                        gl.glEnd();
-
-                        normal = getNormal(diagonal,vertical);
-
-                        gl.glBegin(GL_TRIANGLES);
-                            gl.glNormal3d(normal.x(), normal.y(), normal.z());//set the normal for this triangle
-
-                            setColorAtHeight(lowerLeftCorner);
-                            gl.glVertex3d(x, y, lowerLeftCorner);
-
-                            setColorAtHeight(upperLeftCorner);
-                            gl.glVertex3d(x, y + step, upperLeftCorner);
-
-                            setColorAtHeight(upperRightCorner);
-                            gl.glVertex3d(x + step, y + step, upperRightCorner);
-                        gl.glEnd();
-                    }
-                }
+                gl.glEnableClientState(gl.GL_VERTEX_ARRAY);
+                gl.glEnableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+                
+                enableVBO();
+                
+                gl.glDrawArrays(gl.GL_TRIANGLES, 0, vboTris);
+                
+                gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+                gl.glDisableClientState(gl.GL_VERTEX_ARRAY);
+                
             gl.glDisable(GL_TEXTURE_1D);
             
             gl.glEnable(GL_BLEND);
@@ -1649,26 +1727,23 @@ public class RobotRace extends Base {
             return z;
         }
         
-        public void setColorAtHeight(float z){
+        public float getColorAtHeight(float z){
             float max = ((colors.length)/2.0f)-0.5f;
                 
             if(z > max*2){
                 z = max-1f;
                 z += 1f;
                 z /= max*2+1f;//get a number between 0 and 1, to avoid repeating texture
-                gl.glTexCoord1d(z);
-            }
-            else if(z < -0.5f){
+            } else if(z < -0.5f){
                 z = -0.45f;
                 z += 0.5f;
                 z /= max+0.5f;//get a number from 0 to 1, to avoid repeating texture
-                gl.glTexCoord1d(z);
-            }
-            else{        
+            } else{        
                 z += 1f;
                 z /= max*2+1f;//get a number between 0 and 1, to avoid repeating texture
-                gl.glTexCoord1d(z);
             }
+
+            return z;
         }
         
         public Vector getNormal(Vector a, Vector b){
