@@ -1486,7 +1486,7 @@ public class RobotRace extends Base {
         private int vboTris = 0;
         private int vbo = -1;
         private static final int FLOAT_SIZE = 4; // 4 bytes per float
-        private static final int STRIDE = 4;
+        private static final int STRIDE = 7;
         
         /**
          * Can be used to set up a display list.
@@ -1552,42 +1552,46 @@ public class RobotRace extends Base {
                     *                  horizontal
                     */
 
-                    Vector diagonal = new Vector(step, step, upperRightCorner-lowerLeftCorner);
-                    Vector horizontal = new Vector(step,0, lowerRightCorner-lowerLeftCorner);
-                    Vector vertical = new Vector(0, step, upperLeftCorner-lowerLeftCorner);
+                    Vector normal = null;
 
-                    Vector normal = getNormal(diagonal,horizontal);
+                    // Triangle 1
 
                     // Add lower left corner to VBO
+                    normal = getNormal(x,           y,          step);
                     buf.add(x);                 buf.add(y);                 buf.add(lowerLeftCorner);
-//                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
+                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
                     buf.add(getColorAtHeight(lowerLeftCorner));
 
                     // Add lower right corner to VBO
+                    normal = getNormal(x + step,    y,          step);
                     buf.add(x + step);          buf.add(y);                 buf.add(lowerRightCorner);
-//                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
+                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
                     buf.add(getColorAtHeight(lowerRightCorner));
 
                     // Add upper right corner to VBO
+                    normal = getNormal(x + step,    y + step,   step);
                     buf.add(x + step);          buf.add(y + step);          buf.add(upperRightCorner);
-//                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
+                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
                     buf.add(getColorAtHeight(upperRightCorner));
 
-                    normal = getNormal(diagonal,vertical);
+                    // Triangle 2
 
                     // Add lower left corner to VBO
+                    normal = getNormal(x,           y,          step);
                     buf.add(x);                 buf.add(y);                 buf.add(lowerLeftCorner);
-//                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
+                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
                     buf.add(getColorAtHeight(lowerLeftCorner));
 
                     // Add upper left corner to VBO
+                    normal = getNormal(x,           y + step,   step);
                     buf.add(x);                 buf.add(y + step);          buf.add(upperLeftCorner);
-//                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
+                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
                     buf.add(getColorAtHeight(upperLeftCorner));
 
                     // Add upper right corner to VBO
+                    normal = getNormal(x + step,    y + step,   step);
                     buf.add(x + step);          buf.add(y + step);          buf.add(upperRightCorner);
-//                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
+                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
                     buf.add(getColorAtHeight(upperRightCorner));
                     
                     nTris += 2 * 3;
@@ -1623,11 +1627,7 @@ public class RobotRace extends Base {
             
             gl.glVertexPointer(3, GL_FLOAT, STRIDE * FLOAT_SIZE, 0);
             gl.glTexCoordPointer(1, GL_FLOAT, STRIDE * FLOAT_SIZE, (STRIDE - 1)*FLOAT_SIZE);
-            /*
-            gl.glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            gl.glNormalPointer(GL_FLOAT, 4, 3);
-            
-            gl.glEnableClientState(GL_NORMAL_ARRAY);*/
+            gl.glNormalPointer(GL_FLOAT, 4 * FLOAT_SIZE, 3);
         }
 
         /**
@@ -1641,13 +1641,21 @@ public class RobotRace extends Base {
 
                 gl.glEnableClientState(gl.GL_VERTEX_ARRAY);
                 gl.glEnableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+                gl.glEnableClientState(GL_NORMAL_ARRAY);
                 
                 enableVBO();
                 
                 gl.glDrawArrays(gl.GL_TRIANGLES, 0, vboTris);
                 
+                gl.glDisableClientState(GL_NORMAL_ARRAY);
                 gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
                 gl.glDisableClientState(gl.GL_VERTEX_ARRAY);
+
+                gl.glBegin(gl.GL_LINES);
+                    gl.glVertex3f(0.f, 0.f, 0.f);
+                    Vector n = getNormal(0.f, 0.f, step);
+                    gl.glVertex3d(n.x(), n.y(), n.z());
+                gl.glEnd();
                 
             gl.glDisable(GL_TEXTURE_1D);
             
@@ -1721,6 +1729,10 @@ public class RobotRace extends Base {
             float height = (float)(perlin.noise2d(x,y) * terrainHeightLevel);
             return heightCorrection(x,y,height);
         }
+
+        public Vector positionAt(float x, float y) {
+            return new Vector(x, y, heightAt(x, y));
+        }
         
         public float heightCorrection(float x, float y, float z){
             z=raceTrack.changeHeight(x, y, z);
@@ -1746,12 +1758,43 @@ public class RobotRace extends Base {
             return z;
         }
         
-        public Vector getNormal(Vector a, Vector b){
-            Vector n = a.cross(b);//cross product of the two vectors is the normal of the plane the two vectors represent.
-            if(n.z()<0){
-                n = n.scale(-1);//wrong direction, make it face the other way
-            }
-            return n.normalized();
+        public Vector getNormal(double x_, double y_, float step) {
+            float x = (float)x_, y = (float)y_;
+            /**
+             *     /  | n /
+             *   /    | /          a
+             *  w ----p---- e     bcd
+             *       /|   /        e
+             *      / | s
+             */
+            Vector n = positionAt(x,        y + step);
+            Vector ne= positionAt(x + step, y + step);
+            Vector e = positionAt(x + step, y);
+            Vector s = positionAt(x,        y - step);
+            Vector sw= positionAt(x - step, y - step);
+            Vector w = positionAt(x - step, y);
+
+            Vector p = positionAt(x,        y);
+
+            Vector pn = n.subtract(p);
+            Vector pe = e.subtract(p);
+            Vector ps = s.subtract(p);
+            Vector pw = w.subtract(p);
+
+            Vector npw = pn.cross(pw);
+            Vector wps = pw.cross(ps);
+            Vector spe = ps.cross(pe);
+            Vector epn = pe.cross(pn);
+
+            Vector normal = npw
+                            .add(wps)
+                            .add(spe)
+                            .add(epn)
+                            .normalized();
+
+            assert(normal.z() > 0);
+//             System.out.println("Position: "+p+" Normal: "+normal);
+            return normal;
         }
     }
     
