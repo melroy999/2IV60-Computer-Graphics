@@ -1821,7 +1821,7 @@ public class RobotRace extends Base {
         float x;
         float y;
         float z;
-        int precision = 20;
+        int precision = 8;
         
         public Tree(float x, float y, float z){
             levels = 3+Math.round((float)Math.random()*3);
