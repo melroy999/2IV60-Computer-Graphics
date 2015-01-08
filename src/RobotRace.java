@@ -330,22 +330,40 @@ public class RobotRace extends Base {
                 gl.glPushMatrix();
                     Dimensions textureDimensions = screenCamera.frameBuffer.getDimensions();
                     Vector screenPosition = raceTrack.getPoint(0).add(new Vector(0, 0, 2));
-                    Vector outerScreenPosition = raceTrack.getOuter(screenPosition);
+                    Vector outerScreenPosition = raceTrack.getOuter(screenPosition).add(new Vector(0.54, 0, 0));
                     Vector screenDelta = outerScreenPosition.subtract(screenPosition);
                     gl.glTranslated(screenPosition.x(), screenPosition.y(), screenPosition.z());
-                    gl.glScaled(
-                        screenDelta.x(),
-                        textureDimensions.w()/textureDimensions.w()*screenDelta.x(),
-                        1.f
-                    );
-                    gl.glBegin(GL_QUADS);
-                        gl.glTexCoord2d(0.f, 0.f); gl.glVertex3f(0.f, 0.f, 0.f);
-                        gl.glTexCoord2d(1.f, 0.f); gl.glVertex3f(1.f, 0.f, 0.f);
-                        gl.glTexCoord2d(1.f, 1.f); gl.glVertex3f(1.f, 0.f, 1.f);
-                        gl.glTexCoord2d(0.f, 1.f); gl.glVertex3f(0.f, 0.f, 1.f);
-                    gl.glEnd();
+                    gl.glPushMatrix();
+                        gl.glTranslated(-0.18, 0 ,0);
+                        gl.glScaled(
+                            screenDelta.x(),
+                            textureDimensions.w()/(textureDimensions.w()*screenDelta.x()),
+                            1.f
+                        );
+                        gl.glBegin(GL_QUADS);
+                            gl.glTexCoord2d(0.f, 0.f); gl.glVertex3f(0.f, 0.f, 0.f);
+                            gl.glTexCoord2d(1.f, 0.f); gl.glVertex3f(1.f, 0.f, 0.f);
+                            gl.glTexCoord2d(1.f, 1.f); gl.glVertex3f(1.f, 0.f, 1.f);
+                            gl.glTexCoord2d(0.f, 1.f); gl.glVertex3f(0.f, 0.f, 1.f);
+                        gl.glEnd();
+                    gl.glPopMatrix();
+
+                    gl.glPushMatrix();
+                        gl.glColor3d(0.2f,0.2f,0.2f);
+                        gl.glTranslated(-0.18, 0, -0.5);
+                        gl.glScaled(0.18f, 0.18f, 4f);
+                        glut.glutSolidCube(1.f);
+                    gl.glPopMatrix();
+                    
+                    gl.glPushMatrix();
+                        gl.glColor3d(0.2f,0.2f,0.2f);
+                        gl.glTranslated(4+0.18, 0, -0.5);
+                        gl.glScaled(0.18f, 0.18f, 4f);
+                        glut.glutSolidCube(1.f);
+                    gl.glPopMatrix();
                 gl.glPopMatrix();
             gl.glDisable(GL_TEXTURE_2D);
+            
 
             // Draw the axis frame
             if (gs.showAxes) {
