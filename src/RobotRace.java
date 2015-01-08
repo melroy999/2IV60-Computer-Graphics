@@ -1627,7 +1627,7 @@ public class RobotRace extends Base {
             
             gl.glVertexPointer(3, GL_FLOAT, STRIDE * FLOAT_SIZE, 0);
             gl.glTexCoordPointer(1, GL_FLOAT, STRIDE * FLOAT_SIZE, (STRIDE - 1)*FLOAT_SIZE);
-            gl.glNormalPointer(GL_FLOAT, STRIDE * FLOAT_SIZE, 4);
+            gl.glNormalPointer(GL_FLOAT, STRIDE * FLOAT_SIZE, 3*FLOAT_SIZE);
         }
 
         /**
