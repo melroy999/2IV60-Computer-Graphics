@@ -757,6 +757,10 @@ public class RobotRace extends Base {
                             for(int j = 0; j < 2; j++)
                             {
                                 // Draw a  leg part
+                                if(j==1){
+                                gl.glRotatef(-1.5f*(float)(r), 1.f, 0.f, 0.f);
+                                }
+                                
                                 gl.glPushMatrix();
                                     gl.glTranslatef(0.f, 0.f, -LEG_PART_LENGTH/2);
                                     gl.glScalef(LEG_WIDTH, LEG_HEIGHT, LEG_PART_LENGTH);
@@ -1808,7 +1812,6 @@ public class RobotRace extends Base {
     }
     
     private class Tree {
-        //Types: pine, oak?
         int levels;
         float logHeight;
         float leafHeight;
