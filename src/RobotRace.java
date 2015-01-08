@@ -1465,7 +1465,7 @@ public class RobotRace extends Base {
      */
     private class Terrain {
         float gridSize = 25;
-        float step = 0.1f;
+        float step = 0.25f;
         float waterHeight = 0f;
         int treeCount = 15;
         PerlinNoise perlin;    
@@ -1627,7 +1627,7 @@ public class RobotRace extends Base {
             
             gl.glVertexPointer(3, GL_FLOAT, STRIDE * FLOAT_SIZE, 0);
             gl.glTexCoordPointer(1, GL_FLOAT, STRIDE * FLOAT_SIZE, (STRIDE - 1)*FLOAT_SIZE);
-            gl.glNormalPointer(GL_FLOAT, 4 * FLOAT_SIZE, 3);
+            gl.glNormalPointer(GL_FLOAT, STRIDE * FLOAT_SIZE, 4);
         }
 
         /**
@@ -1641,13 +1641,13 @@ public class RobotRace extends Base {
 
                 gl.glEnableClientState(gl.GL_VERTEX_ARRAY);
                 gl.glEnableClientState(gl.GL_TEXTURE_COORD_ARRAY);
-                gl.glEnableClientState(GL_NORMAL_ARRAY);
+                gl.glEnableClientState(gl.GL_NORMAL_ARRAY);
                 
                 enableVBO();
                 
                 gl.glDrawArrays(gl.GL_TRIANGLES, 0, vboTris);
                 
-                gl.glDisableClientState(GL_NORMAL_ARRAY);
+                gl.glDisableClientState(gl.GL_NORMAL_ARRAY);
                 gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
                 gl.glDisableClientState(gl.GL_VERTEX_ARRAY);
 
@@ -1793,7 +1793,9 @@ public class RobotRace extends Base {
                             .normalized();
 
             assert(normal.z() > 0);
+
 //             System.out.println("Position: "+p+" Normal: "+normal);
+            
             return normal;
         }
     }
