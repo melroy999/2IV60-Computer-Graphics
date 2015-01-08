@@ -183,6 +183,11 @@ public class RobotRace extends Base {
         screenCamera.frameBuffer = new FrameBuffer();
         screenCamera.frameBuffer.create();
         screenCamera.onChangeMode(3);
+
+        raceTrack.trackNr = 1;
+        for(float i = 0; i < 1; i += 0.1) {
+            System.out.println(i + " = " + raceTrack.getPoint(i));
+        }
     }
 
     /**
@@ -1320,7 +1325,12 @@ public class RobotRace extends Base {
         /**
          * Array with control points for the O-track.
          */
-        private Vector[] controlPointsOTrack;
+        private Vector[] controlPointsOTrack = new Vector[] {
+            new Vector(0,	10,     0),
+            new Vector(5.5, 10,     0),
+            new Vector(10,  5.5,    0),
+            new Vector(10,  0,          0),
+        };
         /**
          * Array with control points for the L-track.
          */
@@ -1351,77 +1361,63 @@ public class RobotRace extends Base {
             this.trackNr = trackNr;
             x+=0.2;
             
-            // The test track is selected
-            if (0 == trackNr) {
-                final double STEP = 0.01;
-                for(int j = 0; j < 4; j++) {
-                    if(j == 0) {
-                        gl.glEnable(gl.GL_TEXTURE_2D);
+            final double STEP = 0.01;
+            for(int j = 0; j < 4; j++) {
+                if(j == 0) {
+                    gl.glEnable(gl.GL_TEXTURE_2D);
 
-                        track.bind(gl);
+                    track.bind(gl);
 
-                        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-                        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-                    }
-
-                    gl.glBegin(gl.GL_TRIANGLE_STRIP);
-                        for(double i = -3*STEP; i <= 1; i += STEP) {
-                            Vector initialPoint = getPoint(i),
-                                   point = initialPoint;
-                            if(j == 1) {
-                                point = getLower(point);
-                            } else if (j == 2) {
-                                point = getOuter(point);
-                            }
-
-                            float texcoordy = (float)(i * 100) - x;
-                            if(j != 0) gl.glColor3d(
-                                    Math.sin(i*2*Math.PI+x)/2+.5,
-                                    Math.sin(i*4*Math.PI+x)/2+.5,
-                                    Math.sin(i*8*Math.PI+x)/2+.5);
-                            if(i==0) {
-                                gl.glNormal3f(0.f, 0.f, 1.f);
-                            } else if(i == 1) {
-                                gl.glNormal3f(0.f, 0.f, -1.f);
-                            } else {
-                                Vector outsideDirection = point.subtract(initialPoint);
-                                if(i == 3) {
-                                    outsideDirection.scale(-1);
-                                }
-                                gl.glNormal3d(outsideDirection.x(), outsideDirection.y(), outsideDirection.z());
-                            }
-                            if(j == 0) gl.glTexCoord2f(0.f, texcoordy);
-                            gl.glVertex3d(point.x(), point.y(), point.z());
-
-                            Vector outerPoint = (j == 2 || j == 3) ? getLower(point) : getOuter(point);
-                            if(i==0) {
-                                gl.glNormal3f(0.f, 0.f, 1.f);
-                            } else if(i == 1) {
-                                gl.glNormal3f(0.f, 0.f, -1.f);
-                            } else if(i == 2) {
-                                Vector outsideDirection = point.subtract(initialPoint);
-                                if(i == 3) {
-                                    outsideDirection.scale(-1);
-                                }
-                                gl.glNormal3d(outsideDirection.x(), outsideDirection.y(), outsideDirection.z());
-                            }
-                            if(j == 0) gl.glTexCoord2f(1.f, texcoordy);
-                            gl.glVertex3d(outerPoint.x(), outerPoint.y(), outerPoint.z());
-                        }
-                    gl.glEnd();
-                    if(j == 0) gl.glDisable(gl.GL_TEXTURE_2D);
+                    gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+                    gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
                 }
-            } else if (1 == trackNr) {
-                // code goes here ...
-                // The L-track is selected
-            } else if (2 == trackNr) {
-                // code goes here ...
-                // The C-track is selected
-            } else if (3 == trackNr) {
-                // code goes here ...
-                // The custom track is selected
-            } else if (4 == trackNr) {
-                // code goes here ...
+
+                gl.glBegin(gl.GL_TRIANGLE_STRIP);
+                    for(double i = -3*STEP; i <= 1; i += STEP) {
+                        Vector initialPoint = getPoint(i),
+                                point = initialPoint;
+                        if(j == 1) {
+                            point = getLower(point);
+                        } else if (j == 2) {
+                            point = getOuter(point);
+                        }
+
+                        float texcoordy = (float)(i * 100) - x;
+                        if(j != 0) gl.glColor3d(
+                                Math.sin(i*2*Math.PI+x)/2+.5,
+                                Math.sin(i*4*Math.PI+x)/2+.5,
+                                Math.sin(i*8*Math.PI+x)/2+.5);
+                        if(i==0) {
+                            gl.glNormal3f(0.f, 0.f, 1.f);
+                        } else if(i == 1) {
+                            gl.glNormal3f(0.f, 0.f, -1.f);
+                        } else {
+                            Vector outsideDirection = point.subtract(initialPoint);
+                            if(i == 3) {
+                                outsideDirection.scale(-1);
+                            }
+                            gl.glNormal3d(outsideDirection.x(), outsideDirection.y(), outsideDirection.z());
+                        }
+                        if(j == 0) gl.glTexCoord2f(0.f, texcoordy);
+                        gl.glVertex3d(point.x(), point.y(), point.z());
+
+                        Vector outerPoint = (j == 2 || j == 3) ? getLower(point) : getOuter(point);
+                        if(i==0) {
+                            gl.glNormal3f(0.f, 0.f, 1.f);
+                        } else if(i == 1) {
+                            gl.glNormal3f(0.f, 0.f, -1.f);
+                        } else if(i == 2) {
+                            Vector outsideDirection = point.subtract(initialPoint);
+                            if(i == 3) {
+                                outsideDirection.scale(-1);
+                            }
+                            gl.glNormal3d(outsideDirection.x(), outsideDirection.y(), outsideDirection.z());
+                        }
+                        if(j == 0) gl.glTexCoord2f(1.f, texcoordy);
+                        gl.glVertex3d(outerPoint.x(), outerPoint.y(), outerPoint.z());
+                    }
+                gl.glEnd();
+                if(j == 0) gl.glDisable(gl.GL_TEXTURE_2D);
             }
         }
         
@@ -1438,7 +1434,30 @@ public class RobotRace extends Base {
          * Returns the position of the curve at 0 <= {@code t} <= 1.
          */
         public Vector getPoint(double t) {
-            return new Vector(10*Math.cos(2* Math.PI * t),14*Math.sin(2* Math.PI * t),1);
+            if(trackNr == 0) {
+                return new Vector(10*Math.cos(2* Math.PI * t),14*Math.sin(2* Math.PI * t),1);
+            } else {
+//                 return
+//                              controlPointsOTrack[0].scale(Math.pow(1-t, 3))
+//                         .add(controlPointsOTrack[1].scale(3 * t * Math.pow(1-t, 2)))
+//                         .add(controlPointsOTrack[2].scale(3 * t * t))
+//                         .add(controlPointsOTrack[3].scale(t * t * t));
+                Vector p1 = controlPointsOTrack[0],
+                       p2 = controlPointsOTrack[1],
+                       p3 = controlPointsOTrack[2],
+                       p4 = controlPointsOTrack[3];
+
+                return new Vector(
+                    p1.x()*(Math.pow(-t,3)+3*Math.pow(t,2)-3*t+1)
+                    +3*p2.x()*t*(Math.pow(t,2)-2*t+1)
+                    +3*p3.x()*Math.pow(t,2)*(1-t)+p4.x()*Math.pow(t,3),
+
+                    p1.y()*(Math.pow(-t,3)+3*Math.pow(t,2)-3*t+1)
+                    +3*p2.y()*t*(Math.pow(t,2)-2*t+1)
+                    +3*p3.y()*Math.pow(t,2)*(1-t)+p4.y()*Math.pow(t,3),
+
+                    0);
+            }
         }
 
         /**
