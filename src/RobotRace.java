@@ -905,6 +905,9 @@ public class RobotRace extends Base {
                     gl.glPushMatrix();
                         shoulderColor.set(gl);
 
+                        double r = 25 * Math.sin(t) * (i == 0 ? 1 : -1);
+                        gl.glRotatef((float)r, 1.f, 0.f, 0.f);
+                        
                         // Mirror the 2nd arm
                         if(i == 1) {
                             gl.glScalef(-1.f, 1.f, 1.f);
@@ -945,11 +948,15 @@ public class RobotRace extends Base {
                         {
                             armPartColor[i][j].set(gl);
 
+                            if(j==1){
+                                gl.glRotatef(20-(float)(0.25f*r), 1.f, 0.f, 0.f);
+                            }
                             // Draw the arm part
                             gl.glPushMatrix();
                                 gl.glTranslatef(0.f, 0.f, -ARM_PART_LENGTH/2);
                                 gl.glScalef(ARM_WIDTH, ARM_HEIGHT, ARM_PART_LENGTH);
 
+                                
                                 if(stickFigure) {
                                     gl.glBegin(gl.GL_LINES);
                                         gl.glVertex3f(0.f, 0.f, -1.f);
@@ -1150,7 +1157,7 @@ public class RobotRace extends Base {
             // First person mode
             } else if (3 == mode) {
                 if(this == mainCamera) {
-                    gs.vWidth = 10+(int)(Math.random()*10);
+                    gs.vWidth = 15+(int)(Math.random()*5);
                 }
 
                 for(int i = 0; i < robots.length ; i++) {
@@ -1627,7 +1634,7 @@ public class RobotRace extends Base {
             
             gl.glVertexPointer(3, GL_FLOAT, STRIDE * FLOAT_SIZE, 0);
             gl.glTexCoordPointer(1, GL_FLOAT, STRIDE * FLOAT_SIZE, (STRIDE - 1)*FLOAT_SIZE);
-            gl.glNormalPointer(GL_FLOAT, STRIDE * FLOAT_SIZE, 3*FLOAT_SIZE);
+            gl.glNormalPointer(GL_FLOAT, STRIDE * FLOAT_SIZE, 3*FLOAT_SIZE);//first coordinate is on 3th place, multiplied with the size of one float object.
         }
 
         /**
