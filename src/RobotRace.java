@@ -1560,6 +1560,27 @@ public class RobotRace extends Base {
 
             throw new RuntimeException("Stride out of bounds.");
         }
+
+        public int getStrideOfPart(VertexDefinitionPart part) {
+            int stride = 0;
+
+            for(VertexDefinitionPart p : parts) {
+                if(p == part) {
+                    return stride;
+                }
+                stride += p.getStride();
+            }
+            throw new RuntimeException("Part does not exist in definition.");
+        }
+
+        public boolean hasPart(VertexDefinitionPart part) {
+            for(VertexDefinitionPart p : parts) {
+                if(p == part) {
+                    return true;
+                }
+            }
+            return false;
+        }
     };
 
     public class VBOBuilder {
@@ -1724,6 +1745,81 @@ public class RobotRace extends Base {
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo);
         }
 
+        public void enable() {
+            int vertexPosition = -1;
+            int vertexSize = 0;
+
+            int texturePosition = -1;
+            int textureSize = 0;
+
+            int normalPosition = -1;
+
+            if(layout.hasPart(VertexDefinitionPart.POSITION_1D)) {
+                gl.glEnableClientState(gl.GL_VERTEX_ARRAY);
+                vertexPosition = layout.getStrideOfPart(VertexDefinitionPart.POSITION_1D);
+                vertexSize = 1;
+            } else if(layout.hasPart(VertexDefinitionPart.POSITION_2D)) {
+                gl.glEnableClientState(gl.GL_VERTEX_ARRAY);
+                vertexPosition = layout.getStrideOfPart(VertexDefinitionPart.POSITION_2D);
+                vertexSize = 2;
+            } else if(layout.hasPart(VertexDefinitionPart.POSITION_3D)) {
+                gl.glEnableClientState(gl.GL_VERTEX_ARRAY);
+                vertexPosition = layout.getStrideOfPart(VertexDefinitionPart.POSITION_3D);
+                vertexSize = 3;
+            }
+
+            if(layout.hasPart(VertexDefinitionPart.TEXTCOORD_1D)) {
+                gl.glEnableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+                texturePosition = layout.getStrideOfPart(VertexDefinitionPart.TEXTCOORD_1D);
+                textureSize = 1;
+            } else if(layout.hasPart(VertexDefinitionPart.TEXTCOORD_2D)) {
+                gl.glEnableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+                texturePosition = layout.getStrideOfPart(VertexDefinitionPart.TEXTCOORD_2D);
+                textureSize = 2;
+            } else if(layout.hasPart(VertexDefinitionPart.TEXTCOORD_3D)) {
+                gl.glEnableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+                texturePosition = layout.getStrideOfPart(VertexDefinitionPart.TEXTCOORD_3D);
+                textureSize = 3;
+            }
+
+            if(layout.hasPart(VertexDefinitionPart.NORMAL)) {
+                gl.glEnableClientState(gl.GL_NORMAL_ARRAY);
+                normalPosition = layout.getStrideOfPart(VertexDefinitionPart.NORMAL);
+            }
+
+            int stride = layout.getStride();
+
+            if(vertexPosition != -1) {
+                gl.glVertexPointer(vertexSize, GL_FLOAT, stride, vertexPosition);
+            }
+
+            if(texturePosition != -1) {
+                gl.glTexCoordPointer(textureSize, GL_FLOAT, stride, texturePosition);
+            }
+
+            if(normalPosition != -1) {
+                gl.glNormalPointer(GL_FLOAT, stride, normalPosition);
+            }
+        }
+
+        public void disable() {
+            if(layout.hasPart(VertexDefinitionPart.POSITION_1D) ||
+               layout.hasPart(VertexDefinitionPart.POSITION_2D) ||
+               layout.hasPart(VertexDefinitionPart.POSITION_3D)) {
+                gl.glDisableClientState(gl.GL_VERTEX_ARRAY);
+            }
+
+            if(layout.hasPart(VertexDefinitionPart.TEXTCOORD_1D) ||
+               layout.hasPart(VertexDefinitionPart.TEXTCOORD_2D) ||
+               layout.hasPart(VertexDefinitionPart.TEXTCOORD_3D)) {
+                gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+            }
+
+            if(layout.hasPart(VertexDefinitionPart.NORMAL)) {
+                gl.glDisableClientState(gl.GL_NORMAL_ARRAY);
+            }
+        }
+
         public void upload(VBOBuilder builder) {
             ArrayList<Float> buf = builder.finish();
 
@@ -1883,19 +1979,6 @@ public class RobotRace extends Base {
             
             vbo.upload(builder);
         }
-        
-        private void enableVBO() {
-            if(!vbo.isOpened()) {
-                recomputeGeometry();
-            }
-            vbo.bind();
-            
-            // TODO: move to vbo class
-            int STRIDE = definition.getStride();
-            gl.glVertexPointer(3, GL_FLOAT, STRIDE, 0);
-            gl.glTexCoordPointer(1, GL_FLOAT, STRIDE, STRIDE - 1 *FLOAT_SIZE);
-            gl.glNormalPointer(GL_FLOAT, STRIDE, 3*FLOAT_SIZE);//first coordinate is on 3th place, multiplied with the size of one float object.
-        }
 
         /**
          * Draws the terrain.
@@ -1906,24 +1989,16 @@ public class RobotRace extends Base {
             gl.glEnable(GL_TEXTURE_1D);
                 gl.glBindTexture(GL_TEXTURE_1D, OneDColorId);
 
-                gl.glEnableClientState(gl.GL_VERTEX_ARRAY);
-                gl.glEnableClientState(gl.GL_TEXTURE_COORD_ARRAY);
-                gl.glEnableClientState(gl.GL_NORMAL_ARRAY);
-                
-                enableVBO();
-                
-                gl.glDrawArrays(gl.GL_TRIANGLES, 0, vbo.getTriangleCount());
-                
-                gl.glDisableClientState(gl.GL_NORMAL_ARRAY);
-                gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
-                gl.glDisableClientState(gl.GL_VERTEX_ARRAY);
+                if(!vbo.isOpened()) {
+                    recomputeGeometry();
+                }
 
-                gl.glBegin(gl.GL_LINES);
-                    gl.glVertex3f(0.f, 0.f, 0.f);
-                    Vector n = getNormal(0.f, 0.f, step);
-                    gl.glVertex3d(n.x(), n.y(), n.z());
-                gl.glEnd();
-                
+                vbo.bind();
+                vbo.enable();
+
+                gl.glDrawArrays(gl.GL_TRIANGLES, 0, vbo.getTriangleCount());
+
+                vbo.disable();
             gl.glDisable(GL_TEXTURE_1D);
             
             gl.glEnable(GL_BLEND);
