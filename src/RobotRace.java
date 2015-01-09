@@ -1508,6 +1508,251 @@ public class RobotRace extends Base {
         }
     }
 
+    public static final int FLOAT_SIZE = 4;
+    enum VertexDefinitionPart {
+        POSITION_1D(1   * FLOAT_SIZE),
+        POSITION_2D(2   * FLOAT_SIZE),
+        POSITION_3D(3   * FLOAT_SIZE),
+
+        NORMAL(3        * FLOAT_SIZE),
+
+        TEXTCOORD_1D(1  * FLOAT_SIZE),
+        TEXTCOORD_2D(2  * FLOAT_SIZE),
+        TEXTCOORD_3D(3  * FLOAT_SIZE);
+
+        private int stride;
+
+        private VertexDefinitionPart(int stride) {
+            this.stride = stride;
+        }
+
+        public int getStride() {
+            return stride;
+        }
+    };
+
+    public class VertexDefinition {
+        protected VertexDefinitionPart [] parts;
+
+        public VertexDefinition(VertexDefinitionPart [] parts) {
+            assert(parts != null);
+            this.parts = parts;
+        }
+
+        public int getStride() {
+            int stride = 0;
+
+            for(VertexDefinitionPart part : parts) {
+                stride += part.getStride();
+            }
+
+            return stride;
+        }
+
+        public VertexDefinitionPart getPartAtStride(int stride) {
+            for(VertexDefinitionPart part : parts) {
+                if(stride == 0) {
+                    return part;
+                }
+
+                stride -= part.getStride();
+            }
+
+            throw new RuntimeException("Stride out of bounds.");
+        }
+    };
+
+    public class VBOBuilder {
+        private VertexDefinition definition = null;
+        // TODO: directly use buffer in order to allow for double / int arguments
+        private ArrayList<Float> buffer = new ArrayList<Float>();
+        private int stride = 0;
+        private int nVertex = 0;
+
+        public VBOBuilder(VertexDefinition definition) {
+            this.definition = definition;
+        }
+
+        protected void checkStride(VertexDefinitionPart part) {
+            if(definition.getPartAtStride(stride) != part) {
+                throw new RuntimeException("This is not expected at this time.");
+            }
+            stride += part.getStride();
+        }
+
+        public void endVertex() {
+            if(stride != definition.getStride()) {
+                throw new RuntimeException("Vertex stride invalid");
+            }
+
+            stride = 0;
+            nVertex++;
+        }
+
+        public ArrayList<Float> finish() {
+            if(stride != 0) {
+                throw new RuntimeException("Unterminated vertex");
+            }
+            return buffer;
+        }
+
+        public void addNormal(Vector normal) {
+            checkStride(VertexDefinitionPart.NORMAL);
+
+            buffer.add((float)normal.x());
+            buffer.add((float)normal.y());
+            buffer.add((float)normal.z());
+        }
+
+        public void addPositionn(int n, Vector coord) {
+            if(n < 0 || n > 3) {
+                throw new RuntimeException("Too many dimensions.");
+            }
+            checkStride(
+                n == 1 ? VertexDefinitionPart.POSITION_1D :
+                n == 2 ? VertexDefinitionPart.POSITION_2D :
+                         VertexDefinitionPart.POSITION_3D
+            );
+
+            buffer.add((float)coord.x());
+            if(n < 2) return;
+            buffer.add((float)coord.y());
+            if(n < 3) return;
+            buffer.add((float)coord.z());
+        }
+
+        public void addPosition1(Vector coord) {
+            addPositionn(1, coord);
+        }
+
+        public void addPosition(float x) {
+            addPositionn(3, new Vector(x, 0, 0));
+        }
+
+        public void addPosition2(Vector coord) {
+            addPositionn(2, coord);
+        }
+
+        public void addPosition(float x, float y) {
+            addPositionn(3, new Vector(x, y, 0));
+        }
+
+        public void addPosition3(Vector coord) {
+            addPositionn(3, coord);
+        }
+
+        public void addPosition(float x, float y, float z) {
+            addPositionn(3, new Vector(x, y, z));
+        }
+
+        public void addTexCoordn(int n, Vector coord) {
+            if(n < 0 || n > 3) {
+                throw new RuntimeException("Too many texture dimensions.");
+            }
+            checkStride(
+                n == 1 ? VertexDefinitionPart.TEXTCOORD_1D :
+                n == 2 ? VertexDefinitionPart.TEXTCOORD_2D :
+                         VertexDefinitionPart.TEXTCOORD_3D
+            );
+
+            buffer.add((float)coord.x());
+            if(n < 2) return;
+            buffer.add((float)coord.y());
+            if(n < 3) return;
+            buffer.add((float)coord.z());
+        }
+
+        public void addTexCoord1(Vector coord) {
+            addTexCoordn(1, coord);
+        }
+
+        public void addTexCoord(float x) {
+            addTexCoord1(new Vector(x, 0, 0));
+        }
+
+        public void addTexCoord2(Vector coord) {
+            addTexCoordn(2, coord);
+        }
+
+        public void addTexCoord(float x, float y) {
+            addTexCoord1(new Vector(x, y, 0));
+        }
+
+        public void addTexCoord3(Vector coord) {
+            addTexCoordn(3, coord);
+        }
+
+        public void addTexCoord(float x, float y, float z) {
+            addTexCoord3(new Vector(x, y, z));
+        }
+
+        public int getVertexCount() {
+            return nVertex;
+        }
+    }
+
+    public class VBO {
+        private VertexDefinition layout;
+        private int nVertex = 0;
+        private int vbo = -1;
+
+        public VBO(VertexDefinition layout) {
+            this.layout = layout;
+        }
+
+        public VBOBuilder getVBOBuilder() {
+            return new VBOBuilder(layout);
+        }
+
+        public boolean isOpened() {
+            return vbo != -1;
+        }
+
+        public void open() {
+            if(!isOpened()) {
+                int [] x = new int [1];
+                gl.glGenBuffers(1, x, 0);
+                vbo = x[0];
+            }
+        }
+
+        public void close() {
+            // not used
+        }
+
+        public void bind() {
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo);
+        }
+
+        public void upload(VBOBuilder builder) {
+            ArrayList<Float> buf = builder.finish();
+
+            FloatBuffer vertexData = ByteBuffer
+                .allocateDirect(buf.size()*FLOAT_SIZE)
+                .order(ByteOrder.nativeOrder())
+                .asFloatBuffer();
+
+            for(float f : buf) {
+                vertexData.put(f);
+            }
+
+            vertexData.rewind();
+
+            nVertex = builder.getVertexCount();
+
+
+            System.out.println("vbo="+vbo+"nTris="+nVertex+"buf.size()="+buf.size());
+
+            bind();
+            gl.glBufferData(gl.GL_ARRAY_BUFFER, buf.size() * FLOAT_SIZE, vertexData, gl.GL_STATIC_DRAW);
+        }
+
+        public int getTriangleCount() {
+            return nVertex;
+        }
+
+    }
+
     /**
      * Implementation of the terrain.
      */
@@ -1530,11 +1775,14 @@ public class RobotRace extends Base {
             new Color(0,50,0),//even darker darker dark green
             new Color(0,50,0),//as dark as previous one.
         };
-        
-        private int vboTris = 0;
-        private int vbo = -1;
-        private static final int FLOAT_SIZE = 4; // 4 bytes per float
-        private static final int STRIDE = 7;
+
+        VertexDefinition definition = new VertexDefinition(new VertexDefinitionPart [] {
+            VertexDefinitionPart.POSITION_3D,
+            VertexDefinitionPart.NORMAL,
+            VertexDefinitionPart.TEXTCOORD_1D
+        });
+
+        VBO vbo = new VBO(definition);
         
         /**
          * Can be used to set up a display list.
@@ -1561,23 +1809,12 @@ public class RobotRace extends Base {
                 trees.add(new Tree(x,y,z));//random positions.
             }   
         }
-        
-        private void createVBO() {
-            assert(vbo == -1);
-            int [] x = new int [1];
-            gl.glGenBuffers(1, x, 0);
-            vbo = x[0];
-        }
+
         
         void recomputeGeometry() {
-            /**
-             * VBO Layout (GL_TRIANGLES):
-             * <code>{ x, y, z, normalX, normalY, normalZ, textcoord, ... }</code>
-             */
-            ArrayList<Float> buf = new ArrayList<Float>();
-            
-            // Clear color
-            gl.glColor3f(1.0f, 1.0f, 1.0f);
+            vbo.open();
+
+            VBOBuilder builder = vbo.getVBOBuilder();
             
             int nTris = 0;
             for(float x = -gridSize;x<gridSize;x+=step)
@@ -1605,77 +1842,59 @@ public class RobotRace extends Base {
                     // Triangle 1
 
                     // Add lower left corner to VBO
-                    normal = getNormal(x,           y,          step);
-                    buf.add(x);                 buf.add(y);                 buf.add(lowerLeftCorner);
-                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
-                    buf.add(getColorAtHeight(lowerLeftCorner));
+                    builder.addPosition(x, y, lowerLeftCorner);
+                    builder.addNormal(getNormal(x, y, step));
+                    builder.addTexCoord(getColorAtHeight(lowerLeftCorner));
+                    builder.endVertex();
 
                     // Add lower right corner to VBO
-                    normal = getNormal(x + step,    y,          step);
-                    buf.add(x + step);          buf.add(y);                 buf.add(lowerRightCorner);
-                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
-                    buf.add(getColorAtHeight(lowerRightCorner));
+                    builder.addPosition(x + step, y, lowerRightCorner);
+                    builder.addNormal(getNormal(x + step, y, step));
+                    builder.addTexCoord(getColorAtHeight(lowerRightCorner));
+                    builder.endVertex();
 
                     // Add upper right corner to VBO
-                    normal = getNormal(x + step,    y + step,   step);
-                    buf.add(x + step);          buf.add(y + step);          buf.add(upperRightCorner);
-                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
-                    buf.add(getColorAtHeight(upperRightCorner));
+                    builder.addPosition(x + step, y + step, upperRightCorner);
+                    builder.addNormal(getNormal(x + step, y + step, step));
+                    builder.addTexCoord(getColorAtHeight(upperRightCorner));
+                    builder.endVertex();
 
                     // Triangle 2
 
                     // Add lower left corner to VBO
-                    normal = getNormal(x,           y,          step);
-                    buf.add(x);                 buf.add(y);                 buf.add(lowerLeftCorner);
-                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
-                    buf.add(getColorAtHeight(lowerLeftCorner));
+                    builder.addPosition(x, y, lowerLeftCorner);
+                    builder.addNormal(getNormal(x, y, step));
+                    builder.addTexCoord(getColorAtHeight(lowerLeftCorner));
+                    builder.endVertex();
 
                     // Add upper left corner to VBO
-                    normal = getNormal(x,           y + step,   step);
-                    buf.add(x);                 buf.add(y + step);          buf.add(upperLeftCorner);
-                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
-                    buf.add(getColorAtHeight(upperLeftCorner));
+                    builder.addPosition(x, y + step, upperLeftCorner);
+                    builder.addNormal(getNormal(x, y + step, step));
+                    builder.addTexCoord(getColorAtHeight(upperLeftCorner));
+                    builder.endVertex();
 
                     // Add upper right corner to VBO
-                    normal = getNormal(x + step,    y + step,   step);
-                    buf.add(x + step);          buf.add(y + step);          buf.add(upperRightCorner);
-                    buf.add((float)normal.x()); buf.add((float)normal.y()); buf.add((float)normal.z());
-                    buf.add(getColorAtHeight(upperRightCorner));
-                    
-                    nTris += 2 * 3;
+                    builder.addPosition(x + step, y + step, upperRightCorner);
+                    builder.addNormal(getNormal(x + step, y + step, step));
+                    builder.addTexCoord(getColorAtHeight(upperRightCorner));
+                    builder.endVertex();
                 }
             }
             
-            FloatBuffer vertexData = ByteBuffer.allocateDirect(buf.size()*FLOAT_SIZE)
-                    .order(ByteOrder.nativeOrder()).asFloatBuffer();
-            
-            for(float f : buf) {
-                vertexData.put(f);
-            }
-            
-            vertexData.rewind();
-            
-            vboTris = nTris;
-            
-            if(vbo == -1) {
-                createVBO();
-            }
-            
-            System.out.println("vbo="+vbo+"nTris="+nTris+"buf.size()="+buf.size());
-            
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo);
-            gl.glBufferData(gl.GL_ARRAY_BUFFER, buf.size() * FLOAT_SIZE, vertexData, gl.GL_STATIC_DRAW);
+            vbo.upload(builder);
         }
         
         private void enableVBO() {
-            if(vbo == -1) {
+            if(!vbo.isOpened()) {
                 recomputeGeometry();
             }
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo);
+            vbo.bind();
             
-            gl.glVertexPointer(3, GL_FLOAT, STRIDE * FLOAT_SIZE, 0);
-            gl.glTexCoordPointer(1, GL_FLOAT, STRIDE * FLOAT_SIZE, (STRIDE - 1)*FLOAT_SIZE);
-            gl.glNormalPointer(GL_FLOAT, STRIDE * FLOAT_SIZE, 3*FLOAT_SIZE);//first coordinate is on 3th place, multiplied with the size of one float object.
+            // TODO: move to vbo class
+            int STRIDE = definition.getStride();
+            gl.glVertexPointer(3, GL_FLOAT, STRIDE, 0);
+            gl.glTexCoordPointer(1, GL_FLOAT, STRIDE, STRIDE - 1 *FLOAT_SIZE);
+            gl.glNormalPointer(GL_FLOAT, STRIDE, 3*FLOAT_SIZE);//first coordinate is on 3th place, multiplied with the size of one float object.
         }
 
         /**
@@ -1693,7 +1912,7 @@ public class RobotRace extends Base {
                 
                 enableVBO();
                 
-                gl.glDrawArrays(gl.GL_TRIANGLES, 0, vboTris);
+                gl.glDrawArrays(gl.GL_TRIANGLES, 0, vbo.getTriangleCount());
                 
                 gl.glDisableClientState(gl.GL_NORMAL_ARRAY);
                 gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
