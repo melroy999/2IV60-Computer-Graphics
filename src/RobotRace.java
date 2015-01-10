@@ -1338,15 +1338,61 @@ public class RobotRace extends Base {
      */
     private class RaceTrack {
 
-        /**
-         * Array with control points for the O-track.
-         */
-        private Vector[] controlPointsOTrack = new Vector[] {
-            new Vector(0,	10,     0),
-            new Vector(5.5, 10,     0),
-            new Vector(10,  5.5,    0),
-            new Vector(10,  0,          0),
-        };
+        public class BezierCurve {
+            private Vector [] controlPoints;
+
+            public BezierCurve(Vector [] controlPoints) {
+                assert(controlPoints != null);
+                this.controlPoints = controlPoints;
+            }
+
+            protected Vector B(double t, Vector [] points, boolean derative) {
+                Vector [] newPoints = new Vector[points.length-1];
+
+                for(int i = 1; i < points.length ; i ++) {
+                    newPoints[i-1] = points[i-1].add(
+                        points[i]
+                            .subtract(points[i-1])
+                            .scale(t)
+                    );
+                }
+
+                if(derative && newPoints.length == 2) {
+                    return newPoints[1].subtract(newPoints[0]).normalized();
+                } else if(newPoints.length == 1) {
+                    return newPoints[0];
+                } else {
+                    return B(t, newPoints, derative);
+                }
+            }
+
+            public Vector B(double t) {
+                return B(t, controlPoints, false);
+            }
+
+            public Vector Bd(double t) {
+                return B(t, controlPoints, true);
+            };
+        }
+
+        BezierCurve OTrack = new BezierCurve(new Vector[] {
+            new Vector( 0,	 10,    1),
+            new Vector( 5.5, 10,    1),
+            new Vector( 10,  5.5,   1),
+            new Vector( 10,  0,     1),
+
+            new Vector( 10, -5.5,   1),
+            new Vector( 5.5,-10,    1),
+            new Vector( 0,  -10,    1),
+
+            new Vector(-5.5,-10,    1),
+            new Vector(-10, -5.5,   1),
+            new Vector(-10,  0,     1),
+
+            new Vector(-10, 5.5,    1),
+            new Vector(-5.5, 10,    1),
+            new Vector( 0,   10,    1),
+        });
         /**
          * Array with control points for the L-track.
          */
@@ -1453,26 +1499,7 @@ public class RobotRace extends Base {
             if(trackNr == 0) {
                 return new Vector(10*Math.cos(2* Math.PI * t),14*Math.sin(2* Math.PI * t),1);
             } else {
-//                 return
-//                              controlPointsOTrack[0].scale(Math.pow(1-t, 3))
-//                         .add(controlPointsOTrack[1].scale(3 * t * Math.pow(1-t, 2)))
-//                         .add(controlPointsOTrack[2].scale(3 * t * t))
-//                         .add(controlPointsOTrack[3].scale(t * t * t));
-                Vector p1 = controlPointsOTrack[0],
-                       p2 = controlPointsOTrack[1],
-                       p3 = controlPointsOTrack[2],
-                       p4 = controlPointsOTrack[3];
-
-                return new Vector(
-                    p1.x()*(Math.pow(-t,3)+3*Math.pow(t,2)-3*t+1)
-                    +3*p2.x()*t*(Math.pow(t,2)-2*t+1)
-                    +3*p3.x()*Math.pow(t,2)*(1-t)+p4.x()*Math.pow(t,3),
-
-                    p1.y()*(Math.pow(-t,3)+3*Math.pow(t,2)-3*t+1)
-                    +3*p2.y()*t*(Math.pow(t,2)-2*t+1)
-                    +3*p3.y()*Math.pow(t,2)*(1-t)+p4.y()*Math.pow(t,3),
-
-                    0);
+                return OTrack.B(t);
             }
         }
 
@@ -1480,7 +1507,11 @@ public class RobotRace extends Base {
          * Returns the tangent of the curve at 0 <= {@code t} <= 1.
          */
         public Vector getTangent(double t) {
-            return new Vector(-20*Math.PI*Math.sin(2*Math.PI * t),28*Math.PI*Math.cos(2*Math.PI * t),0);
+            if(trackNr == 0) {
+                return new Vector(-20*Math.PI*Math.sin(2*Math.PI * t),28*Math.PI*Math.cos(2*Math.PI * t),0);
+            } else {
+                return OTrack.Bd(t);
+            }
         }
         
         public boolean isOnTrack(float x, float y){
@@ -1490,8 +1521,12 @@ public class RobotRace extends Base {
                     return true;
                 }
                 return false;
-            }
-            else{
+            } else {
+                for(double t = 0; t < 1; t += 0.01) {
+                    if(new Vector(x, y, 1).subtract(OTrack.B(t)).length() < 10) {
+                        return true;
+                    }
+                }
                 return false;
             }    
         }
