@@ -335,7 +335,7 @@ public class RobotRace extends Base {
                 gl.glPushMatrix();
                     Dimensions textureDimensions = screenCamera.frameBuffer.getDimensions();
                     Vector screenPosition = raceTrack.getPoint(0).add(new Vector(0, 0, 2));
-                    Vector outerScreenPosition = raceTrack.getOuter(screenPosition).add(new Vector(0.54, 0, 0));
+                    Vector outerScreenPosition = raceTrack.getOuter(0, screenPosition).add(new Vector(0.54, 0, 0));
                     Vector screenDelta = outerScreenPosition.subtract(screenPosition);
                     gl.glTranslated(screenPosition.x(), screenPosition.y(), screenPosition.z());
                     gl.glPushMatrix();
@@ -1434,6 +1434,16 @@ public class RobotRace extends Base {
                     gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
                 }
 
+                gl.glBegin(gl.GL_LINES);
+                {
+                    Vector pos = getPoint(0);
+                    Vector dir = getTangent(0);
+                    gl.glVertex3d(pos.x(), pos.y(), pos.z());
+                    pos = pos.add(dir);
+                    gl.glVertex3d(pos.x(), pos.y(), pos.z());
+                }
+                gl.glEnd();
+
                 gl.glBegin(gl.GL_TRIANGLE_STRIP);
                     for(double i = -3*STEP; i <= 1; i += STEP) {
                         Vector initialPoint = getPoint(i),
@@ -1441,7 +1451,7 @@ public class RobotRace extends Base {
                         if(j == 1) {
                             point = getLower(point);
                         } else if (j == 2) {
-                            point = getOuter(point);
+                            point = getOuter(i, point);
                         }
 
                         float texcoordy = (float)(i * 100) - x;
@@ -1463,7 +1473,7 @@ public class RobotRace extends Base {
                         if(j == 0) gl.glTexCoord2f(0.f, texcoordy);
                         gl.glVertex3d(point.x(), point.y(), point.z());
 
-                        Vector outerPoint = (j == 2 || j == 3) ? getLower(point) : getOuter(point);
+                        Vector outerPoint = (j == 2 || j == 3) ? getLower(point) : getOuter(i, point);
                         if(i==0) {
                             gl.glNormal3f(0.f, 0.f, 1.f);
                         } else if(i == 1) {
@@ -1487,9 +1497,14 @@ public class RobotRace extends Base {
             return initialPosition.add(new Vector(0, 0, -2));
         }
         
-        Vector getOuter(Vector initialPosition) {
-            Vector directionVector = initialPosition.normalized().scale(4);
-            return initialPosition.add(new Vector(directionVector.x(), directionVector.y(), 0));
+        Vector getOuter(double t, Vector initialPosition) {
+            Vector tangent = getTangent(t);
+            Vector upVector = initialPosition.cross(tangent);
+            Vector directionVector = tangent.cross(upVector)
+                                            .normalized()
+                                            .scale(4);
+
+            return initialPosition.add(directionVector);
         }
 
         /**
@@ -1508,7 +1523,7 @@ public class RobotRace extends Base {
          */
         public Vector getTangent(double t) {
             if(trackNr == 0) {
-                return new Vector(-20*Math.PI*Math.sin(2*Math.PI * t),28*Math.PI*Math.cos(2*Math.PI * t),0);
+                return new Vector(-20*Math.PI*Math.sin(2*Math.PI * t),28*Math.PI*Math.cos(2*Math.PI * t),0).normalized();
             } else {
                 return OTrack.Bd(t);
             }
