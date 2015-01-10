@@ -334,15 +334,22 @@ public class RobotRace extends Base {
 
                 gl.glPushMatrix();
                     Dimensions textureDimensions = screenCamera.frameBuffer.getDimensions();
-                    Vector screenPosition = raceTrack.getPoint(0).add(new Vector(0, 0, 2));
-                    Vector outerScreenPosition = raceTrack.getOuter(0, screenPosition).add(new Vector(0.54, 0, 0));
+
+                    Vector screenPosition = raceTrack.getPoint(0);
+                    Vector outerScreenPosition = raceTrack.getOuter(0, screenPosition);
+
                     Vector screenDelta = outerScreenPosition.subtract(screenPosition);
-                    gl.glTranslated(screenPosition.x(), screenPosition.y(), screenPosition.z());
+                    Vector screenDelta2D = new Vector(screenDelta.x(), screenDelta.y(), 0);
+
                     gl.glPushMatrix();
-                        gl.glTranslated(-0.18, 0 ,0);
+                        gl.glTranslated(screenPosition.x(), screenPosition.y(), screenPosition.z()+2);
+                        gl.glRotated(Math.toDegrees(
+                            Math.acos(
+                                screenDelta2D.normalized().dot(Vector.X)
+                            )), 0.f, 0.f, 1.f);
                         gl.glScaled(
-                            screenDelta.x(),
-                            textureDimensions.w()/(textureDimensions.w()*screenDelta.x()),
+                            screenDelta2D.length(),
+                            textureDimensions.w()/(textureDimensions.w()*screenDelta2D.length()),
                             1.f
                         );
                         gl.glBegin(GL_QUADS);
@@ -354,15 +361,15 @@ public class RobotRace extends Base {
                     gl.glPopMatrix();
 
                     gl.glPushMatrix();
+                        gl.glTranslated(screenPosition.x(), screenPosition.y(), screenPosition.z()+1);
                         gl.glColor3d(0.2f,0.2f,0.2f);
-                        gl.glTranslated(-0.18, 0, -0.5);
                         gl.glScaled(0.18f, 0.18f, 4f);
                         glut.glutSolidCube(1.f);
                     gl.glPopMatrix();
                     
                     gl.glPushMatrix();
+                        gl.glTranslated(outerScreenPosition.x(), outerScreenPosition.y(), outerScreenPosition.z()+1);
                         gl.glColor3d(0.2f,0.2f,0.2f);
-                        gl.glTranslated(4+0.18, 0, -0.5);
                         gl.glScaled(0.18f, 0.18f, 4f);
                         glut.glutSolidCube(1.f);
                     gl.glPopMatrix();
