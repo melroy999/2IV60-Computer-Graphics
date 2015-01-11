@@ -79,16 +79,16 @@ public class RobotRace extends Base {
         // Create a new array of four robots
         robots = new Robot[] {
             /// Instantiate swag robot
-            new Robot(Material.GOLD).setNeckModifier(2.f).setSpeed(50f),
+            new Robot(Material.GOLD,4).setNeckModifier(2.f).setSpeed(50f),
 
             // Instantiate bender, kiss my shiny metal ass
-            new Robot(Material.SILVER).setSpeed(56f),
+            new Robot(Material.SILVER,3).setSpeed(56f),
 
             // Instantiate oldschool robot
-            new Robot(Material.WOOD).setNeckModifier(0.5f).setSpeed(51f),
+            new Robot(Material.WOOD,2).setNeckModifier(0.5f).setSpeed(51f),
 
             // Hey look at me, I'm an annoying orange robot!
-            new Robot(Material.ORANGE).setSpeed(53f)
+            new Robot(Material.ORANGE,1).setSpeed(53f)
         };
 
         // Initialize the cameras
@@ -175,7 +175,7 @@ public class RobotRace extends Base {
             track = loadTexture("track.png");
             brick = loadTexture("brick.jpg");
             head = loadTexture("head.jpg");
-            torso = loadTexture("torso.jpg");
+            torso = loadTexture("textureRobot.jpg");//full texture of the robot
         gl.glDisable(GL_TEXTURE_2D);
 
         // setup cameras
@@ -428,8 +428,9 @@ public class RobotRace extends Base {
             Vector.Y,
             Vector.Z
         };
-
-
+   
+        
+        
         for (Vector direction : directions) {
             // Set the color, colors match the directions
             gl.glColor4d(direction.x(), direction.y(), direction.z(), 1.);
@@ -566,7 +567,7 @@ public class RobotRace extends Base {
             gl.glColor4fv(diffuse, 0);
         }
     }
-
+      
     /**
      * Represents a Robot, to be implemented according to the Assignments.
      */
@@ -577,6 +578,8 @@ public class RobotRace extends Base {
         private Material material = null;
 
         float speedModifier = 80;
+        
+        int id;
         
         Material headColor = null;
         Material neckColor = null;
@@ -633,8 +636,9 @@ public class RobotRace extends Base {
          * Constructs the robot with initial parameters.
          * @param material The default material
          */
-        public Robot(Material material) {
+        public Robot(Material material, int id) {
             setDefaultMaterial(material);
+            this.id = id;
 
         }
         
@@ -717,6 +721,8 @@ public class RobotRace extends Base {
 
             final float TORSO_RELATIVE_HEIGHT   = 2*LEG_PART_LENGTH+TORSO_HEIGHT/2+TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC)+KNEE_JOINT_HEIGHT/2;
         
+            
+            
             gl.glPushMatrix();
                 // Move up till torso level
                 gl.glTranslatef(0.f, 0.f, TORSO_RELATIVE_HEIGHT);
@@ -740,7 +746,8 @@ public class RobotRace extends Base {
                             gl.glVertex3f(0.f, -TORSO_HEIGHT/2-TORSO_BOTTOM_HEIGHT/(2+SHOULDER_OVERLAP_MAGIC), TORSO_THICKNESS/2);
                         gl.glEnd();
                     } else {
-                        glut.glutSolidCylinder(TORSO_HEIGHT/2, TORSO_THICKNESS, PRECISION, PRECISION2);
+                        //glut.glutSolidCylinder(TORSO_HEIGHT/2, TORSO_THICKNESS, PRECISION, PRECISION2);
+                        drawCylinderFront(TORSO_HEIGHT/2, TORSO_THICKNESS, PRECISION, 0, 168, 420*id+252, 420*id+252+168);
                     }
                 gl.glPopMatrix();
 
@@ -758,7 +765,8 @@ public class RobotRace extends Base {
                                 gl.glVertex3f(0.f, 0.f, TORSO_BOTTOM_WIDTH);
                             gl.glEnd();
                         } else {
-                            glut.glutSolidCylinder(TORSO_BOTTOM_HEIGHT/2, TORSO_BOTTOM_WIDTH, PRECISION, PRECISION2);
+                            //glut.glutSolidCylinder(TORSO_BOTTOM_HEIGHT/2, TORSO_BOTTOM_WIDTH, PRECISION, PRECISION2);
+                            drawCylinder(TORSO_BOTTOM_HEIGHT/2, TORSO_BOTTOM_WIDTH, PRECISION, 150, 250, 420*id, 420*id+100);
                         }
                     gl.glPopMatrix();
 
@@ -798,7 +806,7 @@ public class RobotRace extends Base {
                                             gl.glVertex3f(0.f, 0.f, -0.5f);
                                         gl.glEnd();
                                     } else {
-                                        glut.glutSolidCube(1.f);
+                                        drawBox(gl, 1.0f, 0, 0+j*60, 60+j*60, id*420, id*420+252);
                                     }
                                 gl.glPopMatrix();
 
@@ -815,7 +823,8 @@ public class RobotRace extends Base {
                                             gl.glVertex3f(0.f, 0.f, KNEE_JOINT_WIDTH);
                                         gl.glEnd();
                                     } else {
-                                        glut.glutSolidCylinder(KNEE_JOINT_HEIGHT/2, KNEE_JOINT_WIDTH, PRECISION, PRECISION2);
+                                        //glut.glutSolidCylinder(KNEE_JOINT_HEIGHT/2, KNEE_JOINT_WIDTH, PRECISION, PRECISION2);
+                                        drawCylinder(KNEE_JOINT_HEIGHT/2, KNEE_JOINT_WIDTH, PRECISION, 150, 250, 420*id, 420*id+100);
                                     }
                                 gl.glPopMatrix();
 
@@ -892,7 +901,8 @@ public class RobotRace extends Base {
                             gl.glVertex3f(0.f, 0.f, SHOULDER_WIDTH);
                         gl.glEnd();
                     } else {
-                        glut.glutSolidCylinder(SHOULDER_HEIGHT/2, SHOULDER_WIDTH, PRECISION, PRECISION2);
+                        //glut.glutSolidCylinder(SHOULDER_HEIGHT/2, SHOULDER_WIDTH, PRECISION, PRECISION2);
+                        drawCylinder(SHOULDER_HEIGHT/2, SHOULDER_WIDTH, PRECISION, 150, 250, 420*id, 420*id+100);
                     }
                 gl.glPopMatrix();
 
@@ -906,7 +916,8 @@ public class RobotRace extends Base {
                             gl.glVertex3f(0.f, 0.f, NECK_HEIGHT+SHOULDER_HEIGHT/2);
                         gl.glEnd();
                     } else {
-                        glut.glutSolidCylinder(NECK_WIDTH/2 ,NECK_HEIGHT+SHOULDER_HEIGHT/2, PRECISION, PRECISION2);
+                        //glut.glutSolidCylinder(NECK_WIDTH/2 ,NECK_HEIGHT+SHOULDER_HEIGHT/2, PRECISION, PRECISION2);
+                        drawCylinder(NECK_WIDTH/2 ,NECK_HEIGHT+SHOULDER_HEIGHT/2, PRECISION, 150, 250, 420*id, 420*id+100);
                     }
                 gl.glPopMatrix();
 
@@ -922,7 +933,9 @@ public class RobotRace extends Base {
                             gl.glVertex3f(0.f, 0.f, HEAD_HEIGHT);
                         gl.glEnd();
                     } else {
-                        glut.glutSolidCylinder(HEAD_WIDTH/2, HEAD_HEIGHT, PRECISION, PRECISION2);
+                        //glut.glutSolidCylinder(HEAD_WIDTH/2, HEAD_HEIGHT, PRECISION, PRECISION2);
+                        gl.glRotated(-90, 0, 0, 1);
+                        drawCylinder(HEAD_WIDTH/2, HEAD_HEIGHT, PRECISION, 108, 108+260, 420*id+147, 420*id+147+105);
                     }
                 gl.glPopMatrix();
 
@@ -952,7 +965,8 @@ public class RobotRace extends Base {
                                     gl.glVertex3f(0.f, 0.f, SHOULDER_JOINT_WIDTH);
                                 gl.glEnd();
                             } else {
-                                glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, SHOULDER_JOINT_WIDTH, PRECISION, PRECISION2);
+                                //glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, SHOULDER_JOINT_WIDTH, PRECISION, PRECISION2);
+                                drawCylinder(SHOUlDER_JOINT_HEIGHT/2, SHOULDER_JOINT_WIDTH, PRECISION, 150, 250, 420*id, 420*id+100);
                             }
                         gl.glPopMatrix();
 
@@ -990,7 +1004,8 @@ public class RobotRace extends Base {
                                         gl.glVertex3f(0.f, 0.f, 1.f);
                                     gl.glEnd();
                                 } else {
-                                    glut.glutSolidCube(1.f);
+                                    //glut.glutSolidCube(1.f);
+                                    drawBox(gl, 1.0f, 0, 344+j*54, 344+54+j*54, id*420+252, id*420+420);
                                 }
                             gl.glPopMatrix();
 
@@ -1009,7 +1024,8 @@ public class RobotRace extends Base {
                                         gl.glVertex3f(0.f, 0.f, ELBOW_JOINT_WIDTH);
                                     gl.glEnd();
                                 } else {
-                                    glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, ELBOW_JOINT_WIDTH, PRECISION, PRECISION2);
+                                    //glut.glutSolidCylinder(SHOUlDER_JOINT_HEIGHT/2, ELBOW_JOINT_WIDTH, PRECISION, PRECISION2);
+                                    drawCylinder(SHOUlDER_JOINT_HEIGHT/2, ELBOW_JOINT_WIDTH, PRECISION, 150, 250, 420*id, 420*id+100);
                                 }
                             gl.glPopMatrix();
                         }
@@ -2192,5 +2208,236 @@ public class RobotRace extends Base {
     
     public RaceTrack getTrack(){
         return raceTrack;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    private float[][] boxVertices;
+    private float[][] boxNormals = {
+      {-1.0f, 0.0f, 0.0f},
+      {0.0f, 1.0f, 0.0f},
+      {1.0f, 0.0f, 0.0f},
+      {0.0f, -1.0f, 0.0f},
+      {0.0f, 0.0f, 1.0f},
+      {0.0f, 0.0f, -1.0f}
+    };
+    private int[][] boxFaces = {
+      {0, 1, 2, 3},
+      {3, 2, 6, 7},
+      {7, 6, 5, 4},
+      {4, 5, 1, 0},
+      {5, 6, 2, 1},
+      {7, 4, 0, 3}
+    };
+    
+    public void drawBox(final GL2 gl, final float size, final int type, float textureX1, float textureX2, float textureY1, float textureY2) {
+        gl.glEnable(gl.GL_TEXTURE_2D);
+        torso.bind(gl);
+        //gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dimensions.w(), dimensions.h(), 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+
+        float deltaX = 720;
+        float deltaY = 2100;
+
+        textureX1 /= deltaX;
+        textureX2 /= deltaX;
+        textureY1 /= deltaY;
+        textureY2 /= deltaY;
+
+        if (boxVertices == null) {
+          final float[][] v = new float[8][];
+          for (int i = 0; i < 8; i++) {
+            v[i] = new float[3];
+          }
+          v[0][0] = v[1][0] = v[2][0] = v[3][0] = -0.5f;
+          v[4][0] = v[5][0] = v[6][0] = v[7][0] =  0.5f;
+          v[0][1] = v[1][1] = v[4][1] = v[5][1] = -0.5f;
+          v[2][1] = v[3][1] = v[6][1] = v[7][1] =  0.5f;
+          v[0][2] = v[3][2] = v[4][2] = v[7][2] = -0.5f;
+          v[1][2] = v[2][2] = v[5][2] = v[6][2] =  0.5f;
+          boxVertices = v;
+        }
+        final float[][] v = boxVertices;
+        final float[][] n = boxNormals;
+        final int[][] faces = boxFaces;
+        for (int i = 5; i >= 0; i--) {
+          gl.glBegin(gl.GL_QUADS);
+          gl.glNormal3fv(n[i], 0);
+          float[] vt = v[faces[i][0]];
+          gl.glTexCoord2f(textureX1, textureY1); 
+          gl.glVertex3f(vt[0] * size, vt[1] * size, vt[2] * size);
+          vt = v[faces[i][1]];
+          gl.glTexCoord2f(textureX1, textureY2); 
+          gl.glVertex3f(vt[0] * size, vt[1] * size, vt[2] * size);
+          vt = v[faces[i][2]];
+          gl.glTexCoord2f(textureX2, textureY2); 
+          gl.glVertex3f(vt[0] * size, vt[1] * size, vt[2] * size);
+          vt = v[faces[i][3]];
+          gl.glTexCoord2f(textureX2, textureY1); 
+          gl.glVertex3f(vt[0] * size, vt[1] * size, vt[2] * size);
+          gl.glEnd();
+        }
+        gl.glDisable(gl.GL_TEXTURE_2D);
+    }
+    
+    public void drawCylinder(float radius, float height, int steps, float textureX1, float textureX2, float textureY1, float textureY2){
+        gl.glEnable(gl.GL_TEXTURE_2D);
+        torso.bind(gl);
+        //gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dimensions.w(), dimensions.h(), 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+        
+        
+        float deltaX = 720;
+        float deltaY = 2100;     
+
+        textureX1 /= deltaX;
+        textureX2 /= deltaX;
+        textureY1 /= deltaY;
+        textureY2 /= deltaY;
+        
+        float delta = (textureX2 - textureX1) / (steps-1);
+        
+        double step = (2* Math.PI) / steps;
+        gl.glBegin(gl.GL_QUADS);
+        for(int i = 0; i<steps; i++){
+            double x = Math.cos(step*i)*radius;
+            double y = Math.sin(step*i)*radius;
+            double xn = Math.cos(step*i+step)*radius;
+            double yn = Math.sin(step*i+step)*radius;
+            double xnn = Math.cos(step*i+0.5*step)*radius;
+            double ynn = Math.sin(step*i+0.5*step)*radius;
+            
+            Vector normal = new Vector(xnn,ynn,0).normalized();
+            
+            gl.glNormal3d(normal.x(), normal.y(), normal.z());         
+            gl.glTexCoord2f(textureX1+delta*i, textureY1); 
+            gl.glVertex3d(x,y,0);
+            gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
+            gl.glTexCoord2f(textureX1+delta*i, textureY2); 
+            gl.glVertex3d(x,y,height);
+            gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
+            gl.glTexCoord2f(textureX1+delta*(i+1), textureY2); 
+            gl.glVertex3d(xn,yn,height);
+            gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
+            gl.glTexCoord2f(textureX1+delta*(i+1), textureY1); 
+            gl.glVertex3d(xn,yn,0);
+        }
+        gl.glEnd();
+        
+        float dummyX = 600*deltaX;
+        float dummyX2 = 720*deltaX;
+        
+        float diffX = (dummyX2 - dummyX);
+        float diffY = (textureY2 - textureY1);
+        
+        gl.glBegin(gl.GL_TRIANGLES);
+        for(int i = 0; i<steps; i++){
+            double x = Math.cos(step*i)*radius;
+            double y = Math.sin(step*i)*radius;
+            double xn = Math.cos(step*i+step)*radius;
+            double yn = Math.sin(step*i+step)*radius;
+            gl.glNormal3d(0, 0, 1);
+            gl.glTexCoord2d((660)/deltaX,textureY1+(0.5*diffY)); 
+            gl.glVertex3d(x,y,height);
+            gl.glTexCoord2d((660+0.5*diffX*Math.cos(step*i))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i)));  
+            gl.glVertex3d(xn,yn,height);
+            gl.glTexCoord2d((660+0.5*diffX*Math.cos(step*i+step))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i+step))); 
+            gl.glVertex3d(0,0,height);
+            
+            gl.glNormal3d(0, 0, -1);
+            gl.glTexCoord2d((660)/deltaX,textureY1+(0.5*diffY)); 
+            gl.glVertex3d(x,y,0);
+            gl.glTexCoord2d((660+0.5*diffX*Math.cos(step*i))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i))); 
+            gl.glVertex3d(xn,yn,0);
+            gl.glTexCoord2d((660+0.5*diffX*Math.cos(step*i+step))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i+step))); 
+            gl.glVertex3d(0,0,0);
+        }
+        gl.glEnd();
+        gl.glDisable(gl.GL_TEXTURE_2D);
+    }
+    
+    public void drawCylinderFront(float radius, float height, int steps, float textureX1, float textureX2, float textureY1, float textureY2){
+        gl.glEnable(gl.GL_TEXTURE_2D);
+        torso.bind(gl);
+        //gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dimensions.w(), dimensions.h(), 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+        
+        
+        float deltaX = 720;
+        float deltaY = 2100;     
+
+        float diffX = (textureX2 - textureX1);
+        float diffY = (textureY2 - textureY1);
+        
+        textureX1 /= deltaX;
+        textureX2 /= deltaX;
+        textureY1 /= deltaY;
+        textureY2 /= deltaY;
+        
+        float diff = (textureX2 - textureX1);
+        float delta = (textureX2 - textureX1) / (steps-1);
+        
+        double step = (2* Math.PI) / steps;
+        gl.glBegin(gl.GL_QUADS);
+        for(int i = 0; i<steps; i++){
+            double x = Math.cos(step*i)*radius;
+            double y = Math.sin(step*i)*radius;
+            double xn = Math.cos(step*i+step)*radius;
+            double yn = Math.sin(step*i+step)*radius;
+            double xnn = Math.cos(step*i+0.5*step)*radius;
+            double ynn = Math.sin(step*i+0.5*step)*radius;
+            
+            Vector normal = new Vector(xnn,ynn,0).normalized();
+            
+            gl.glNormal3d(normal.x(), normal.y(), normal.z());         
+            gl.glTexCoord2f(textureX1+delta*i+168, textureY1); 
+            gl.glVertex3d(x,y,0);
+            gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
+            gl.glTexCoord2f(textureX1+delta*i+168, textureY2); 
+            gl.glVertex3d(x,y,height);
+            gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
+            gl.glTexCoord2f(textureX1+delta*(i+1)+168, textureY2); 
+            gl.glVertex3d(xn,yn,height);
+            gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
+            gl.glTexCoord2f(textureX1+delta*(i+1)+168, textureY1); 
+            gl.glVertex3d(xn,yn,0);
+        }
+        gl.glEnd();
+        
+        
+        
+        gl.glBegin(gl.GL_TRIANGLES);
+        for(int i = 0; i<steps; i++){
+            double x = Math.cos(step*i)*radius;
+            double y = Math.sin(step*i)*radius;
+            double xn = Math.cos(step*i+step)*radius;
+            double yn = Math.sin(step*i+step)*radius;
+            gl.glNormal3d(0, 0, 1);
+            gl.glTexCoord2d(textureX1+(0.5*diffX)/deltaX,textureY1+(0.5*diffY)/deltaY); 
+            gl.glVertex3d(x,y,height);
+            gl.glTexCoord2d(textureX1+(0.5*diffX+0.5*diffX*Math.cos(step*i))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i))/deltaY);  
+            gl.glVertex3d(xn,yn,height);
+            gl.glTexCoord2d(textureX1+(0.5*diffX+0.5*diffX*Math.cos(step*i+step))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i+step))/deltaY); 
+            gl.glVertex3d(0,0,height);
+            
+            gl.glNormal3d(0, 0, -1);
+            gl.glTexCoord2d(textureX1+(0.5*diffX)/deltaX,(textureY1+0.5*diffY)/deltaY); 
+            gl.glVertex3d(x,y,0);
+            gl.glTexCoord2d(textureX1+(0.5*diffX+0.5*diffX*Math.cos(step*i))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i))/deltaY); 
+            gl.glVertex3d(xn,yn,0);
+            gl.glTexCoord2d(textureX1+(0.5*diffX+0.5*diffX*Math.cos(step*i+step))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i+step))/deltaY); 
+            gl.glVertex3d(0,0,0);
+        }
+        gl.glEnd();
+        gl.glDisable(gl.GL_TEXTURE_2D);
     }
 }
