@@ -184,10 +184,6 @@ public class RobotRace extends Base {
         screenCamera.frameBuffer.create();
         screenCamera.onChangeMode(3);
 
-        raceTrack.trackNr = 1;
-        for(float i = 0; i < 1; i += 0.1) {
-            System.out.println(i + " = " + raceTrack.getPoint(i));
-        }
     }
 
     /**
@@ -1340,94 +1336,137 @@ public class RobotRace extends Base {
         }
     }
 
+    public interface CurveInterface {
+        /**
+         * @param t Parameter {@code 0 <= t <= 1}
+         * @return The location of the curve at {@code t}
+         */
+        public Vector getPoint(double t);
+
+        /**
+         * @param t Parameter {@code 0 <= t <= 1}
+         * @return The tangent of the curve at {@code t}
+         */
+        public Vector getTangent(double t);
+    }
+
+    public class OvalCurve implements CurveInterface {
+        protected double x, y;
+
+        public OvalCurve(double x, double y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        public OvalCurve() {
+            this(10, 14);
+        }
+        /**
+         * {@inheritdoc}
+         */
+        public Vector getPoint(double t) {
+            return new Vector(
+                x * Math.cos(2 * Math.PI * t),
+                y * Math.sin(2 * Math.PI * t),
+                1
+            );
+        }
+
+        /**
+         * {@inheritdoc}
+         */
+        public Vector getTangent(double t) {
+            return new Vector(
+                x * -2 * Math.PI * Math.sin(2 * Math.PI * t),
+                y *  2 * Math.PI * Math.cos(2 * Math.PI * t),
+                0
+            ).normalized();
+        }
+    }
+
+    public class BezierCurve implements CurveInterface {
+        private Vector [] controlPoints;
+
+        public BezierCurve(Vector [] controlPoints) {
+            assert(controlPoints != null);
+            this.controlPoints = controlPoints;
+        }
+
+        protected Vector B(double t, Vector [] points, boolean derative) {
+            Vector [] newPoints = new Vector[points.length-1];
+
+            for(int i = 1; i < points.length ; i ++) {
+                newPoints[i-1] = points[i-1].add(
+                    points[i]
+                        .subtract(points[i-1])
+                        .scale(t)
+                );
+            }
+
+            if(derative && newPoints.length == 2) {
+                return newPoints[1].subtract(newPoints[0]).normalized();
+            } else if(newPoints.length == 1) {
+                return newPoints[0];
+            } else {
+                return B(t, newPoints, derative);
+            }
+        }
+
+        @Override
+        public Vector getPoint(double t) {
+            return B(t, controlPoints, false);
+        }
+
+        @Override
+        public Vector getTangent(double t) {
+            return B(t, controlPoints, true);
+        };
+    }
+
     /**
      * Implementation of a race track that is made from Bezier segments.
      */
     private class RaceTrack {
+        protected CurveInterface currentCurve;
 
-        public class BezierCurve {
-            private Vector [] controlPoints;
+        protected CurveInterface [] curves = new CurveInterface[] {
+            new OvalCurve(),
+            new BezierCurve(new Vector[] {
+                new Vector( 0,	 10,    1),
+                new Vector( 5.5, 10,    1),
+                new Vector( 10,  5.5,   1),
+                new Vector( 10,  0,     1),
 
-            public BezierCurve(Vector [] controlPoints) {
-                assert(controlPoints != null);
-                this.controlPoints = controlPoints;
-            }
+                new Vector( 10, -5.5,   1),
+                new Vector( 5.5,-10,    1),
+                new Vector( 0,  -10,    1),
 
-            protected Vector B(double t, Vector [] points, boolean derative) {
-                Vector [] newPoints = new Vector[points.length-1];
+                new Vector(-5.5,-10,    1),
+                new Vector(-10, -5.5,   1),
+                new Vector(-10,  0,     1),
 
-                for(int i = 1; i < points.length ; i ++) {
-                    newPoints[i-1] = points[i-1].add(
-                        points[i]
-                            .subtract(points[i-1])
-                            .scale(t)
-                    );
-                }
+                new Vector(-10, 5.5,    1),
+                new Vector(-5.5, 10,    1),
+                new Vector( 0,   10,    1),
+            }),
 
-                if(derative && newPoints.length == 2) {
-                    return newPoints[1].subtract(newPoints[0]).normalized();
-                } else if(newPoints.length == 1) {
-                    return newPoints[0];
-                } else {
-                    return B(t, newPoints, derative);
-                }
-            }
+        };
 
-            public Vector B(double t) {
-                return B(t, controlPoints, false);
-            }
-
-            public Vector Bd(double t) {
-                return B(t, controlPoints, true);
-            };
-        }
-
-        BezierCurve OTrack = new BezierCurve(new Vector[] {
-            new Vector( 0,	 10,    1),
-            new Vector( 5.5, 10,    1),
-            new Vector( 10,  5.5,   1),
-            new Vector( 10,  0,     1),
-
-            new Vector( 10, -5.5,   1),
-            new Vector( 5.5,-10,    1),
-            new Vector( 0,  -10,    1),
-
-            new Vector(-5.5,-10,    1),
-            new Vector(-10, -5.5,   1),
-            new Vector(-10,  0,     1),
-
-            new Vector(-10, 5.5,    1),
-            new Vector(-5.5, 10,    1),
-            new Vector( 0,   10,    1),
-        });
-        /**
-         * Array with control points for the L-track.
-         */
-        private Vector[] controlPointsLTrack;
-        /**
-         * Array with control points for the C-track.
-         */
-        private Vector[] controlPointsCTrack;
-        /**
-         * Array with control points for the custom track.
-         */
-        private Vector[] controlPointsCustomTrack;
-
-        private int trackNr = 0;
-        /**
-         * Constructs the race track, sets up display lists.
-         */
         public RaceTrack() {
-            // code goes here ...
+            setCurrentCurve(curves[0]);
         }
 
-        float x = 0.f;
+        public void setCurrentCurve(CurveInterface curve) {
+            currentCurve = curve;
+        }
+
         /**
          * Draws this track, based on the selected track number.
          */
         
+        float x = 0;
         public void draw(int trackNr) {
-            this.trackNr = trackNr;
+            currentCurve = curves[trackNr];
             x+=0.2;
             
             final double STEP = 0.01;
@@ -1518,63 +1557,50 @@ public class RobotRace extends Base {
          * Returns the position of the curve at 0 <= {@code t} <= 1.
          */
         public Vector getPoint(double t) {
-            if(trackNr == 0) {
-                return new Vector(10*Math.cos(2* Math.PI * t),14*Math.sin(2* Math.PI * t),1);
-            } else {
-                return OTrack.B(t);
-            }
+            return currentCurve.getPoint(t);
         }
 
         /**
          * Returns the tangent of the curve at 0 <= {@code t} <= 1.
          */
         public Vector getTangent(double t) {
-            if(trackNr == 0) {
-                return new Vector(-20*Math.PI*Math.sin(2*Math.PI * t),28*Math.PI*Math.cos(2*Math.PI * t),0).normalized();
-            } else {
-                Vector tangent = OTrack.Bd(t);
-                return new Vector(tangent.x(), tangent.y(), 0);
-            }
+            return currentCurve.getTangent(t);
         }
         
-        public boolean isOnTrack(float x, float y){
-            if(trackNr==0){
-                float f = pointFunctionalValue(x, y);
-                if(f<2.1 && f>0.8){
-                    return true;
+        public class TrackCollision {
+            public final boolean isCollision;
+            public final double collisionPosition;
+
+            public TrackCollision(boolean isCollision, double collisionPosition) {
+                this.isCollision = isCollision;
+                this.collisionPosition = collisionPosition;
+            }
+
+            public TrackCollision(boolean isCollision) {
+                this(false, 0);
+                assert(!isCollision);
+            }
+        };
+
+        public TrackCollision findCollision(float x, float y){
+            // Brute force
+            Vector initialVector = new Vector(x, y, 1);
+            for(double t = 0; t < 1; t += 0.01) {
+                Vector point = currentCurve.getPoint(t);
+
+                if(initialVector.subtract(point).length() <= 4.2 &&
+                    initialVector.subtract(getOuter(t, point)).length() <= 4.2) {
+                    return new TrackCollision(true, t);
                 }
-                return false;
-            } else {
-                for(double t = 0; t < 1; t += 0.01) {
-                    if(new Vector(x, y, 1).subtract(OTrack.B(t)).length() < 10) {
-                        return true;
-                    }
-                }
-                return false;
-            }    
-        }
-        
-        public float pointFunctionalValue(float x, float y){
-            if(trackNr==0){
-                return (float)(Math.pow(x,2)/100+Math.pow(y,2)/196);
             }
-            else{
-                return 1;
-            }
+
+            return new TrackCollision(false);
         }
-        
+
         public float changeHeight(float x, float y, float height){
-            if(height > 0.5){
-                if(!raceTrack.isOnTrack(x,y)){
-                    float f = pointFunctionalValue(x,y);
-                    if(f<0.8 && f>0.2){
-                         height = height*0.5f;      
-                    } 
-                    else if (f>2.1 && f<3){
-                         height = height*0.5f; 
-                    }
-                }
-                else{
+            if(height > 0.5f){
+                TrackCollision collision = findCollision(x, y);
+                if(collision.isCollision) {
                     height = 0.5f;
                 }
             }
@@ -1931,9 +1957,9 @@ public class RobotRace extends Base {
         float step = 0.25f;
         float waterHeight = 0f;
         int treeCount = 15;
-        PerlinNoise perlin;    
+        PerlinNoise perlin;
         int OneDColorId = -1;
-        ArrayList<Tree> trees;
+        ArrayList<Tree> trees = null;
         float terrainHeightLevel = 5.0f;
         private Color[] colors = {
             new Color(0,0,255),//blue
@@ -1953,18 +1979,16 @@ public class RobotRace extends Base {
         });
 
         VBO vbo = new VBO(definition);
-        
+
         /**
          * Can be used to set up a display list.
          */
         public Terrain() {
             perlin = new PerlinNoise(123332321, 4, 5.0);
-            generateTrees();
-                   
         }
-        
-        public void generateTrees(){
-           trees = new ArrayList<Tree>();
+
+        public void generateTrees() {
+            trees = new ArrayList<Tree>();
             for(int i = 0; i < treeCount ; i++){
                 float x = 0;
                 float y = 0;
@@ -1972,12 +1996,14 @@ public class RobotRace extends Base {
                 while(z < 0.5f){
                     x = (float)(gridSize*(1-Math.random()*2));
                     y = (float)(gridSize*(1-Math.random()*2));
-                    if(!raceTrack.isOnTrack(x,y)){
-                       z = heightAt(x, y); 
+
+                    RaceTrack.TrackCollision collision = raceTrack.findCollision(x, y);
+                    if(!collision.isCollision) {
+                        z = heightAt(x, y);
                     }
                 }
                 trees.add(new Tree(x,y,z));//random positions.
-            }   
+            }
         }
 
         
@@ -2052,6 +2078,8 @@ public class RobotRace extends Base {
             }
             
             vbo.upload(builder);
+
+            generateTrees();
         }
 
         /**
@@ -2086,8 +2114,10 @@ public class RobotRace extends Base {
                 gl.glEnd();
             gl.glDisable(GL_BLEND);
             
-            for(int i = 0; i < treeCount; i++){
-                trees.get(i).draw();
+            if(trees != null) {
+                for(Tree tree : trees) {
+                    tree.draw();
+                }
             }
         }
 
