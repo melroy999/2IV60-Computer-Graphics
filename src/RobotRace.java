@@ -1501,7 +1501,7 @@ public class RobotRace extends Base {
         }
         
         Vector getLower(Vector initialPosition) {
-            return initialPosition.add(new Vector(0, 0, -2));
+            return new Vector(initialPosition.x(), initialPosition.y(), -1);
         }
         
         Vector getOuter(double t, Vector initialPosition) {
@@ -1532,7 +1532,8 @@ public class RobotRace extends Base {
             if(trackNr == 0) {
                 return new Vector(-20*Math.PI*Math.sin(2*Math.PI * t),28*Math.PI*Math.cos(2*Math.PI * t),0).normalized();
             } else {
-                return OTrack.Bd(t);
+                Vector tangent = OTrack.Bd(t);
+                return new Vector(tangent.x(), tangent.y(), 0);
             }
         }
         
