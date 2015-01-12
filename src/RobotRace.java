@@ -1652,6 +1652,7 @@ public class RobotRace extends Base {
 
         public void setCurrentCurve(CurveInterface curve) {
             currentCurve = curve;
+            cachedCollisions = null;
         }
 
         public void setCurrentCurve(int curve) {
@@ -1800,15 +1801,36 @@ public class RobotRace extends Base {
             }
         };
 
+        private class CollisionPoint {
+            public final double parameter;
+            public final Vector inner, outer;
+
+            CollisionPoint(double parameter, Vector inner, Vector outer) {
+                this.parameter = parameter;
+                this.inner = inner;
+                this.outer = outer;
+            }
+        }
+
+        ArrayList<CollisionPoint> cachedCollisions = null;
         public TrackCollision findCollision(float x, float y){
+            // Cache bezier
+            if(cachedCollisions == null) {
+                cachedCollisions = new ArrayList<CollisionPoint>();
+
+                for(double t = 0; t < 1; t += 0.01) {
+                    Vector point = currentCurve.getPoint(t);
+                    cachedCollisions.add(new CollisionPoint(t, point, getOuter(t, point)));
+                }
+            }
+
             // Brute force
             Vector initialVector = new Vector(x, y, 1);
-            for(double t = 0; t < 1; t += 0.01) {
-                Vector point = currentCurve.getPoint(t);
 
-                if(initialVector.subtract(point).length() <= 4.2 &&
-                    initialVector.subtract(getOuter(t, point)).length() <= 4.2) {
-                    return new TrackCollision(true, t);
+            for(CollisionPoint point : cachedCollisions) {
+                if( initialVector.subtract(point.inner).length() <= 4.2 &&
+                    initialVector.subtract(point.outer).length() <= 4.2) {
+                    return new TrackCollision(true, point.parameter);
                 }
             }
 
