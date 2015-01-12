@@ -948,7 +948,7 @@ public class RobotRace extends Base {
                     gl.glPushMatrix();
                         shoulderColor.set(gl);
 
-                        double r = 25 * Math.sin(t) * (i == 0 ? 1 : -1);
+                        double r = -25 * Math.sin(t) * (i == 0 ? 1 : -1);
                         gl.glRotatef((float)r, 1.f, 0.f, 0.f);
                         
                         // Mirror the 2nd arm
@@ -2386,10 +2386,10 @@ public class RobotRace extends Base {
         float deltaX = 720;
         float deltaY = 2100;     
 
-        textureX1 /= deltaX;
+        /*textureX1 /= deltaX;
         textureX2 /= deltaX;
         textureY1 /= deltaY;
-        textureY2 /= deltaY;
+        textureY2 /= deltaY;*/
         
         float delta = (textureX2 - textureX1) / (steps-1);
         
@@ -2406,22 +2406,22 @@ public class RobotRace extends Base {
             Vector normal = new Vector(xnn,ynn,0).normalized();
             
             gl.glNormal3d(normal.x(), normal.y(), normal.z());         
-            gl.glTexCoord2f(textureX1+delta*i, textureY1); 
+            gl.glTexCoord2f((textureX1+delta*i)/deltaX, textureY1/deltaY); 
             gl.glVertex3d(x,y,0);
             gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
-            gl.glTexCoord2f(textureX1+delta*i, textureY2); 
+            gl.glTexCoord2f((textureX1+delta*i)/deltaX, textureY2/deltaY); 
             gl.glVertex3d(x,y,height);
             gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
-            gl.glTexCoord2f(textureX1+delta*(i+1), textureY2); 
+            gl.glTexCoord2f((textureX1+delta*(i+1))/deltaX, textureY2/deltaY); 
             gl.glVertex3d(xn,yn,height);
             gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
-            gl.glTexCoord2f(textureX1+delta*(i+1), textureY1); 
+            gl.glTexCoord2f((textureX1+delta*(i+1))/deltaX, textureY1/deltaY); 
             gl.glVertex3d(xn,yn,0);
         }
         gl.glEnd();
         
-        float dummyX = 600*deltaX;
-        float dummyX2 = 720*deltaX;
+        float dummyX = 620*deltaX;
+        float dummyX2 = 700*deltaX;
         
         float diffX = (dummyX2 - dummyX);
         float diffY = (textureY2 - textureY1);
@@ -2430,22 +2430,22 @@ public class RobotRace extends Base {
         for(int i = 0; i<steps; i++){
             double x = Math.cos(step*i)*radius;
             double y = Math.sin(step*i)*radius;
-            double xn = Math.cos(step*i+step)*radius;
-            double yn = Math.sin(step*i+step)*radius;
+            double xn = Math.cos(step*(i+1))*radius;
+            double yn = Math.sin(step*(i+1))*radius;
             gl.glNormal3d(0, 0, 1);
-            gl.glTexCoord2d((660)/deltaX,textureY1+(0.5*diffY)); 
+            gl.glTexCoord2d((660)/deltaX,(textureY1+0.5*diffY)/deltaY); 
             gl.glVertex3d(x,y,height);
-            gl.glTexCoord2d((660+0.5*diffX*Math.cos(step*i))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i)));  
+            gl.glTexCoord2d((660+0.5*diffX*Math.cos(step*i))/deltaX,(textureY1+0.5*diffY+0.5*diffY*Math.sin(step*i))/deltaY);  
             gl.glVertex3d(xn,yn,height);
-            gl.glTexCoord2d((660+0.5*diffX*Math.cos(step*i+step))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i+step))); 
+            gl.glTexCoord2d((660+0.5*diffX*Math.cos(step*(i+1)))/deltaX,(textureY1+0.5*diffY+0.5*diffY*Math.sin(step*(i+1)))/deltaY); 
             gl.glVertex3d(0,0,height);
             
             gl.glNormal3d(0, 0, -1);
-            gl.glTexCoord2d((660)/deltaX,textureY1+(0.5*diffY)); 
+            gl.glTexCoord2d((dummyX+0.5*diffX)/deltaX,(textureY1+0.5*diffY)/deltaY); 
             gl.glVertex3d(x,y,0);
-            gl.glTexCoord2d((660+0.5*diffX*Math.cos(step*i))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i))); 
+            gl.glTexCoord2d((dummyX+0.5*diffX+0.5*diffX*Math.cos(step*i))/deltaX,(textureY1+0.5*diffY+0.5*diffY*Math.sin(step*i))/deltaY); 
             gl.glVertex3d(xn,yn,0);
-            gl.glTexCoord2d((660+0.5*diffX*Math.cos(step*i+step))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i+step))); 
+            gl.glTexCoord2d((dummyX+0.5*diffX+0.5*diffX*Math.cos(step*(i+1)))/deltaX,(textureY1+0.5*diffY+0.5*diffY*Math.sin(step*(i+1)))/deltaY); 
             gl.glVertex3d(0,0,0);
         }
         gl.glEnd();
@@ -2466,15 +2466,42 @@ public class RobotRace extends Base {
         float diffX = (textureX2 - textureX1);
         float diffY = (textureY2 - textureY1);
         
-        textureX1 /= deltaX;
+        double step = (2* Math.PI) / steps;
+        
+        gl.glBegin(gl.GL_TRIANGLES);
+        for(int i = 0; i<steps; i++){
+            double x = Math.cos(step*i)*radius;
+            double y = Math.sin(step*i)*radius;
+            double xn = Math.cos(step*i+step)*radius;
+            double yn = Math.sin(step*i+step)*radius;
+            
+            gl.glNormal3d(0, 0, 1);
+            //gl.glTexCoord2d(textureX1+(0.5*diffX)/deltaX,textureY1+(0.5*diffY)/deltaY); 
+            gl.glTexCoord2d((textureX1+diffX*0.5+170)/deltaX, (textureY1 + diffY*0.5)/deltaY);
+            gl.glVertex3d(x,y,height);
+            gl.glTexCoord2d((textureX1+diffX*0.5+diffX*0.5*Math.cos(step*i)+170)/deltaX, (textureY1 + diffY*0.5+ diffY*0.5*Math.sin(step*i))/deltaY);  
+            gl.glVertex3d(xn,yn,height);
+            gl.glTexCoord2d((textureX1+diffX*0.5+diffX*0.5*Math.cos(step*(i+1))+170)/deltaX, (textureY1 + diffY*0.5+ diffY*0.5*Math.sin(step*(i+1)))/deltaY); 
+            gl.glVertex3d(0,0,height);
+            
+            gl.glNormal3d(0, 0, -1);
+            gl.glTexCoord2d((textureX1+diffX*0.5+170)/deltaX, (textureY1 + diffY*0.5)/deltaY);
+            gl.glVertex3d(x,y,0);
+            gl.glTexCoord2d((textureX1+diffX*0.5+diffX*0.5*Math.cos(step*i)+170)/deltaX, (textureY1 + diffY*0.5+ diffY*0.5*Math.sin(step*i))/deltaY);  
+            gl.glVertex3d(xn,yn,0);
+            gl.glTexCoord2d((textureX1+diffX*0.5+diffX*0.5*Math.cos(step*(i+1))+170)/deltaX, (textureY1 + diffY*0.5+ diffY*0.5*Math.sin(step*(i+1)))/deltaY); 
+            gl.glVertex3d(0,0,0);
+        }
+        gl.glEnd();
+        
+        /*textureX1 /= deltaX;
         textureX2 /= deltaX;
         textureY1 /= deltaY;
-        textureY2 /= deltaY;
+        textureY2 /= deltaY;*/
         
-        float diff = (textureX2 - textureX1);
+        /*float diff = (textureX2 - textureX1);*/
         float delta = (textureX2 - textureX1) / (steps-1);
         
-        double step = (2* Math.PI) / steps;
         gl.glBegin(gl.GL_QUADS);
         for(int i = 0; i<steps; i++){
             double x = Math.cos(step*i)*radius;
@@ -2487,43 +2514,17 @@ public class RobotRace extends Base {
             Vector normal = new Vector(xnn,ynn,0).normalized();
             
             gl.glNormal3d(normal.x(), normal.y(), normal.z());         
-            gl.glTexCoord2f(textureX1+delta*i+168, textureY1); 
+            gl.glTexCoord2f((textureX1+delta*i+130)/deltaX, textureY1/deltaY); 
             gl.glVertex3d(x,y,0);
             gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
-            gl.glTexCoord2f(textureX1+delta*i+168, textureY2); 
+            gl.glTexCoord2f((textureX1+delta*i+130)/deltaX, textureY2/deltaY); 
             gl.glVertex3d(x,y,height);
             gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
-            gl.glTexCoord2f(textureX1+delta*(i+1)+168, textureY2); 
+            gl.glTexCoord2f((textureX1+delta*(i+1)+130)/deltaX, textureY2/deltaY); 
             gl.glVertex3d(xn,yn,height);
             gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
-            gl.glTexCoord2f(textureX1+delta*(i+1)+168, textureY1); 
+            gl.glTexCoord2f((textureX1+delta*(i+1)+130)/deltaX, textureY1/deltaY); 
             gl.glVertex3d(xn,yn,0);
-        }
-        gl.glEnd();
-        
-        
-        
-        gl.glBegin(gl.GL_TRIANGLES);
-        for(int i = 0; i<steps; i++){
-            double x = Math.cos(step*i)*radius;
-            double y = Math.sin(step*i)*radius;
-            double xn = Math.cos(step*i+step)*radius;
-            double yn = Math.sin(step*i+step)*radius;
-            gl.glNormal3d(0, 0, 1);
-            gl.glTexCoord2d(textureX1+(0.5*diffX)/deltaX,textureY1+(0.5*diffY)/deltaY); 
-            gl.glVertex3d(x,y,height);
-            gl.glTexCoord2d(textureX1+(0.5*diffX+0.5*diffX*Math.cos(step*i))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i))/deltaY);  
-            gl.glVertex3d(xn,yn,height);
-            gl.glTexCoord2d(textureX1+(0.5*diffX+0.5*diffX*Math.cos(step*i+step))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i+step))/deltaY); 
-            gl.glVertex3d(0,0,height);
-            
-            gl.glNormal3d(0, 0, -1);
-            gl.glTexCoord2d(textureX1+(0.5*diffX)/deltaX,(textureY1+0.5*diffY)/deltaY); 
-            gl.glVertex3d(x,y,0);
-            gl.glTexCoord2d(textureX1+(0.5*diffX+0.5*diffX*Math.cos(step*i))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i))/deltaY); 
-            gl.glVertex3d(xn,yn,0);
-            gl.glTexCoord2d(textureX1+(0.5*diffX+0.5*diffX*Math.cos(step*i+step))/deltaX,textureY1+(0.5*diffY+0.5*diffY*Math.sin(step*i+step))/deltaY); 
-            gl.glVertex3d(0,0,0);
         }
         gl.glEnd();
         gl.glDisable(gl.GL_TEXTURE_2D);
