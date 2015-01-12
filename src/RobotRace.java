@@ -1364,6 +1364,7 @@ public class RobotRace extends Base {
 
     public interface TransformableCurveInterface extends CurveInterface {
         public CurveInterface scale(Vector scale);
+        public CurveInterface translate(Vector transformation);
     }
 
     public class OvalCurve implements CurveInterface {
@@ -1438,6 +1439,7 @@ public class RobotRace extends Base {
             return B(t, controlPoints, true);
         };
 
+        @Override
         public BezierCurve translate(Vector delta) {
             Vector [] newPoints = new Vector[controlPoints.length];
 
@@ -1458,6 +1460,16 @@ public class RobotRace extends Base {
                     controlPoints[i].y() * scale.y(),
                     controlPoints[i].z() * scale.z()
                 );
+            }
+
+            return new BezierCurve(newPoints);
+        }
+
+        public BezierCurve reverse() {
+            Vector [] newPoints = new Vector[controlPoints.length];
+
+            for(int i = 0; i < controlPoints.length ; i ++) {
+                newPoints[i] = controlPoints[controlPoints.length - 1 - i];
             }
 
             return new BezierCurve(newPoints);
@@ -1510,6 +1522,83 @@ public class RobotRace extends Base {
 
             return new MultiSegmentCurve(newCurves);
         }
+
+        @Override
+        public MultiSegmentCurve translate(Vector translation) {
+            CurveInterface [] newCurves = new CurveInterface[curves.length];
+
+            for(int i = 0; i < curves.length ; i ++) {
+                newCurves[i] = ((TransformableCurveInterface)curves[i]).translate(translation);
+            }
+
+            return new MultiSegmentCurve(newCurves);
+        }
+    }
+
+    public enum CircleOrientation {
+        BOTTOM_RIGHT,
+        BOTTOM_LEFT,
+
+        LEFT_BOTTOM,
+        LEFT_TOP,
+
+        TOP_LEFT,
+        TOP_RIGHT,
+
+        RIGHT_TOP,
+        RIGHT_BOTTOM
+    };
+    public class QuarterCircleCurveFactory {
+        /**
+         *
+         *      .-----
+         *     /
+         *    -
+         *    |
+         */
+        protected BezierCurve template = new BezierCurve(
+            new Vector [] {
+                new Vector( 0,      1,      0),
+                new Vector( 0.55,   1,      0),
+
+                new Vector( 1,      0.55,   0),
+                new Vector( 1,      0,      0),
+            });
+
+        public QuarterCircleCurveFactory () {
+        }
+
+        public BezierCurve createCurve(CircleOrientation orientation) {
+            BezierCurve newCurve = template;
+
+            switch(orientation) {
+                case BOTTOM_RIGHT:
+                    break;
+                case BOTTOM_LEFT:
+                    newCurve = newCurve.scale(new Vector(-1,  1, 1)).translate(new Vector(1, 0, 0));
+                    break;
+                case LEFT_BOTTOM:
+                    newCurve = newCurve.scale(new Vector(-1,  1, 1)).translate(new Vector(1, 0, 0)).reverse();
+                    break;
+                case LEFT_TOP:
+                    newCurve = newCurve.scale(new Vector(-1, -1, 1)).translate(new Vector(1, 1, 0));
+                    break;
+                case TOP_LEFT:
+                    newCurve = newCurve.scale(new Vector( -1, -1, 1)).translate(new Vector(1, 1, 0)).reverse();
+                    break;
+                case TOP_RIGHT:
+                    newCurve = newCurve.scale(new Vector(  1, -1, 1)).translate(new Vector(0, 1, 0));
+                    break;
+                case RIGHT_TOP:
+                    newCurve = newCurve.scale(new Vector(  1, -1, 1)).translate(new Vector(0, 1, 0)).reverse();
+                    break;
+                case RIGHT_BOTTOM:
+                    newCurve = newCurve.reverse();
+                    break;
+                }
+
+            return newCurve;
+        }
     }
 
     /**
@@ -1558,49 +1647,50 @@ public class RobotRace extends Base {
                     new Vector(     0,   -2.5,  0),
                     new Vector(     0,      0,  0),
                 }),
-// //                 new BezierCurve(new Vector[] {
-// //                     new Vector( 0,    0,    1),
-// //                     new Vector(-0.5,  1,    1),
-// //
-// //                     new Vector(-1,    8,    1),
-// //                     new Vector( 0,   10,    1),
-// //                 }),
-// //                 new BezierCurve(new Vector[] {
-// //                     new Vector( 0,   10,    1),
-// //                     new Vector( 1,   11,    1),
-// //
-// //                     new Vector( 1,   11,    1),
-// //                     new Vector( 2, 10.5,    1),
-// //                 }),
-// //                 new BezierCurve(new Vector[] {
-// //                     new Vector( 2, 10.5,    1),
-// //                     new Vector( 3,   10,    1),
-// //                     new Vector( 1,   4,     1),
-// //                     new Vector( 3,   2,     1),
-// //                 }),
-// //                 new BezierCurve(new Vector[] {
-// //                     new Vector( 3,   2,     1),
-// //                     new Vector( 6,   0,     1),
-// //
-// //                     new Vector( 7,   2,     1),
-// //                     new Vector( 8,   0,     1),
-// //                 }),
-// //                 new BezierCurve(new Vector [] {
-// //                     new Vector( 8,   0,     1),
-// //                     new Vector( 9,   -2,    1),
-// //
-// //                     new Vector(10,   -2,    1),
-// //                     new Vector( 6,   -3,    1),
-// //                 }),
-//                 new BezierCurve(new Vector [] {
-//                     new Vector(6,   0,     1),
-//                     new Vector(4,  -4,     1),
-//
-//                     new Vector(0.5, -1,     1),
-//                     new Vector( 0,   0,     1),
-//                 })
-            }).scale(new Vector(4, 4, 1))
+            }).scale(new Vector(4, 4, 1)),
 
+            new MultiSegmentCurve(new CurveInterface[] {
+                new BezierCurve(new Vector[] {
+                    new Vector( 0,      0,      0),
+                    new Vector(15,      0,      0),
+                    new Vector(15,     10,      0),
+                    new Vector( 0,     10,      0),
+                }),
+                new BezierCurve(new Vector[] {
+                    new Vector( 0,     10,      0),
+                    new Vector(-30,     10,      0),
+                    new Vector(-30,     40,      0),
+                    new Vector( 0,     40,      0),
+
+                }),
+                new BezierCurve(new Vector[] {
+                    new Vector( 0,     40,      0),
+                    new Vector(15,     40,      0),
+                    new Vector(15,     50,      0),
+                    new Vector( 0,     50,      0),
+                }),
+                new BezierCurve(new Vector[] {
+                    new Vector( 0,     50,      0),
+                    new Vector(-50,    50,      0),
+                    new Vector(-50,     0,      0),
+                    new Vector( 0,      0,      0),
+
+                }),
+            }).translate(new Vector(0, -25, 0)).scale(new Vector(0.5, 0.5, 0.5)),
+            new MultiSegmentCurve(new CurveInterface[] {
+                new BezierCurve(new Vector [] {
+                    new Vector (0, 0, 0),
+                    new Vector (-10, 20, 5),
+                    new Vector (20, 0, 5),
+                    new Vector (0, 0, 10)
+                }),
+                new BezierCurve(new Vector [] {
+                    new Vector (0, 0, 10),
+                    new Vector (-20, 0, 5),
+                    new Vector (10, -20, 5),
+                    new Vector (0, 0, 0),
+                }),
+            }).scale(new Vector(2, 2, .5)),
         };
 
         public RaceTrack() {
