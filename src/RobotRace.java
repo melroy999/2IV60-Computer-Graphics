@@ -2193,15 +2193,45 @@ public class RobotRace extends Base {
      * Implementation of the terrain.
      */
     private class Terrain {
-        float gridSize = 25;//grid is -25 to 25
-        float step = 0.25f;//size of each polygon
-        float waterHeight = 0f;//height of the water
-        int treeCount = 15;//amount of trees
-        PerlinNoise perlin;//the perlinNoise
-        int OneDColorId = -1;
-        ArrayList<Tree> trees = null;
-        float terrainHeightLevel = 5.0f;//severity of the surface
-        private Color[] colors = {
+        /**
+         * Size of a chunk,
+         * Chunks go from -GRID_SIZE to GRID_SIZE
+         */
+        private static final float GRID_SIZE = 25;
+
+        /**
+         * Real size of a chunk
+         */
+        private static final float CHUNK_SIZE = 2 * GRID_SIZE;
+
+
+        /**
+         * Water height
+         */
+        private static final float WATER_HEIGHT = 0f;
+
+        /**
+         * Amount of trees per chunk
+         */
+        private static final int TREE_COUNT = 15;
+
+        /**
+         * The noise generator
+         */
+        private final PerlinNoise perlin = new PerlinNoise(123332321, 4, 5.0);
+
+
+        /**
+         * Severity of the surface
+         */
+        private static final float TERRAIN_HEIGHT_LEVEL = 5.0f;
+
+        /**
+         * Color texture id
+         */
+        protected int OneDColorId = -1;
+
+        private final Color[] TEXTURE_COLORS = {
             new Color(0,0,255),//blue
             new Color(255,255,0),//yellow
             new Color(0,255,0),//green
@@ -2218,113 +2248,173 @@ public class RobotRace extends Base {
             VertexDefinitionPart.TEXTCOORD_1D
         });
 
-        VBO vbo = new VBO(definition);
+        private class TerrainChunk {
+            private Terrain terrain;
+            private Vector offset;
+            private VBO vbo = new VBO(definition);
+            private ArrayList<Tree> trees = null;
+            /**
+            * Size of each polygon
+            */
+            private float STEP_SIZE = 0.25f;
+
+            public TerrainChunk(Terrain terrain, Vector offset) {
+                this.terrain = terrain;
+                this.offset = offset;
+                if(offset.length() > 0) STEP_SIZE *= 2;
+            }
+
+            /**
+             * Fill chunk with trees
+             */
+            public void generateTrees() {
+                trees = new ArrayList<Tree>();
+
+                for(int i = 0; i < TREE_COUNT; i++) {
+                    float x = 0;
+                    float y = 0;
+                    float z = 0;
+
+                    // Brute force good locaions
+                    while(z < 0.5f) {
+                        //get x and y, randomly
+                        x = (float)(GRID_SIZE*(1-Math.random()*2)) + (float)offset.x();
+                        y = (float)(GRID_SIZE*(1-Math.random()*2)) + (float)offset.y();
+
+                        //find out if the tree is on the track
+                        RaceTrack.TrackCollision collision = raceTrack.findCollision(x, y);
+                        if(!collision.isCollision) {
+                            z = heightAt(x, y);
+                        }
+                    }
+
+                    trees.add(new Tree(x,y,z));//add the tree.
+                }
+            }
+
+            public void recomputeGeometry() {
+                System.out.print("Building Geometry " + offset + ": ");
+
+                vbo.open();
+
+                VBOBuilder builder = vbo.getVBOBuilder();
+
+                for(float innerX = -GRID_SIZE; innerX < GRID_SIZE; innerX += STEP_SIZE)
+                {//for every x in the range
+                    System.out.print("|");
+
+                    for(float innerY = -GRID_SIZE; innerY < GRID_SIZE; innerY += STEP_SIZE)
+                    {//for every y in the range
+
+                        float   x = (float)offset.x() + innerX,
+                                y = (float)offset.y() + innerY;
+
+                        // Calculate the height of the corners
+                        float lowerLeftCorner   = terrain.heightAt(x,               y);
+                        float lowerRightCorner  = terrain.heightAt(x+STEP_SIZE,     y);
+                        float upperLeftCorner   = terrain.heightAt(x,               y+STEP_SIZE);
+                        float upperRightCorner  = terrain.heightAt(x+STEP_SIZE,     y+STEP_SIZE);
+
+                        /* structure of this quad
+                        *
+                        *             ulc - - - - - - urc
+                        *              |             / |
+                        *              |    diag  /    |
+                        *     vertical |       /       |
+                        *              |    /          |
+                        *              | /             |
+                        *             llc - - - - - - lrc
+                        *                  horizontal
+                        */
+
+                        // Triangle 1
+
+                        // Add lower left corner to VBO
+                        builder.addPosition(x, y, lowerLeftCorner);//add the position
+                        builder.addNormal(terrain.getNormal(x, y, STEP_SIZE));//find the normal and add the normal
+                        builder.addTexCoord(terrain.getColorAtHeight(lowerLeftCorner));//add the texture
+                        builder.endVertex();//close this vertex
+
+                        // Add lower right corner to VBO
+                        builder.addPosition(x + STEP_SIZE, y, lowerRightCorner);
+                        builder.addNormal(terrain.getNormal(x + STEP_SIZE, y, STEP_SIZE));
+                        builder.addTexCoord(terrain.getColorAtHeight(lowerRightCorner));
+                        builder.endVertex();
+
+                        // Add upper right corner to VBO
+                        builder.addPosition(x + STEP_SIZE, y + STEP_SIZE, upperRightCorner);
+                        builder.addNormal(terrain.getNormal(x + STEP_SIZE, y + STEP_SIZE, STEP_SIZE));
+                        builder.addTexCoord(terrain.getColorAtHeight(upperRightCorner));
+                        builder.endVertex();
+
+                        // Triangle 2
+
+                        // Add lower left corner to VBO
+                        builder.addPosition(x, y, lowerLeftCorner);
+                        builder.addNormal(terrain.getNormal(x, y, STEP_SIZE));
+                        builder.addTexCoord(terrain.getColorAtHeight(lowerLeftCorner));
+                        builder.endVertex();
+
+                        // Add upper left corner to VBO
+                        builder.addPosition(x, y + STEP_SIZE, upperLeftCorner);
+                        builder.addNormal(terrain.getNormal(x, y + STEP_SIZE, STEP_SIZE));
+                        builder.addTexCoord(terrain.getColorAtHeight(upperLeftCorner));
+                        builder.endVertex();
+
+                        // Add upper right corner to VBO
+                        builder.addPosition(x + STEP_SIZE, y + STEP_SIZE, upperRightCorner);
+                        builder.addNormal(terrain.getNormal(x + STEP_SIZE, y + STEP_SIZE, STEP_SIZE));
+                        builder.addTexCoord(terrain.getColorAtHeight(upperRightCorner));
+                        builder.endVertex();
+                    }
+                }
+
+                System.out.print(" -> Uploading geometry. ");
+
+                vbo.upload(builder);//add it to the vbo.
+
+                System.out.println("Done.");
+
+                generateTrees();//generate all the trees.
+            }
+        }
+
+        /**
+         * Chunks to render
+         */
+        ArrayList<TerrainChunk> chunks = new ArrayList<TerrainChunk>();
 
         /**
          * Can be used to set up a display list.
          */
         public Terrain() {
-            perlin = new PerlinNoise(123332321, 4, 5.0);//create perlinNoise.
-        }
+            int [][] sides = {
+                { 0, 0 }, // Closest first
+                { 0, 1 },
+                { 1, 1 },
+                { 1, 0 },
+                { 0,-1 },
+                {-1,-1 },
+                {-1, 0 },
+                {-1, 1 },
+                { 1,-1 }
+            };
 
-        public void generateTrees() {
-            trees = new ArrayList<Tree>();//list of trees
-            for(int i = 0; i < treeCount ; i++){//for all trees
-                float x = 0;
-                float y = 0;
-                float z = 0;
-                while(z < 0.5f){//while no good position is found
-                    x = (float)(gridSize*(1-Math.random()*2));//get x and y, randomly
-                    y = (float)(gridSize*(1-Math.random()*2));
-
-                    RaceTrack.TrackCollision collision = raceTrack.findCollision(x, y);//find out if the tree is on the track
-                    if(!collision.isCollision) {//if not, set the height
-                        z = heightAt(x, y);
-                    }
-                }
-                trees.add(new Tree(x,y,z));//add the tree.
+            for(int [] x : sides) {
+                chunks.add(new TerrainChunk(this, new Vector(
+                    x[0] * CHUNK_SIZE,
+                    x[1] * CHUNK_SIZE,
+                    0
+                )));
             }
         }
 
-        
         public void recomputeGeometry() {
-            System.out.print("Building Geometry: ");
-            vbo.open();
-
-            VBOBuilder builder = vbo.getVBOBuilder();
-
-            for(float x = -gridSize;x<gridSize;x+=step)
-            {//for every x in the range
-                System.out.print("|");
-
-                for(float y = -gridSize;y<gridSize;y+=step)
-                {//for every y in the range
-                    float lowerLeftCorner = heightAt(x,y);//get the 4 corners
-                    float lowerRightCorner = heightAt(x+step,y);
-                    float upperLeftCorner = heightAt(x,y+step);
-                    float upperRightCorner = heightAt(x+step,y+step);
-
-                    /* structure of this quad
-                    * 
-                    *             ulc - - - - - - urc
-                    *              |             / |
-                    *              |    diag  /    |
-                    *     vertical |       /       |
-                    *              |    /          |
-                    *              | /             |
-                    *             llc - - - - - - lrc
-                    *                  horizontal
-                    */
-
-                    // Triangle 1
-
-                    // Add lower left corner to VBO
-                    builder.addPosition(x, y, lowerLeftCorner);//add the position
-                    builder.addNormal(getNormal(x, y, step));//find the normal and add the normal
-                    builder.addTexCoord(getColorAtHeight(lowerLeftCorner));//add the texture 
-                    builder.endVertex();//close this vertex
-
-                    // Add lower right corner to VBO
-                    builder.addPosition(x + step, y, lowerRightCorner);
-                    builder.addNormal(getNormal(x + step, y, step));
-                    builder.addTexCoord(getColorAtHeight(lowerRightCorner));
-                    builder.endVertex();
-
-                    // Add upper right corner to VBO
-                    builder.addPosition(x + step, y + step, upperRightCorner);
-                    builder.addNormal(getNormal(x + step, y + step, step));
-                    builder.addTexCoord(getColorAtHeight(upperRightCorner));
-                    builder.endVertex();
-
-                    // Triangle 2
-
-                    // Add lower left corner to VBO
-                    builder.addPosition(x, y, lowerLeftCorner);
-                    builder.addNormal(getNormal(x, y, step));
-                    builder.addTexCoord(getColorAtHeight(lowerLeftCorner));
-                    builder.endVertex();
-
-                    // Add upper left corner to VBO
-                    builder.addPosition(x, y + step, upperLeftCorner);
-                    builder.addNormal(getNormal(x, y + step, step));
-                    builder.addTexCoord(getColorAtHeight(upperLeftCorner));
-                    builder.endVertex();
-
-                    // Add upper right corner to VBO
-                    builder.addPosition(x + step, y + step, upperRightCorner);
-                    builder.addNormal(getNormal(x + step, y + step, step));
-                    builder.addTexCoord(getColorAtHeight(upperRightCorner));
-                    builder.endVertex();
+            for(TerrainChunk chunk : chunks) {
+                if(chunk != null) {
+                    chunk.recomputeGeometry();
                 }
             }
-
-            System.out.print(" -> Uploading geometry. ");
-            
-            vbo.upload(builder);//add it to the vbo.
-
-            System.out.println("Done.");
-
-            generateTrees();//generate all the trees.
         }
 
         /**
@@ -2336,32 +2426,42 @@ public class RobotRace extends Base {
             gl.glEnable(GL_TEXTURE_1D);
                 gl.glBindTexture(GL_TEXTURE_1D, OneDColorId);
 
-                if(!vbo.isOpened()) {//if no vbo
-                    recomputeGeometry();//make it!
+                boolean isFirst = true;
+                VBO vbo = null;
+                for(TerrainChunk chunk : chunks) {
+                    if(chunk != null) {
+                        vbo = chunk.vbo;
+
+                        if(!vbo.isOpened()) {//if no vbo
+                            chunk.recomputeGeometry();//make it!
+                        }
+
+                        vbo.bind();
+                        vbo.enable();
+
+                        gl.glDrawArrays(gl.GL_TRIANGLES, 0, vbo.getTriangleCount());
+
+                        vbo.disable();
+                    }
                 }
-
-                vbo.bind();
-                vbo.enable();
-
-                gl.glDrawArrays(gl.GL_TRIANGLES, 0, vbo.getTriangleCount());
-
-                vbo.disable();
             gl.glDisable(GL_TEXTURE_1D);
             
             gl.glEnable(GL_BLEND);//draw the water surface, enable alpha
             gl.glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);//enable alpha
                 gl.glBegin(GL_QUADS);
                     RobotRace.Material.WATER.set(gl);//set material water
-                    gl.glVertex3d(-gridSize,-gridSize,waterHeight);//all 4 corners of the terrain
-                    gl.glVertex3d(gridSize,-gridSize,waterHeight);
-                    gl.glVertex3d(gridSize,gridSize,waterHeight);
-                    gl.glVertex3d(-gridSize,gridSize,waterHeight);
+                    gl.glVertex3d(-CHUNK_SIZE, -CHUNK_SIZE, WATER_HEIGHT);
+                    gl.glVertex3d(CHUNK_SIZE,  -CHUNK_SIZE, WATER_HEIGHT);
+                    gl.glVertex3d(CHUNK_SIZE,   CHUNK_SIZE, WATER_HEIGHT);
+                    gl.glVertex3d(-CHUNK_SIZE,  CHUNK_SIZE, WATER_HEIGHT);
                 gl.glEnd();
             gl.glDisable(GL_BLEND);
             
-            if(trees != null) {
-                for(Tree tree : trees) {
-                    tree.draw();
+            for(TerrainChunk chunk : chunks) {
+                if(chunk.trees != null) {
+                    for(Tree tree : chunk.trees) {
+                        tree.draw();
+                    }
                 }
             }
         }
@@ -2383,8 +2483,10 @@ public class RobotRace extends Base {
          * @param textureId The OpenGL texture to upload the colors to
          */
         public void uploadColors(int textureId) {
-            ByteBuffer byteBuffer = ByteBuffer.allocateDirect(colors.length*4).order(ByteOrder.nativeOrder());//create bytebuffer.
-            for(Color color: colors){//for all colors
+            ByteBuffer byteBuffer = ByteBuffer.allocateDirect(TEXTURE_COLORS.length*4).order(ByteOrder.nativeOrder());//create bytebuffer.
+
+            // Add a pixel for every color
+            for(Color color: TEXTURE_COLORS) {
                 int pixel = color.getRGB();//RGB value
                 byteBuffer.put((byte)((pixel >>> 16) & 0xFF));//select Red component
                 byteBuffer.put((byte)((pixel >>> 8) & 0xFF));//select Green component
@@ -2395,29 +2497,15 @@ public class RobotRace extends Base {
 
             gl.glEnable(GL_TEXTURE_1D);
                 gl.glBindTexture(GL_TEXTURE_1D, textureId);//bind the textures
-                gl.glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, colors.length, 0, GL_RGBA, GL_UNSIGNED_BYTE, byteBuffer);//set the 1d texture
+                gl.glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, TEXTURE_COLORS.length, 0, GL_RGBA, GL_UNSIGNED_BYTE, byteBuffer);//set the 1d texture
                 gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);//add filters
                 gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);//add filters
             gl.glDisable(GL_TEXTURE_1D);
         }
 
-        public void setColors(Color [] colors, boolean upload) {
-            this.colors = colors;
-            if(upload) {
-                uploadColors(OneDColorId);
-            }
-        }
 
-        public void setColors(Color [] colors) {
-            setColors(colors, true);
-        }
-
-        public Color [] getColors() {
-            return colors;
-        }
-        
         public float heightAt(float x, float y) {
-            float height = (float)(perlin.noise2d(x,y) * terrainHeightLevel);
+            float height = (float)(perlin.noise2d(x,y) * TERRAIN_HEIGHT_LEVEL);
             return heightCorrection(x,y,height);
         }
 
@@ -2436,7 +2524,7 @@ public class RobotRace extends Base {
          * @return 1D coordinates for 1D texture
          */
         public float getColorAtHeight(float z){
-            float max = ((colors.length)/2.0f)-0.5f;//maximum
+            float max = ((TEXTURE_COLORS.length)/2.0f)-0.5f;//maximum
                 
             if(z > max*2){//if above 2x max
                 z = max;//make it the max
