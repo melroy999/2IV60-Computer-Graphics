@@ -305,13 +305,14 @@ public class RobotRace extends Base {
 
         gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL);
 
-        // Axes should not be affected by light
+        // Set color
+        gl.glColor3f(1.f, 1.f, 1.f);
+
+        // Axes and the screen should not be affected by light
         gl.glDisable(gl.GL_LIGHTING);
-
+            // Bind the screen camera buffer as a texture
             gl.glEnable(gl.GL_TEXTURE_2D);
-                gl.glColor3f(1.f, 1.f, 1.f);
-
-                screenCamera.frameBuffer.bindColorBuffer();
+            screenCamera.frameBuffer.bindColorBuffer();
 
                 gl.glPushMatrix();
                     Dimensions textureDimensions = screenCamera.frameBuffer.getDimensions();
@@ -322,18 +323,26 @@ public class RobotRace extends Base {
                     Vector screenDelta = outerScreenPosition.subtract(screenPosition);
                     Vector screenDelta2D = new Vector(screenDelta.x(), screenDelta.y(), 0);
 
+                    // Draw the screen
                     gl.glPushMatrix();
+                        // Put in the right spot
                         gl.glTranslated(screenPosition.x(), screenPosition.y(), screenPosition.z()+2);
+
+                        // Correctly rotate
                         double rotation = Math.acos(
                             screenDelta2D.normalized().dot(Vector.X)
                         );
                         if(screenDelta.y() < 0) rotation += Math.PI;
                         gl.glRotated(Math.toDegrees(rotation), 0.f, 0.f, 1.f);
+
+                        // Let the screen have the correct length
                         gl.glScaled(
                             screenDelta2D.length(),
                             textureDimensions.w()/(textureDimensions.w()*screenDelta2D.length()),
                             1.f
                         );
+
+                        // Draw!
                         gl.glBegin(gl.GL_QUADS);
                             gl.glTexCoord2d(0.f, 0.f); gl.glVertex3f(0.f, 0.f, 0.f);
                             gl.glTexCoord2d(1.f, 0.f); gl.glVertex3f(1.f, 0.f, 0.f);
@@ -342,6 +351,7 @@ public class RobotRace extends Base {
                         gl.glEnd();
                     gl.glPopMatrix();
 
+                    // Draw the sides
                     gl.glPushMatrix();
                         gl.glTranslated(screenPosition.x(), screenPosition.y(), screenPosition.z()+1);
                         gl.glColor3d(0.2f,0.2f,0.2f);
@@ -374,23 +384,25 @@ public class RobotRace extends Base {
                 Vector position = raceTrack.getPoint(t);
                 Vector tangent = raceTrack.getTangent(t);
                 
+                // Center in the correct lane
                 position = position.add(
-                        tangent.cross(Vector.Z).normalized().scale(.5f+i++)
+                    tangent.cross(Vector.Z).normalized().scale(.5f+i++)
                 );
                 
+                // Move into position
                 gl.glTranslated(position.x(), position.y(), position.z());
 
+                // Rotate
                 gl.glRotatef(
                     (float)Math.toDegrees(Math.atan(tangent.y() / tangent.x())) + (tangent.x() < 0 ? 90 : -90),
                     0.f, 0.f, 1.f
                 );
                 
+                // Draw
                 bob.draw(gs.showStick, t);
-                
             gl.glPopMatrix();
         }
 
-        
         // Draw race track
         Material.GOLD.set(gl);
         raceTrack.draw();
@@ -417,8 +429,6 @@ public class RobotRace extends Base {
             Vector.Y,
             Vector.Z
         };
-   
-        
         
         for (Vector direction : directions) {
             // Set the color, colors match the directions
@@ -505,9 +515,10 @@ public class RobotRace extends Base {
         new float[]{0.50754f, 0.50754f, 0.50754f, 0.5f},
         new float[]{0.508273f, 0.508273f, 0.508273f, 0.3f}),
         
+        // Be the leaf!
         LEAF(
-                new float[]{0.0f, 0.2f, 0.0f, 1.0f},
-                new float[]{0.0f, 0.1f, 0.0f, 1.0f});
+        new float[]{0.0f, 0.2f, 0.0f, 1.0f},
+        new float[]{0.0f, 0.1f, 0.0f, 1.0f});
         /* 
         
         /**
@@ -566,10 +577,19 @@ public class RobotRace extends Base {
          */        
         private Material material = null;
 
-        float speedModifier = 80;
+        /**
+         * Speed of the robot
+         */
+        private float speedModifier = 80;
         
-        int id;
+        /**
+         * Identifying digit of the robot
+         */
+        public int id;
         
+        /**
+         * Material specification of different parts of the robot
+         */
         Material headColor = null;
         Material neckColor = null;
         Material shoulderColor = null;
@@ -607,7 +627,7 @@ public class RobotRace extends Base {
          * Change the materials that are set to the default material
          * @param material The material to change to
          */
-        void setDefaultMaterial(Material material) {
+        public void setDefaultMaterial(Material material) {
             headColor           = headColor         == this.material ? material : headColor;
             neckColor           = neckColor         == this.material ? material : neckColor;
             shoulderColor       = shoulderColor     == this.material ? material : shoulderColor;
@@ -631,11 +651,18 @@ public class RobotRace extends Base {
 
         }
         
+        /**
+         * Sets the speed of the robot
+         * @param speed
+         */
         public Robot setSpeed(float speed){
             this.speedModifier = speed;
             return this;
         }
-        
+
+        /**
+         * @return The speed of the robot
+         */
         public float getSpeed(){
             return speedModifier;
         }
@@ -665,7 +692,8 @@ public class RobotRace extends Base {
         }*/
 
         /**
-         * Draws the robot
+         * Draws the robot.
+         * "It works"
          * @param stickFigure Whether to draw this robot as a stick figure
          * @param t The position in the cycle (0 - 1), used for animation.
          */
@@ -1039,77 +1067,146 @@ public class RobotRace extends Base {
         }
     }
 
+    /**
+     * Integral 2D vector used to store the dimensions of the screen.
+     */
     public class Dimensions {
+
+        /**
+         * The actual value
+         */
         private int w, h;
+
+        /**
+         * Initialize the class with -1
+         */
         public Dimensions() {
             this(-1, -1);
         }
+
+        /**
+         * Create a new dimensions class and set the Width and Height
+         * @param w
+         * @param h
+         */
         public Dimensions(int w, int h) {
             set(w, h);
         }
+
+        /**
+         * @return The width
+         */
         public int w() {
             return w;
         }
+
+        /**
+         * @return The height
+         */
         public int h() {
             return h;
         }
+
+        /**
+         * Set the width and the height.
+         * @param w
+         * @param h
+         */
         public void set(int w, int h) {
             this.w = w;
             this.h = h;
         }
+
+        /**
+         * @return A string representation of this class
+         */
         public String toString() {
             return "Dimensions{w:"+w+",h:"+h+"}";
         }
     }
 
+    /**
+     * Framebuffer, a target to render to
+     */
     public class FrameBuffer {
-        int handle = -1;
-        int colorBufferHandle = -1;
-        int deptBufferHandle = -1;
-        Dimensions dimensions = null;
+        /**
+         * The handle of the framebuffer
+         */
+        private int handle = -1;
 
+        /**
+         * The handle of the color buffer
+         */
+        private int colorBufferHandle = -1;
+
+        /**
+         * The handle of the depth buffer
+         */
+        private int deptBufferHandle = -1;
+
+        /**
+         * The dimensions of the buffers
+         */
+        private Dimensions dimensions = null;
+
+        /**
+         * Create a new empty frame buffer
+         */
         FrameBuffer () {}
 
-        // Initialize from existing buffer (Such as 0, the primary screen buffer)
+        /**
+         * Initialize from an already existing buffer
+         * @param handle The buffer handle. Set to 0 for the default framebuffer.
+         */
         FrameBuffer (int handle) {
             this.handle = handle;
         }
 
+        /**
+         * Create the framebuffer
+         */
         public void create() {
+            // Create a framebuffer
             {
                 int [] x = new int [1]; // Java is fun
                 gl.glGenFramebuffers(1, x, 0);
                 handle = x[0];
             }
 
+            // Bind the framebuffer
             bind();
 
-            //Initialize color buffer
+            // Create a color buffer
             {
                 int [] x = new int [1];
                 gl.glGenTextures(1, x, 0);
                 colorBufferHandle = x[0];
             }
 
+            // Bind the color buffer
             bindColorBuffer();
 
+            // Make sure dimensions is set to a valid value
             dimensions = dimensions != null ? dimensions : new Dimensions(1024, 768);
 
-            // Give an empty image to OpenGL ( the last "0" )
+            // Set the color buffer to an empty texture
             gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGB, dimensions.w(), dimensions.h(), 0, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, null);
 
             // Poor filtering. Needed !
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST);
             gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST);
 
+            // Create a depth buffer
             {
                 int [] x = new int [1];
                 gl.glGenRenderbuffers(1, x, 0);
                 deptBufferHandle = x[0];
             }
 
+            // Bind the depth buffer
             bindDepthBuffer();
 
+            // Set the buffer to an empty depth texture
             gl.glRenderbufferStorage(gl.GL_RENDERBUFFER, gl.GL_DEPTH_COMPONENT, dimensions.w(), dimensions.h());
             gl.glFramebufferRenderbuffer(gl.GL_FRAMEBUFFER, gl.GL_DEPTH_ATTACHMENT, gl.GL_RENDERBUFFER, deptBufferHandle);
 
@@ -1121,23 +1218,36 @@ public class RobotRace extends Base {
             drawBuffers[0] = gl.GL_COLOR_ATTACHMENT0;
             gl.glDrawBuffers(1, drawBuffers, 0);
 
+            // Check if everything went well
             if(gl.glCheckFramebufferStatus(gl.GL_FRAMEBUFFER) != gl.GL_FRAMEBUFFER_COMPLETE) {
                 throw new RuntimeException("Could not create camera buffer");
             }
         }
 
+        /**
+         * Bind the framebuffer
+         */
         void bind() {
             gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, handle);
         }
 
+        /**
+         * Bind the color buffer as a texture
+         */
         void bindColorBuffer() {
             gl.glBindTexture(gl.GL_TEXTURE_2D, colorBufferHandle);
         }
 
+        /**
+         * Bind the depth buffer
+         */
         void bindDepthBuffer() {
             gl.glBindRenderbuffer(gl.GL_RENDERBUFFER, deptBufferHandle);
         }
 
+        /**
+         * Get the dimensions of the buffer
+         */
         Dimensions getDimensions() {
             return dimensions == null ? new Dimensions(gs.w, gs.h) : dimensions;
         }
@@ -1150,64 +1260,122 @@ public class RobotRace extends Base {
         /**
          * The position of the camera.
          */
-        public Vector eye = new Vector(3f, 6f, 5f);//starting eye position
+        public Vector eye = new Vector(3f, 6f, 5f);
+
         /**
          * The point to which the camera is looking.
          */
-        public Vector center = Vector.O;//starting center
+        public Vector center = Vector.O;
+
         /**
          * The up vector.
          */
-        public Vector up = Vector.Z;//up direction
+        public Vector up = Vector.Z;
 
-        private int mode = 0;//the viewing mode we are in
-        private int robot = 0;//the robot you look at
+        /**
+         * The viewing mode the camera is in.
+         */
+        private int mode = 0;
 
-        public float fov = (float)Math.PI/2.f;//fov of the scene
+        /**
+         * The robot the camera is focussed on.
+         */
+        private int robot = 0;
 
+        /**
+         * The fov of the camera.
+         * (only used on the non primary camera)
+         */
+        public float fov = (float)Math.PI/2.f;
+
+        /**
+         * The framebuffer of the camera
+         */
         public FrameBuffer frameBuffer = null;
-        private float viewingDistance = 12;//default viewing distance
 
+        /**
+         * The default viewing distance
+         */
+        private float viewingDistance = 12;
+        /**
+         * The slowest robot
+         */
+        private int robotFPV = 0;
+
+        /**
+         * The time the auto camera was selected.
+         */
+        private long startTime;
+
+        /**
+         * Time in milliseconds the camera switches in auto mode
+         */
+        private static final int AUTO_MODE_SWITCH_INTERVAL = 6000;
+
+        /**
+         * @return The viewing distance of the camera, returns gs.vDist for the primary camera.
+         */
         public float getViewingDistance() {
             // This is why we don't use global state ..
             return this == mainCamera ? gs.vDist : viewingDistance;
         }
 
-        public void setViewingDistance(int distance) {
+        /**
+         * Sets the viewing distance of the camera
+         * @param int distance
+         */
+        public void setViewingDistance(float distance) {
             if(this == mainCamera) {
                 gs.vDist = distance;
             }
             viewingDistance = distance;
         }
 
+        /**
+         * @return the mode of the camera
+         */
         public int getMode() {
             return mode;
         }
 
+        /**
+         * Update the camera mode.
+         * @param mode
+         */
         public void onChangeMode(int mode) {
+            // Manual mode
             if (-1 == mode) {
+                // Does nothing
+
             // Helicopter mode
             } else if (1 == mode) {
-                setViewingDistance(10);//set some values, to make sure the view doesn't look horrible.
+                // Set viewing distance to a sane value
+                setViewingDistance(10);
+
                 if(this == mainCamera) {
-                    gs.vWidth = 10+(int)(Math.random()*10);//randomize the vWidth a bit.
+                    // Randomize the vWidth a bit.
+                    gs.vWidth = 10+(int)(Math.random()*10);
                 }
 
             // Motor cycle mode
             } else if (2 == mode) {
-                setViewingDistance(5);//set some values, to make sure the view doesn't look horrible.
+                // Set viewing distance to a sane value
+                setViewingDistance(5);
 
                 if(this == mainCamera) {
-                    gs.vWidth = 10+(int)(Math.random()*10);//randomize the vWidth a bit.
+                    // Randomize the vWidth a bit.
+                    gs.vWidth = 10+(int)(Math.random()*10);
                 }
 
             // First person mode
             } else if (3 == mode) {
                 if(this == mainCamera) {
-                    gs.vWidth = 15+(int)(Math.random()*5);//randomize the vWidth a bit.
+                    //Randomize the vWidth a bit.
+                    gs.vWidth = 15+(int)(Math.random()*5);
                 }
 
-                for(int i = 0; i < robots.length ; i++) {//find the slowest robot
+                // Focus on the slowest robot
+                for(int i = 0; i < robots.length ; i++) {
                     float speed = robots[i].getSpeed();
                     if(speed>=robots[robotFPV].getSpeed()){
                         robotFPV = i;
@@ -1216,31 +1384,40 @@ public class RobotRace extends Base {
 
             // Auto mode
             } else if (4 == mode) {
-                setViewingDistance(12);//set some values, to make sure the view doesn't look horrible.
+                // Set the viewing distance to a sanve value
+                setViewingDistance(12);
+
+                // Initialize the timer
                 startTime = System.currentTimeMillis();
-                for(int i = 0; i < robots.length ; i++) {//find the slowest robot
+
+                // Find the slowest robot
+                for(int i = 0; i < robots.length ; i++) {
                     float speed = robots[i].getSpeed();
 
                     if(speed>=robots[robotFPV].getSpeed()) {
                         robotFPV = i;
                     }
                 }
+
             // Default mode
             } else {
-                setViewingDistance(25);//set some values, to make sure the view doesn't look horrible.
+                // Set to a sane value
+                setViewingDistance(25);
             }
 
-            robot = (int)(Math.random()*robots.length);//randomly select a robot.
+            // Randomly select a robot
+            robot = (int)(Math.random()*robots.length);
+
+            // Actually change the mode
             this.mode = mode;
         }
 
+        /**
+         * @return The field of view of the camera
+         */
         public float getFov() {
             return fov;
         }
-
-        public int robotFPV = 0;
-        long startTime;
-        int interval = 6000;//in miliseconds
 
 
         /**
@@ -1250,6 +1427,7 @@ public class RobotRace extends Base {
         public void update(float theta, float phi) {
             float vDist = getViewingDistance();
 
+            // Calculate the eye position
             eye = new Vector (
                 vDist * Math.cos(phi) * Math.cos(theta) + center.x(),
                 vDist * Math.cos(phi) * Math.sin(theta) + center.y(),
@@ -1270,13 +1448,14 @@ public class RobotRace extends Base {
 
             // Auto mode
             } else if (4 == mode) {
-                if(System.currentTimeMillis() - startTime < interval){//change perspective on interval
+                // Automatically swithc camera mode
+                if(System.currentTimeMillis() - startTime < AUTO_MODE_SWITCH_INTERVAL){
                     setHelicopterMode();
                 }
-                else if(System.currentTimeMillis() - startTime < 2*interval){
+                else if(System.currentTimeMillis() - startTime < 2*AUTO_MODE_SWITCH_INTERVAL){
                     setMotorCycleMode();
                 }
-                else if(System.currentTimeMillis() - startTime < 3*interval){
+                else if(System.currentTimeMillis() - startTime < 3*AUTO_MODE_SWITCH_INTERVAL){
                     setFirstPersonMode();
                 }
                 else{
@@ -1286,7 +1465,10 @@ public class RobotRace extends Base {
 
             // Default mode
             } else {
+                // Only usable by the main camera
                 assert(this == mainCamera);
+
+                // Use the center defined in the global state
                 center = gs.cnt;
             }
         }
@@ -1334,6 +1516,9 @@ public class RobotRace extends Base {
         }
     }
 
+    /**
+     * An interface for basic curves.
+     */
     public interface CurveInterface {
         /**
          * @param t Parameter {@code 0 <= t <= 1}
@@ -1348,22 +1533,49 @@ public class RobotRace extends Base {
         public Vector getTangent(double t);
     }
 
+    /**
+     * An interface for curves that can be modified.
+     */
     public interface TransformableCurveInterface extends CurveInterface {
+        /**
+         * Scale the curve accordign to the vector
+         * @param scale
+         */
         public CurveInterface scale(Vector scale);
+
+        /**
+         * Translate the curve according to the vector
+         */
         public CurveInterface translate(Vector transformation);
     }
 
+    /**
+     * A simple oval shape.
+     * This shape is used in the default race track.
+     */
     public class OvalCurve implements CurveInterface {
+        /**
+         * The radius in the x and y direction
+         */
         protected double x, y;
 
+        /**
+         * Initialize the curve from an x and an y radius.
+         * @param x The x radius.
+         * @param y The y radius.
+         */
         public OvalCurve(double x, double y) {
             this.x = x;
             this.y = y;
         }
 
+        /**
+         * Initialize the oval curve with the default values.
+         */
         public OvalCurve() {
             this(10, 14);
         }
+
         /**
          * {@inheritdoc}
          */
@@ -1388,16 +1600,31 @@ public class RobotRace extends Base {
     }
 
     public class BezierCurve implements TransformableCurveInterface {
+        /**
+         * The control points of the curve
+         */
         private Vector [] controlPoints;
 
+        /**
+         * Initialize the curve from controlpoints
+         */
         public BezierCurve(Vector [] controlPoints) {
             assert(controlPoints != null);
             this.controlPoints = controlPoints;
         }
 
+        /**
+         * Finds the Vector at parameter t according to the specified points.
+         * When derative is true, the derative vector is calculated instead of the point.
+         * @param t The parameter
+         * @param points The control points / calculated points
+         * @param derative Whether to calculate the derivative
+         */
         protected Vector B(double t, Vector [] points, boolean derative) {
+            // The new set of points is one less
             Vector [] newPoints = new Vector[points.length-1];
 
+            // Calculate the deltas, then scale the deltas according to t to obtain a new set of points
             for(int i = 1; i < points.length ; i ++) {
                 newPoints[i-1] = points[i-1].add(
                     points[i]
@@ -1406,25 +1633,39 @@ public class RobotRace extends Base {
                 );
             }
 
+            // The last two points are the derivative, return those instead if requirested
             if(derative && newPoints.length == 2) {
                 return newPoints[1].subtract(newPoints[0]).normalized();
+
+            // Return the answer when there is only one point left
             } else if(newPoints.length == 1) {
                 return newPoints[0];
+
+            // Recursively call to obtain the point
             } else {
                 return B(t, newPoints, derative);
             }
         }
 
+        /**
+         * {@inheritdoc}
+         */
         @Override
         public Vector getPoint(double t) {
             return B(t, controlPoints, false);
         }
 
+        /**
+         * {@inheritdoc}
+         */
         @Override
         public Vector getTangent(double t) {
             return B(t, controlPoints, true);
         };
 
+        /**
+         * {@inheritdoc}
+         */
         @Override
         public BezierCurve translate(Vector delta) {
             Vector [] newPoints = new Vector[controlPoints.length];
@@ -1436,6 +1677,9 @@ public class RobotRace extends Base {
             return new BezierCurve(newPoints);
         }
 
+        /**
+         * {@inheritdoc}
+         */
         @Override
         public BezierCurve scale(Vector scale) {
             Vector [] newPoints = new Vector[controlPoints.length];
@@ -1451,6 +1695,10 @@ public class RobotRace extends Base {
             return new BezierCurve(newPoints);
         }
 
+        /**
+         * Reverse the order of control points.
+         * Effectively changes the direction.
+         */
         public BezierCurve reverse() {
             Vector [] newPoints = new Vector[controlPoints.length];
 
@@ -1462,42 +1710,87 @@ public class RobotRace extends Base {
         }
     }
 
+    /**
+     * A curve that consists of multiple curve segments.
+     */
     public class MultiSegmentCurve implements TransformableCurveInterface {
+        /**
+         * The curves this curve consists of
+         */
         protected CurveInterface [] curves;
 
+        /**
+         * Initialize the curve with a set of sub-curves
+         */
         public MultiSegmentCurve(CurveInterface [] curves) {
             this.curves = curves;
         }
 
+        /**
+         * Information about a segment
+         */
         protected class SegmentInformation {
+            /**
+             * The curve that this information is about
+             */
             public final CurveInterface curve;
+
+            /**
+             * The scaled parameter (0 <= x <= 1)
+             */
             public final double localParameter;
 
+            /**
+             * Initialize the segment information from a curve and local parameter.
+             * @param curve
+             * @param localParameter
+             */
             SegmentInformation(CurveInterface curve, double localParameter) {
                 this.curve = curve;
                 this.localParameter = localParameter;
             }
         }
 
+        /**
+         * Finds the segment information from a global parameter
+         * @param t Parameter
+         * @return The local parameter and the curve it applies to
+         */
         protected SegmentInformation findSegment(double t) {
             return new SegmentInformation(
+                // Wow Such math,
+                // So unreadable
+                // Much useful comments
+
+                // Find the curve the parameter applies to
                 curves[(int)Math.max(0, Math.ceil(t * curves.length)-1)],
+
+                // Find the local parameter
                 (t * curves.length) % 1
             );
         }
 
+        /**
+         * {@inheritdoc}
+         */
         @Override
         public Vector getPoint(double t) {
             SegmentInformation segment = findSegment(t);
             return segment.curve.getPoint(segment.localParameter);
         }
 
+        /**
+         * {@inheritdoc}
+         */
         @Override
         public Vector getTangent(double t) {
             SegmentInformation segment = findSegment(t);
             return segment.curve.getTangent(segment.localParameter);
         }
 
+        /**
+         * {@inheritdoc}
+         */
         @Override
         public MultiSegmentCurve scale(Vector scale) {
             CurveInterface [] newCurves = new CurveInterface[curves.length];
@@ -1509,6 +1802,9 @@ public class RobotRace extends Base {
             return new MultiSegmentCurve(newCurves);
         }
 
+        /**
+         * {@inheritdoc}
+         */
         @Override
         public MultiSegmentCurve translate(Vector translation) {
             CurveInterface [] newCurves = new CurveInterface[curves.length];
@@ -1520,12 +1816,19 @@ public class RobotRace extends Base {
             return new MultiSegmentCurve(newCurves);
         }
     }
+
     /**
      * Implementation of a race track that is made from Bezier segments.
      */
     private class RaceTrack {
+        /**
+         * The current track that is in use
+         */
         protected CurveInterface currentCurve;
 
+        /**
+         * All the available curves
+         */
         protected CurveInterface [] curves = new CurveInterface[] {
             // 0: default
             new OvalCurve(),
@@ -1626,11 +1929,18 @@ public class RobotRace extends Base {
             }).scale(new Vector(2, 2, .5)),
         };
 
+        /**
+         * Initializes the race track, sets the default curve to 0.
+         */
         public RaceTrack() {
             setCurrentCurve(curves[0]);
         }
 
-        public void setCurrentCurve(CurveInterface curve) {
+        /**
+         * Sets the current track, clears the collision cache.
+         * @param curve The curve to set it to
+         */
+        protected void setCurrentCurve(CurveInterface curve) {
             currentCurve = curve;
             cachedCollisions = null;
         }
@@ -1639,6 +1949,9 @@ public class RobotRace extends Base {
             setCurrentCurve(curves[curve]);
         }
 
+        /**
+         * @return The integral representation of the curve. -1 When it is not set to a valid value.
+         */
         public int getCurrentCurve() {
             for(int i = 0; i < curves.length; i ++) {
                 if(currentCurve == curves[i]) {
@@ -1649,124 +1962,161 @@ public class RobotRace extends Base {
             return -1;
         }
 
+        // Fps dependant color switching variable
+        float x = 0;
+
         /**
          * Draws this track.
          */
-        
-        float x = 0;
         public void draw() {
             x+=0.2;
             
             final double STEP = 0.01;
-            for(int j = 0; j < 4; j++) {
-                gl.glEnable(gl.GL_TEXTURE_2D);
-                if(j == 0) {
-                    track.bind(gl);
-                } else {
-                    brick.bind(gl);
-                }
 
-                gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT );
-                gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT );
-
-                gl.glBegin(gl.GL_LINES);
-                {
-                    Vector pos = getPoint(0);
-                    Vector dir = getTangent(0);
-                    gl.glVertex3d(pos.x(), pos.y(), pos.z());
-                    pos = pos.add(dir);
-                    gl.glVertex3d(pos.x(), pos.y(), pos.z());
-                }
-                gl.glEnd();
-
-                gl.glBegin(gl.GL_TRIANGLE_STRIP);
-                    for(double i = -3*STEP; i <= 1; i += STEP) {
-                        Vector initialPoint = getPoint(i),
-                                point = initialPoint;
-                        if(j == 1) {
-                            point = getLower(point);
-                        } else if (j == 2) {
-                            point = getOuter(i, point);
-                        }
-
-                        float texcoordy = j == 0 ? (float)(i * 100) - x : (float)(i * 1000);
-                        if(j != 0) gl.glColor3d(
-                                Math.sin(i*2*Math.PI+x)/2+.5,
-                                Math.sin(i*4*Math.PI+x)/2+.5,
-                                Math.sin(i*8*Math.PI+x)/2+.5);
-                        if(i==0) {
-                            gl.glNormal3f(0.f, 0.f, 1.f);
-                        } else if(i == 1) {
-                            gl.glNormal3f(0.f, 0.f, -1.f);
-                        } else {
-                            Vector outsideDirection = point.subtract(initialPoint);
-                            if(i == 3) {
-                                outsideDirection.scale(-1);
-                            }
-                            gl.glNormal3d(outsideDirection.x(), outsideDirection.y(), outsideDirection.z());
-                        }
-                        gl.glTexCoord2f(0.f, texcoordy);
-                        gl.glVertex3d(point.x(), point.y(), point.z());
-
-                        Vector outerPoint = (j == 2 || j == 3) ? getLower(point) : getOuter(i, point);
-                        if(i==0) {
-                            gl.glNormal3f(0.f, 0.f, 1.f);
-                        } else if(i == 1) {
-                            gl.glNormal3f(0.f, 0.f, -1.f);
-                        } else if(i == 2) {
-                            Vector outsideDirection = point.subtract(initialPoint);
-                            if(i == 3) {
-                                outsideDirection.scale(-1);
-                            }
-                            gl.glNormal3d(outsideDirection.x(), outsideDirection.y(), outsideDirection.z());
-                        }
-                        gl.glTexCoord2f(j == 0 ? 1.f : 5.f, texcoordy);
-                        gl.glVertex3d(outerPoint.x(), outerPoint.y(), outerPoint.z());
+            // Enable textures
+            gl.glEnable(gl.GL_TEXTURE_2D);
+                // Loop through the sides
+                for(int j = 0; j < 4; j++) {
+                    // Bind the right texture
+                    if(j == 0) {
+                        track.bind(gl);
+                    } else {
+                        brick.bind(gl);
                     }
-                gl.glEnd();
-                gl.glDisable(gl.GL_TEXTURE_2D);
-            }
+
+                    // Set correct settings
+                    gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT );
+                    gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT );
+
+                    // Draw a side of the track
+                    gl.glBegin(gl.GL_TRIANGLE_STRIP);
+                        // Divide the track up in small peices
+                        // -3*STEP to make the ends less noticable
+                        for(double i = -3*STEP; i <= 1; i += STEP) {
+                            // Find the location on the track
+                            Vector initialPoint = getPoint(i),
+                                    point = initialPoint;
+
+                            // Modify the point depending on the side
+                            if(j == 1) {
+                                point = getLower(point);
+                            } else if (j == 2) {
+                                point = getOuter(i, point);
+                            }
+
+                            // Calculate textcoord, top depends on fps-dependant time
+                            float texcoordy = j == 0 ? (float)(i * 100) - x : (float)(i * 1000);
+
+                            // Set the color for all sides but the top
+                            if(j != 0) gl.glColor3d(
+                                    Math.sin(i*2*Math.PI+x)/2+.5,
+                                    Math.sin(i*4*Math.PI+x)/2+.5,
+                                    Math.sin(i*8*Math.PI+x)/2+.5);
+
+                            // Set normals
+                            if(i==0) {
+                                gl.glNormal3f(0.f, 0.f, 1.f);
+                            } else if(i == 1) {
+                                gl.glNormal3f(0.f, 0.f, -1.f);
+                            } else {
+                                // Calculate the normals from the derivative
+                                Vector outsideDirection = point.subtract(initialPoint);
+                                if(i == 3) {
+                                    outsideDirection.scale(-1);
+                                }
+                                gl.glNormal3d(outsideDirection.x(), outsideDirection.y(), outsideDirection.z());
+                            }
+
+                            // Set the coordinates for the texture
+                            gl.glTexCoord2f(0.f, texcoordy);
+
+                            // Draw the first point
+                            gl.glVertex3d(point.x(), point.y(), point.z());
+
+                            // Find the other point
+                            Vector outerPoint = (j == 2 || j == 3) ? getLower(point) : getOuter(i, point);
+
+                            // Set the correct normal
+                            if(i==0) {
+                                gl.glNormal3f(0.f, 0.f, 1.f);
+                            } else if(i == 1) {
+                                gl.glNormal3f(0.f, 0.f, -1.f);
+                            } else if(i == 2) {
+                                // Calculate the normal
+                                Vector outsideDirection = point.subtract(initialPoint);
+                                if(i == 3) {
+                                    outsideDirection.scale(-1);
+                                }
+                                gl.glNormal3d(outsideDirection.x(), outsideDirection.y(), outsideDirection.z());
+                            }
+
+                            // Set the correct textcoord
+                            gl.glTexCoord2f(j == 0 ? 1.f : 5.f, texcoordy);
+
+                            // Draw the point
+                            gl.glVertex3d(outerPoint.x(), outerPoint.y(), outerPoint.z());
+                        }
+                    gl.glEnd();
+                }
+            gl.glDisable(gl.GL_TEXTURE_2D);
         }
-        
+
+        /**
+         * @param initalPosition The coordinate of the top of the track
+         * @return The coordinate of the bottom of the track
+         */
         Vector getLower(Vector initialPosition) {
-//             for(PathLocation path : intersections) {
-//                 double length = initialPosition.subtract(path.point).length();
-//                 if(length < 4) {
-//                     return new Vector(initialPosition.x(), initialPosition.y(), initialPosition.z() - (1 - length/4) * initialPosition.z() );
-//                 }
-//             }
             return new Vector(initialPosition.x(), initialPosition.y(), initialPosition.z()-1);
         }
         
+        /**
+         * @param t Parameter
+         * @param initalPosition The position of the inside of the track
+         * @return The position of the outside of the track
+         */
         Vector getOuter(double t, Vector initialPosition) {
             Vector tangent = getTangent(t);
+
+            // Assume the track is always flat
             Vector upVector = Vector.Z;//initialPosition.cross(tangent);
+
+            // Calculate the direction
             Vector directionVector = tangent.cross(upVector)
                                             .normalized()
                                             .scale(4);
 
+            // Add it to the inital position
             return initialPosition.add(directionVector);
         }
 
+        /**
+         * @param t A non normalized track parameter
+         * @return A normalized track parameter
+         */
         double normalizeParam(double t) {
             while(t < 0) t++;
             return t % 1;
         }
         /**
-         * Returns the position of the curve at 0 <= {@code t} <= 1.
+         * @param t Parameter
+         * @return The position of the curve at 0 <= {@code t} <= 1.
          */
         public Vector getPoint(double t) {
             return currentCurve.getPoint(normalizeParam(t));
         }
 
         /**
-         * Returns the tangent of the curve at 0 <= {@code t} <= 1.
+         * @param t Parameter
+         * @return the normalized horizontal tangent of the curve at 0 <= {@code t} <= 1.
          */
         public Vector getTangent(double t) {
             Vector tangent = currentCurve.getTangent(normalizeParam(t)).normalized();
             return new Vector(tangent.x(), tangent.y(), 0);
         }
         
+        /**
+         * Collision of the track with the terrain
+         */
         public class TrackCollision {
             public final boolean isCollision;
             public final double collisionPosition;
@@ -1782,6 +2132,9 @@ public class RobotRace extends Base {
             }
         };
 
+        /**
+         * Cache entry of collisions
+         */
         private class CollisionPoint {
             public final double parameter;
             public final Vector inner, outer;
@@ -1795,17 +2148,18 @@ public class RobotRace extends Base {
 
         ArrayList<CollisionPoint> cachedCollisions = null;
         public TrackCollision findCollision(float x, float y){
-            // Cache bezier
+            // Cache bezier, prebuild all collisions at first call
             if(cachedCollisions == null) {
                 cachedCollisions = new ArrayList<CollisionPoint>();
 
+                // Brute force 'all' positions
                 for(double t = 0; t < 1; t += 0.01) {
                     Vector point = currentCurve.getPoint(t);
                     cachedCollisions.add(new CollisionPoint(t, point, getOuter(t, point)));
                 }
             }
 
-            // Brute force
+            // Brute force, compare with cache
             Vector initialVector = new Vector(x, y, 1);
 
             for(CollisionPoint point : cachedCollisions) {
@@ -1815,9 +2169,13 @@ public class RobotRace extends Base {
                 }
             }
 
+            // Return no collision
             return new TrackCollision(false);
         }
 
+        /**
+         * Change the height of the terain at a certain point
+         */
         public float changeHeight(float x, float y, float height){
             if(height > 0.5f){
                 TrackCollision collision = findCollision(x, y);
@@ -1829,7 +2187,14 @@ public class RobotRace extends Base {
         }
     }
 
+    /**
+     * The size of a floating point number in bytes: 4 (32 bits)
+     */
     public static final int FLOAT_SIZE = 4;
+
+    /**
+     * A chunk of data that can be used in a vertex definition
+     */
     enum VertexDefinitionPart {
         POSITION_1D(1   * FLOAT_SIZE),
         POSITION_2D(2   * FLOAT_SIZE),
@@ -1841,6 +2206,9 @@ public class RobotRace extends Base {
         TEXTCOORD_2D(2  * FLOAT_SIZE),
         TEXTCOORD_3D(3  * FLOAT_SIZE);
 
+        /**
+         * Size of the data in bytes
+         */
         private int stride;
 
         private VertexDefinitionPart(int stride) {
@@ -1852,7 +2220,13 @@ public class RobotRace extends Base {
         }
     };
 
+    /**
+     * Definition is used to determine the format and store vertex data in opengl buffers
+     */
     public class VertexDefinition {
+        /**
+         * The actual definition
+         */
         protected VertexDefinitionPart [] parts;
 
         public VertexDefinition(VertexDefinitionPart [] parts) {
@@ -1860,6 +2234,9 @@ public class RobotRace extends Base {
             this.parts = parts;
         }
 
+        /**
+         * @return The stride of the vertex
+         */
         public int getStride() {
             int stride = 0;
 
@@ -1870,6 +2247,9 @@ public class RobotRace extends Base {
             return stride;
         }
 
+        /**
+         * @return The definition at a certain stride, stride must be the *start* of the part.
+         */
         public VertexDefinitionPart getPartAtStride(int stride) {
             for(VertexDefinitionPart part : parts) {
                 if(stride == 0) {
@@ -1882,6 +2262,9 @@ public class RobotRace extends Base {
             throw new RuntimeException("Stride out of bounds.");
         }
 
+        /**
+         * @return The stride of a certain part
+         */
         public int getStrideOfPart(VertexDefinitionPart part) {
             int stride = 0;
 
@@ -1894,6 +2277,9 @@ public class RobotRace extends Base {
             throw new RuntimeException("Part does not exist in definition.");
         }
 
+        /**
+         * @return If the definition contains a certain part
+         */
         public boolean hasPart(VertexDefinitionPart part) {
             for(VertexDefinitionPart p : parts) {
                 if(p == part) {
@@ -1904,17 +2290,40 @@ public class RobotRace extends Base {
         }
     };
 
+    /**
+     * Builder for VBO data
+     */
     public class VBOBuilder {
+        /**
+         * The definition to build according to
+         */
         private VertexDefinition definition = null;
+
+        /**
+         * The buffer to store the vertex data in before getting converted to packed bytes
+         */
         // TODO: directly use buffer in order to allow for double / int arguments
         private ArrayList<Float> buffer = new ArrayList<Float>();
+
+        /**
+         * The current stride
+         */
         private int stride = 0;
+
+        /**
+         * The amount of vertexes
+         */
         private int nVertex = 0;
 
         public VBOBuilder(VertexDefinition definition) {
             this.definition = definition;
         }
 
+        /**
+         * Check if a part is expected at this time.
+         * @param part
+         * @throws RuntimeException When the part is not expected according to the definition
+         */
         protected void checkStride(VertexDefinitionPart part) {
             if(definition.getPartAtStride(stride) != part) {
                 throw new RuntimeException("This is not expected at this time.");
@@ -1922,6 +2331,10 @@ public class RobotRace extends Base {
             stride += part.getStride();
         }
 
+        /**
+         * Mark the end of a vertex
+         * @throws RuntimeException If the length of the vertex does not match the defined stride.
+         */
         public void endVertex() {
             if(stride != definition.getStride()) {
                 throw new RuntimeException("Vertex stride invalid");
@@ -1931,6 +2344,10 @@ public class RobotRace extends Base {
             nVertex++;
         }
 
+        /**
+         * Mark the end of the buffer
+         * @throws RuntimeException If there is an unfinished vertex.
+         */
         public ArrayList<Float> finish() {
             if(stride != 0) {
                 throw new RuntimeException("Unterminated vertex");
@@ -1938,6 +2355,9 @@ public class RobotRace extends Base {
             return buffer;
         }
 
+        /**
+         * Adds a normal
+         */
         public void addNormal(Vector normal) {
             checkStride(VertexDefinitionPart.NORMAL);
 
@@ -2033,15 +2453,35 @@ public class RobotRace extends Base {
         }
     }
 
+    /**
+     * Represents an opengl VBO
+     */
     public class VBO {
+        /**
+         * The definition of the layout
+         */
         private VertexDefinition layout;
+
+        /**
+         * The amount of vertexes in the buffer
+         */
         private int nVertex = 0;
+
+        /**
+         * The handle of the buffer
+         */
         private int vbo = -1;
 
+        /**
+         * Creates a VBO from a layout
+         */
         public VBO(VertexDefinition layout) {
             this.layout = layout;
         }
 
+        /**
+         * @return A builder that can be used with this builder
+         */
         public VBOBuilder getVBOBuilder() {
             return new VBOBuilder(layout);
         }
@@ -2066,6 +2506,9 @@ public class RobotRace extends Base {
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo);
         }
 
+        /**
+         * Set all the pointers right
+         */
         public void enable() {
             int vertexPosition = -1;
             int vertexSize = 0;
@@ -2141,6 +2584,9 @@ public class RobotRace extends Base {
             }
         }
 
+        /**
+         * Upload data from the builder to the gpu
+         */
         public void upload(VBOBuilder builder) {
             ArrayList<Float> buf = builder.finish();
 
@@ -2223,12 +2669,18 @@ public class RobotRace extends Base {
             new Color(0,50,0),//as dark as previous one.
         };
 
+        /**
+         * Definition fo the vertex layout
+         */
         VertexDefinition definition = new VertexDefinition(new VertexDefinitionPart [] {
             VertexDefinitionPart.POSITION_3D,
             VertexDefinitionPart.NORMAL,
             VertexDefinitionPart.TEXTCOORD_1D
         });
 
+        /**
+         * A chunk of terrain
+         */
         private class TerrainChunk {
             private Terrain terrain;
             private Vector offset;
@@ -2273,6 +2725,9 @@ public class RobotRace extends Base {
                 }
             }
 
+            /**
+             * Generate geometry
+             */
             public void recomputeGeometry() {
                 System.out.print("Building Geometry " + offset + ": ");
 
@@ -2369,6 +2824,7 @@ public class RobotRace extends Base {
          * Can be used to set up a display list.
          */
         public Terrain() {
+            // 9 Chunks by default
             int [][] sides = {
                 { 0, 0 }, // Closest first
                 { 0, 1 },
@@ -2390,6 +2846,9 @@ public class RobotRace extends Base {
             }
         }
 
+        /**
+         * Recompute the geometry for all the terrain
+         */
         public void recomputeGeometry() {
             for(TerrainChunk chunk : chunks) {
                 if(chunk != null) {
@@ -2407,6 +2866,7 @@ public class RobotRace extends Base {
             gl.glEnable(gl.GL_TEXTURE_1D);
                 gl.glBindTexture(gl.GL_TEXTURE_1D, OneDColorId);
 
+                // Draw all the chunks
                 boolean isFirst = true;
                 VBO vbo = null;
                 for(TerrainChunk chunk : chunks) {
@@ -2438,6 +2898,7 @@ public class RobotRace extends Base {
                 gl.glEnd();
             gl.glDisable(gl.GL_BLEND);
             
+            // Draw all the trees
             for(TerrainChunk chunk : chunks) {
                 if(chunk.trees != null) {
                     for(Tree tree : chunk.trees) {
@@ -2447,6 +2908,9 @@ public class RobotRace extends Base {
             }
         }
 
+        /**
+         * @return Opengl handle to texture
+         */
         private int create1DTexture() {
             int[] textureId = new int[1];
 
@@ -2484,16 +2948,24 @@ public class RobotRace extends Base {
             gl.glDisable(gl.GL_TEXTURE_1D);
         }
 
-
+        /**
+         * @return height at specified position
+         */
         public float heightAt(float x, float y) {
             float height = (float)(perlin.noise2d(x,y) * TERRAIN_HEIGHT_LEVEL);
             return heightCorrection(x,y,height);
         }
 
+        /**
+         * @return vector at specified position
+         */
         public Vector positionAt(float x, float y) {
             return new Vector(x, y, heightAt(x, y));
         }
         
+        /**
+         * @return For racetrack corrected height
+         */
         public float heightCorrection(float x, float y, float z){
             z=raceTrack.changeHeight(x, y, z);
             return z;
@@ -2523,10 +2995,10 @@ public class RobotRace extends Base {
         }
         
         /**
-         * 
-         * @param x_ = x coordinate
-         * @param y_ = y coordinate
-         * @param step = step till next point
+         * Get smooth normal at position.
+         * @param x x coordinate
+         * @param y y coordinate
+         * @param step step till next point
          * @return the normal vector.
          */
         public Vector getNormal(double x_, double y_, float step) {
@@ -2571,6 +3043,9 @@ public class RobotRace extends Base {
         }
     }
     
+    /**
+     * A class representing a tree
+     */
     private class Tree {
         int levels;//the amount of levels of leaves.
         float logHeight;//height of the stump
