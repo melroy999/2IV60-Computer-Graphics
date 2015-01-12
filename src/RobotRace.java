@@ -173,7 +173,7 @@ public class RobotRace extends Base {
         // Try to load four textures, add more if you like.
         gl.glEnable(GL_TEXTURE_2D);
             track = loadTexture("track.png");
-            brick = loadTexture("brick.jpg");
+            brick = loadTexture("brick.png");
             head = loadTexture("head.jpg");
             torso = loadTexture("textureRobot.jpg");//full texture of the robot
         gl.glDisable(GL_TEXTURE_2D);
@@ -1670,7 +1670,7 @@ public class RobotRace extends Base {
         }
 
         /**
-         * Draws this track, based on the selected track number.
+         * Draws this track.
          */
         
         float x = 0;
@@ -1679,14 +1679,15 @@ public class RobotRace extends Base {
             
             final double STEP = 0.01;
             for(int j = 0; j < 4; j++) {
+                gl.glEnable(gl.GL_TEXTURE_2D);
                 if(j == 0) {
-                    gl.glEnable(gl.GL_TEXTURE_2D);
-
                     track.bind(gl);
-
-                    gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-                    gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+                } else {
+                    brick.bind(gl);
                 }
+
+                gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+                gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
 
                 gl.glBegin(gl.GL_LINES);
                 {
@@ -1708,7 +1709,7 @@ public class RobotRace extends Base {
                             point = getOuter(i, point);
                         }
 
-                        float texcoordy = (float)(i * 100) - x;
+                        float texcoordy = j == 0 ? (float)(i * 100) - x : (float)(i * 1000);
                         if(j != 0) gl.glColor3d(
                                 Math.sin(i*2*Math.PI+x)/2+.5,
                                 Math.sin(i*4*Math.PI+x)/2+.5,
@@ -1724,7 +1725,7 @@ public class RobotRace extends Base {
                             }
                             gl.glNormal3d(outsideDirection.x(), outsideDirection.y(), outsideDirection.z());
                         }
-                        if(j == 0) gl.glTexCoord2f(0.f, texcoordy);
+                        gl.glTexCoord2f(0.f, texcoordy);
                         gl.glVertex3d(point.x(), point.y(), point.z());
 
                         Vector outerPoint = (j == 2 || j == 3) ? getLower(point) : getOuter(i, point);
@@ -1739,11 +1740,11 @@ public class RobotRace extends Base {
                             }
                             gl.glNormal3d(outsideDirection.x(), outsideDirection.y(), outsideDirection.z());
                         }
-                        if(j == 0) gl.glTexCoord2f(1.f, texcoordy);
+                        gl.glTexCoord2f(j == 0 ? 1.f : 5.f, texcoordy);
                         gl.glVertex3d(outerPoint.x(), outerPoint.y(), outerPoint.z());
                     }
                 gl.glEnd();
-                if(j == 0) gl.glDisable(gl.GL_TEXTURE_2D);
+                gl.glDisable(gl.GL_TEXTURE_2D);
             }
         }
         
