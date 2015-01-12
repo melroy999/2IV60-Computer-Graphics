@@ -855,27 +855,41 @@ public class RobotRace extends Base {
                              */
 
                              // Draw a stick figure or a triangle strip depending on the mode
+                            gl.glEnable(gl.GL_TEXTURE_2D);
+                            torso.bind(gl);
+                            //gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dimensions.w(), dimensions.h(), 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+                            gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+                            gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+                            
+                            float textureX = 600;
+                            float textureX2 = 650;
+                            float textureY = id*420;
+                            float textureY2 = id*420 + 50;
+                            
+                            float deltaX = 720;
+                            float deltaY = 2100;
+                            
                              gl.glBegin(stickFigure ? gl.GL_LINE_STRIP : gl.GL_TRIANGLE_STRIP);
                                 // Left side
-                                gl.glNormal3f(0.f, -1.f, 0.f); gl.glVertex3f(0.f, 0.f, 0.f);
-                                gl.glNormal3f((float)Math.sqrt(2), -1.f, (float)Math.sqrt(2)); gl.glVertex3f(1.f, 0.f, 0.f);
-                                gl.glNormal3f((float)Math.sqrt(2), -1.f, (float)Math.sqrt(2)); gl.glVertex3f(0.f, 0.f, 1.f);
+                                gl.glNormal3f(0.f, -1.f, 0.f); gl.glTexCoord2f(textureX/deltaX,textureY/deltaY); gl.glVertex3f(0.f, 0.f, 0.f);
+                                gl.glNormal3f((float)Math.sqrt(2), -1.f, (float)Math.sqrt(2)); gl.glTexCoord2f(textureX2/deltaX,textureY/deltaY); gl.glVertex3f(1.f, 0.f, 0.f);
+                                gl.glNormal3f((float)Math.sqrt(2), -1.f, (float)Math.sqrt(2)); gl.glTexCoord2f(textureX/deltaX,textureY2/deltaY); gl.glVertex3f(0.f, 0.f, 1.f);
 
                                 //Front quad
-                                gl.glNormal3f((float)Math.sqrt(2), 1.f, (float)Math.sqrt(2)); gl.glVertex3f(1.f, 1.f, 0.f);
-                                gl.glNormal3f((float)Math.sqrt(2)-1.f, 1.f, (float)Math.sqrt(2)); gl.glVertex3f(0.f, 1.f, 1.f);
+                                gl.glNormal3f((float)Math.sqrt(2), 1.f, (float)Math.sqrt(2)); gl.glTexCoord2f(textureX2/deltaX,textureY/deltaY); gl.glVertex3f(1.f, 1.f, 0.f);
+                                gl.glNormal3f((float)Math.sqrt(2)-1.f, 1.f, (float)Math.sqrt(2)); gl.glTexCoord2f(textureX/deltaX,textureY2/deltaY); gl.glVertex3f(0.f, 1.f, 1.f);
 
                                 //Right side
-                                gl.glNormal3f(-1.f, 1.f, 0.f); gl.glVertex3f(0.f, 1.f, 0.f);
+                                gl.glNormal3f(-1.f, 1.f, 0.f); gl.glTexCoord2f(textureX/deltaX,textureY2/deltaY); gl.glVertex3f(0.f, 1.f, 0.f);
 
                                 //Back side
-                                gl.glNormal3f(-1.f, 0.f, 0.f); gl.glVertex3f(0.f, 0.f, 1.f);
-                                gl.glNormal3f(-1.f, 0.f, -1.f); gl.glVertex3f(0.f, 0.f, 0.f);
-                                gl.glNormal3f(-1.f, 0.f, -1.f); gl.glVertex3f(0.f, 1.f, 0.f);
+                                gl.glNormal3f(-1.f, 0.f, 0.f); gl.glTexCoord2f(textureX/deltaX,textureY2/deltaY); gl.glVertex3f(0.f, 0.f, 1.f);
+                                gl.glNormal3f(-1.f, 0.f, -1.f); gl.glTexCoord2f(textureX/deltaX,textureY/deltaY); gl.glVertex3f(0.f, 0.f, 0.f);
+                                gl.glNormal3f(-1.f, 0.f, -1.f); gl.glTexCoord2f(textureX2/deltaX,textureY/deltaY); gl.glVertex3f(0.f, 1.f, 0.f);
 
                                 //Bottom side
-                                gl.glNormal3f(0.f, 0.f, -1.f); gl.glVertex3f(1.f, 0.f, 0.f);
-                                gl.glNormal3f(0.f, 0.f, -1.f); gl.glVertex3f(1.f, 1.f, 0.f);
+                                gl.glNormal3f(0.f, 0.f, -1.f); gl.glTexCoord2f(textureX2/deltaX,textureY/deltaY); gl.glVertex3f(1.f, 0.f, 0.f);
+                                gl.glNormal3f(0.f, 0.f, -1.f); gl.glTexCoord2f(textureX2/deltaX,textureY2/deltaY); gl.glVertex3f(1.f, 1.f, 0.f);
 
                                 // Stick figure needs additional vertexes
                                 if(stickFigure) {
@@ -886,6 +900,7 @@ public class RobotRace extends Base {
                                     gl.glVertex3f(0.f, 0.f, 1.f);
                                 }
                             gl.glEnd();
+                          gl.glDisable(gl.GL_TEXTURE_2D);
                         gl.glPopMatrix();
                     }
                 gl.glPopMatrix();
@@ -948,7 +963,7 @@ public class RobotRace extends Base {
                     gl.glPushMatrix();
                         shoulderColor.set(gl);
 
-                        double r = 25 * Math.sin(t) * (i == 0 ? 1 : -1);
+                        double r = - 25 * Math.sin(t) * (i == 0 ? 1 : -1);//set angle of arm
                         gl.glRotatef((float)r, 1.f, 0.f, 0.f);
                         
                         // Mirror the 2nd arm
@@ -993,7 +1008,7 @@ public class RobotRace extends Base {
                             armPartColor[i][j].set(gl);
 
                             if(j==1){
-                                gl.glRotatef(20-(float)(0.25f*r), 1.f, 0.f, 0.f);
+                                gl.glRotatef(20-(float)(0.25f*r), 1.f, 0.f, 0.f);//set angle of arm
                             }
                             // Draw the arm part
                             gl.glPushMatrix();
@@ -2518,7 +2533,7 @@ public class RobotRace extends Base {
             
             gl.glNormal3d(normal.x(), normal.y(), normal.z());//set the normal         
             gl.glTexCoord2f((textureX1+delta*i+130)/deltaX, textureY1/deltaY);//get the location of the texture (only used for torso, so adding 130 gives us clean textures) 
-            gl.glVertex3d(x,y,0);
+            gl.glVertex3d(x,y,0);//set coordinates
             gl.glTexCoord2f((textureX1+delta*i+130)/deltaX, textureY2/deltaY);//get the location of the texture
             gl.glVertex3d(x,y,height);
             gl.glTexCoord2f((textureX1+delta*(i+1)+130)/deltaX, textureY2/deltaY);//get the location of the texture 
