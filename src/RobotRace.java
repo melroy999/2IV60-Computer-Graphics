@@ -1362,6 +1362,10 @@ public class RobotRace extends Base {
         public Vector getTangent(double t);
     }
 
+    public interface TransformableCurveInterface extends CurveInterface {
+        public CurveInterface scale(Vector scale);
+    }
+
     public class OvalCurve implements CurveInterface {
         protected double x, y;
 
@@ -1396,7 +1400,7 @@ public class RobotRace extends Base {
         }
     }
 
-    public class BezierCurve implements CurveInterface {
+    public class BezierCurve implements TransformableCurveInterface {
         private Vector [] controlPoints;
 
         public BezierCurve(Vector [] controlPoints) {
@@ -1444,14 +1448,67 @@ public class RobotRace extends Base {
             return new BezierCurve(newPoints);
         }
 
-        public BezierCurve scale(double scale) {
+        @Override
+        public BezierCurve scale(Vector scale) {
             Vector [] newPoints = new Vector[controlPoints.length];
 
             for(int i = 0; i < controlPoints.length ; i ++) {
-                newPoints[i] = controlPoints[i].scale(scale);
+                newPoints[i] = new Vector(
+                    controlPoints[i].x() * scale.x(),
+                    controlPoints[i].y() * scale.y(),
+                    controlPoints[i].z() * scale.z()
+                );
             }
 
             return new BezierCurve(newPoints);
+        }
+    }
+
+    public class MultiSegmentCurve implements TransformableCurveInterface {
+        protected CurveInterface [] curves;
+
+        public MultiSegmentCurve(CurveInterface [] curves) {
+            this.curves = curves;
+        }
+
+        protected class SegmentInformation {
+            public final CurveInterface curve;
+            public final double localParameter;
+
+            SegmentInformation(CurveInterface curve, double localParameter) {
+                this.curve = curve;
+                this.localParameter = localParameter;
+            }
+        }
+
+        protected SegmentInformation findSegment(double t) {
+            return new SegmentInformation(
+                curves[(int)Math.max(0, Math.ceil(t * curves.length)-1)],
+                (t * curves.length) % 1
+            );
+        }
+
+        @Override
+        public Vector getPoint(double t) {
+            SegmentInformation segment = findSegment(t);
+            return segment.curve.getPoint(segment.localParameter);
+        }
+
+        @Override
+        public Vector getTangent(double t) {
+            SegmentInformation segment = findSegment(t);
+            return segment.curve.getTangent(segment.localParameter);
+        }
+
+        @Override
+        public MultiSegmentCurve scale(Vector scale) {
+            CurveInterface [] newCurves = new CurveInterface[curves.length];
+
+            for(int i = 0; i < curves.length ; i ++) {
+                newCurves[i] = ((TransformableCurveInterface)curves[i]).scale(scale);
+            }
+
+            return new MultiSegmentCurve(newCurves);
         }
     }
 
@@ -1482,31 +1539,67 @@ public class RobotRace extends Base {
                 new Vector(-5.5, 10,    1),
                 new Vector( 0,   10,    1),
             }),
-            new BezierCurve(new Vector[] {
-                new Vector( 0,    0,    1),
-                new Vector(-0.5,  1,    1),
-
-                new Vector(-1,    8,    1),
-                new Vector( 0,   10,    1),
-                new Vector( 1,   12,    1),
-
-                new Vector( 2,   11,    1),
-                new Vector( 3, 10.5,    1),
-                new Vector( 4,   10,    1),
-
-                new Vector( 2,   4,     1),
-                new Vector( 4,   2,     1),
-                new Vector( 6,   6,     1),
-
-                new Vector( 8,   4,     1),
-                new Vector( 6,   0,     1),
-                new Vector( 4,  -4,     1),
-
-                new Vector(0.5, -1,     1),
-                new Vector( 0,   0,     1),
-            })
-                //.translate(new Vector(10, 2, 0))
-                .scale(5),
+            new MultiSegmentCurve(new  CurveInterface[] {
+                new BezierCurve(new Vector [] {
+                    new Vector(     0,      0,  0),
+                    new Vector(     0,      5,  0),
+                    new Vector(   2.5,     15,  0),
+                    new Vector(   2.5,      5,  0),
+                }),
+                new BezierCurve(new Vector [] {
+                    new Vector(   2.5,      5,  0),
+                    new Vector(   2.5,      0,  0),
+                    new Vector(     5,    2.5,  0),
+                    new Vector(     5,      0,  0),
+                }),
+                new BezierCurve(new Vector [] {
+                    new Vector(     5,      0,  0),
+                    new Vector(     5,   -2.5,  0),
+                    new Vector(     0,   -2.5,  0),
+                    new Vector(     0,      0,  0),
+                }),
+// //                 new BezierCurve(new Vector[] {
+// //                     new Vector( 0,    0,    1),
+// //                     new Vector(-0.5,  1,    1),
+// //
+// //                     new Vector(-1,    8,    1),
+// //                     new Vector( 0,   10,    1),
+// //                 }),
+// //                 new BezierCurve(new Vector[] {
+// //                     new Vector( 0,   10,    1),
+// //                     new Vector( 1,   11,    1),
+// //
+// //                     new Vector( 1,   11,    1),
+// //                     new Vector( 2, 10.5,    1),
+// //                 }),
+// //                 new BezierCurve(new Vector[] {
+// //                     new Vector( 2, 10.5,    1),
+// //                     new Vector( 3,   10,    1),
+// //                     new Vector( 1,   4,     1),
+// //                     new Vector( 3,   2,     1),
+// //                 }),
+// //                 new BezierCurve(new Vector[] {
+// //                     new Vector( 3,   2,     1),
+// //                     new Vector( 6,   0,     1),
+// //
+// //                     new Vector( 7,   2,     1),
+// //                     new Vector( 8,   0,     1),
+// //                 }),
+// //                 new BezierCurve(new Vector [] {
+// //                     new Vector( 8,   0,     1),
+// //                     new Vector( 9,   -2,    1),
+// //
+// //                     new Vector(10,   -2,    1),
+// //                     new Vector( 6,   -3,    1),
+// //                 }),
+//                 new BezierCurve(new Vector [] {
+//                     new Vector(6,   0,     1),
+//                     new Vector(4,  -4,     1),
+//
+//                     new Vector(0.5, -1,     1),
+//                     new Vector( 0,   0,     1),
+//                 })
+            }).scale(new Vector(4, 4, 1))
 
         };
 
