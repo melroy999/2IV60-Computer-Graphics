@@ -297,6 +297,11 @@ public class RobotRace extends Base {
      */
     @Override
     public void drawScene() {
+        if(raceTrack.getCurrentCurve() != gs.trackNr) {
+            raceTrack.setCurrentCurve(gs.trackNr);
+            terrain.recomputeGeometry();
+        }
+
         drawAs(mainCamera);
         drawAs(screenCamera);
 //         mainCamera.frameBuffer.bind();
@@ -339,10 +344,11 @@ public class RobotRace extends Base {
 
                     gl.glPushMatrix();
                         gl.glTranslated(screenPosition.x(), screenPosition.y(), screenPosition.z()+2);
-                        gl.glRotated(Math.toDegrees(
-                            Math.acos(
-                                screenDelta2D.normalized().dot(Vector.X)
-                            )), 0.f, 0.f, 1.f);
+                        double rotation = Math.acos(
+                            screenDelta2D.normalized().dot(Vector.X)
+                        );
+                        if(screenDelta.y() < 0) rotation += Math.PI;
+                        gl.glRotated(Math.toDegrees(rotation), 0.f, 0.f, 1.f);
                         gl.glScaled(
                             screenDelta2D.length(),
                             textureDimensions.w()/(textureDimensions.w()*screenDelta2D.length()),
@@ -407,7 +413,7 @@ public class RobotRace extends Base {
         
         // Draw race track
         Material.GOLD.set(gl);
-        raceTrack.draw(gs.trackNr);
+        raceTrack.draw();
 
         // Draw terrain
         terrain.draw();
@@ -1534,73 +1540,6 @@ public class RobotRace extends Base {
             return new MultiSegmentCurve(newCurves);
         }
     }
-
-    public enum CircleOrientation {
-        BOTTOM_RIGHT,
-        BOTTOM_LEFT,
-
-        LEFT_BOTTOM,
-        LEFT_TOP,
-
-        TOP_LEFT,
-        TOP_RIGHT,
-
-        RIGHT_TOP,
-        RIGHT_BOTTOM
-    };
-    public class QuarterCircleCurveFactory {
-        /**
-         *
-         *      .-----
-         *     /
-         *    -
-         *    |
-         */
-        protected BezierCurve template = new BezierCurve(
-            new Vector [] {
-                new Vector( 0,      1,      0),
-                new Vector( 0.55,   1,      0),
-
-                new Vector( 1,      0.55,   0),
-                new Vector( 1,      0,      0),
-            });
-
-        public QuarterCircleCurveFactory () {
-        }
-
-        public BezierCurve createCurve(CircleOrientation orientation) {
-            BezierCurve newCurve = template;
-
-            switch(orientation) {
-                case BOTTOM_RIGHT:
-                    break;
-                case BOTTOM_LEFT:
-                    newCurve = newCurve.scale(new Vector(-1,  1, 1)).translate(new Vector(1, 0, 0));
-                    break;
-                case LEFT_BOTTOM:
-                    newCurve = newCurve.scale(new Vector(-1,  1, 1)).translate(new Vector(1, 0, 0)).reverse();
-                    break;
-                case LEFT_TOP:
-                    newCurve = newCurve.scale(new Vector(-1, -1, 1)).translate(new Vector(1, 1, 0));
-                    break;
-                case TOP_LEFT:
-                    newCurve = newCurve.scale(new Vector( -1, -1, 1)).translate(new Vector(1, 1, 0)).reverse();
-                    break;
-                case TOP_RIGHT:
-                    newCurve = newCurve.scale(new Vector(  1, -1, 1)).translate(new Vector(0, 1, 0));
-                    break;
-                case RIGHT_TOP:
-                    newCurve = newCurve.scale(new Vector(  1, -1, 1)).translate(new Vector(0, 1, 0)).reverse();
-                    break;
-                case RIGHT_BOTTOM:
-                    newCurve = newCurve.reverse();
-                    break;
-                }
-
-            return newCurve;
-        }
-    }
-
     /**
      * Implementation of a race track that is made from Bezier segments.
      */
@@ -1608,7 +1547,10 @@ public class RobotRace extends Base {
         protected CurveInterface currentCurve;
 
         protected CurveInterface [] curves = new CurveInterface[] {
+            // 0: default
             new OvalCurve(),
+
+            // 1: O-track
             new BezierCurve(new Vector[] {
                 new Vector( 0,	 10,    1),
                 new Vector( 5.5, 10,    1),
@@ -1628,67 +1570,78 @@ public class RobotRace extends Base {
                 new Vector(-5.5, 10,    1),
                 new Vector( 0,   10,    1),
             }),
+
+            // 1: L-track
             new MultiSegmentCurve(new  CurveInterface[] {
                 new BezierCurve(new Vector [] {
-                    new Vector(     0,      0,  0),
-                    new Vector(     0,      5,  0),
-                    new Vector(   2.5,     15,  0),
-                    new Vector(   2.5,      5,  0),
+                    new Vector(     0,     10,  1),
+                    new Vector(     0,     12,  1),
+                    new Vector(     2,     12,  1),
+                    new Vector(     2,     10,  1),
                 }),
                 new BezierCurve(new Vector [] {
-                    new Vector(   2.5,      5,  0),
-                    new Vector(   2.5,      0,  0),
-                    new Vector(     5,    2.5,  0),
-                    new Vector(     5,      0,  0),
+                    new Vector(     2,     10,  1),
+                    new Vector(     2,      0,  1),
+                    new Vector(     0,      2,  1),
+                    new Vector(     5,      2,  1),
                 }),
                 new BezierCurve(new Vector [] {
-                    new Vector(     5,      0,  0),
-                    new Vector(     5,   -2.5,  0),
-                    new Vector(     0,   -2.5,  0),
-                    new Vector(     0,      0,  0),
+                    new Vector(     5,      2,  1),
+                    new Vector(     7,      2,  1),
+                    new Vector(     7,      0,  1),
+                    new Vector(     5,      0,  1),
                 }),
-            }).scale(new Vector(4, 4, 1)),
+                new BezierCurve(new Vector [] {
+                    new Vector(     5,      0,  1),
+                    new Vector(    -2,      0,  1),
+                    new Vector(     0,     -2,  1),
+                    new Vector(     0,     10,  1),
+                }),
+            }).scale(new Vector(4, 4, 1)).translate(new Vector(-15, -20, 1)),
 
+            // 2: C-track
             new MultiSegmentCurve(new CurveInterface[] {
                 new BezierCurve(new Vector[] {
-                    new Vector( 0,      0,      0),
-                    new Vector(15,      0,      0),
-                    new Vector(15,     10,      0),
-                    new Vector( 0,     10,      0),
+                    new Vector( 0,      0,      1),
+                    new Vector(15,      0,      1),
+                    new Vector(15,     10,      1),
+                    new Vector( 0,     10,      1),
                 }),
                 new BezierCurve(new Vector[] {
-                    new Vector( 0,     10,      0),
-                    new Vector(-30,     10,      0),
-                    new Vector(-30,     40,      0),
-                    new Vector( 0,     40,      0),
+                    new Vector( 0,     10,      1),
+                    new Vector(-30,     10,     1),
+                    new Vector(-30,     40,     1),
+                    new Vector( 0,     40,      1),
 
                 }),
                 new BezierCurve(new Vector[] {
-                    new Vector( 0,     40,      0),
-                    new Vector(15,     40,      0),
-                    new Vector(15,     50,      0),
-                    new Vector( 0,     50,      0),
+                    new Vector( 0,     40,      1),
+                    new Vector(15,     40,      1),
+                    new Vector(15,     50,      1),
+                    new Vector( 0,     50,      1),
                 }),
                 new BezierCurve(new Vector[] {
-                    new Vector( 0,     50,      0),
-                    new Vector(-50,    50,      0),
-                    new Vector(-50,     0,      0),
-                    new Vector( 0,      0,      0),
+                    new Vector( 0,     50,      1),
+                    new Vector(-50,    50,      1),
+                    new Vector(-50,     0,      1),
+                    new Vector( 0,      0,      1),
 
                 }),
             }).translate(new Vector(0, -25, 0)).scale(new Vector(0.5, 0.5, 0.5)),
+
+            // 3: Custom track
             new MultiSegmentCurve(new CurveInterface[] {
                 new BezierCurve(new Vector [] {
-                    new Vector (0, 0, 0),
-                    new Vector (-10, 20, 5),
-                    new Vector (20, 0, 5),
-                    new Vector (0, 0, 10)
+                    new Vector (0,      0,  0),
+                    new Vector (-10,   20,  5),
+                    new Vector (20,     0,  5),
+                    new Vector (0,      0, 10)
                 }),
                 new BezierCurve(new Vector [] {
-                    new Vector (0, 0, 10),
-                    new Vector (-20, 0, 5),
-                    new Vector (10, -20, 5),
-                    new Vector (0, 0, 0),
+                    new Vector (0,      0, 10),
+                    new Vector (-20,    0,  5),
+                    new Vector (10,   -20,  5),
+                    new Vector (0,      0,  0),
                 }),
             }).scale(new Vector(2, 2, .5)),
         };
@@ -1701,13 +1654,26 @@ public class RobotRace extends Base {
             currentCurve = curve;
         }
 
+        public void setCurrentCurve(int curve) {
+            setCurrentCurve(curves[curve]);
+        }
+
+        public int getCurrentCurve() {
+            for(int i = 0; i < curves.length; i ++) {
+                if(currentCurve == curves[i]) {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
         /**
          * Draws this track, based on the selected track number.
          */
         
         float x = 0;
-        public void draw(int trackNr) {
-            currentCurve = curves[trackNr];
+        public void draw() {
             x+=0.2;
             
             final double STEP = 0.01;
@@ -1781,7 +1747,13 @@ public class RobotRace extends Base {
         }
         
         Vector getLower(Vector initialPosition) {
-            return new Vector(initialPosition.x(), initialPosition.y(), -1);
+//             for(PathLocation path : intersections) {
+//                 double length = initialPosition.subtract(path.point).length();
+//                 if(length < 4) {
+//                     return new Vector(initialPosition.x(), initialPosition.y(), initialPosition.z() - (1 - length/4) * initialPosition.z() );
+//                 }
+//             }
+            return new Vector(initialPosition.x(), initialPosition.y(), initialPosition.z()-1);
         }
         
         Vector getOuter(double t, Vector initialPosition) {
@@ -2183,7 +2155,7 @@ public class RobotRace extends Base {
             nVertex = builder.getVertexCount();
 
 
-            System.out.println("vbo="+vbo+"nTris="+nVertex+"buf.size()="+buf.size());
+            System.out.println("(vbo="+vbo+"nTris="+nVertex+"buf.size()="+buf.size()+")");
 
             bind();
             gl.glBufferData(gl.GL_ARRAY_BUFFER, buf.size() * FLOAT_SIZE, vertexData, gl.GL_STATIC_DRAW);
@@ -2253,13 +2225,16 @@ public class RobotRace extends Base {
         }
 
         
-        void recomputeGeometry() {
+        public void recomputeGeometry() {
+            System.out.print("Building Geometry: ");
             vbo.open();
 
             VBOBuilder builder = vbo.getVBOBuilder();
 
             for(float x = -gridSize;x<gridSize;x+=step)
             {//for every x in the range
+                System.out.print("|");
+
                 for(float y = -gridSize;y<gridSize;y+=step)
                 {//for every y in the range
                     float lowerLeftCorner = heightAt(x,y);//get the 4 corners
@@ -2320,8 +2295,12 @@ public class RobotRace extends Base {
                     builder.endVertex();
                 }
             }
+
+            System.out.print(" -> Uploading geometry. ");
             
             vbo.upload(builder);//add it to the vbo.
+
+            System.out.println("Done.");
 
             generateTrees();//generate all the trees.
         }
