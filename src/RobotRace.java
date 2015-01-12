@@ -1149,23 +1149,23 @@ public class RobotRace extends Base {
         /**
          * The position of the camera.
          */
-        public Vector eye = new Vector(3f, 6f, 5f);
+        public Vector eye = new Vector(3f, 6f, 5f);//starting eye position
         /**
          * The point to which the camera is looking.
          */
-        public Vector center = Vector.O;
+        public Vector center = Vector.O;//starting center
         /**
          * The up vector.
          */
-        public Vector up = Vector.Z;
+        public Vector up = Vector.Z;//up direction
 
-        private int mode = 0;
-        private int robot = 0;
+        private int mode = 0;//the viewing mode we are in
+        private int robot = 0;//the robot you look at
 
-        public float fov = (float)Math.PI/2.f;
+        public float fov = (float)Math.PI/2.f;//fov of the scene
 
         public FrameBuffer frameBuffer = null;
-        private float viewingDistance = 12;
+        private float viewingDistance = 12;//default viewing distance
 
         public float getViewingDistance() {
             // This is why we don't use global state ..
@@ -1187,26 +1187,26 @@ public class RobotRace extends Base {
             if (-1 == mode) {
             // Helicopter mode
             } else if (1 == mode) {
-                setViewingDistance(10);
+                setViewingDistance(10);//set some values, to make sure the view doesn't look horrible.
                 if(this == mainCamera) {
-                    gs.vWidth = 10+(int)(Math.random()*10);
+                    gs.vWidth = 10+(int)(Math.random()*10);//randomize the vWidth a bit.
                 }
 
             // Motor cycle mode
             } else if (2 == mode) {
-                setViewingDistance(5);
+                setViewingDistance(5);//set some values, to make sure the view doesn't look horrible.
 
                 if(this == mainCamera) {
-                    gs.vWidth = 10+(int)(Math.random()*10);
+                    gs.vWidth = 10+(int)(Math.random()*10);//randomize the vWidth a bit.
                 }
 
             // First person mode
             } else if (3 == mode) {
                 if(this == mainCamera) {
-                    gs.vWidth = 15+(int)(Math.random()*5);
+                    gs.vWidth = 15+(int)(Math.random()*5);//randomize the vWidth a bit.
                 }
 
-                for(int i = 0; i < robots.length ; i++) {
+                for(int i = 0; i < robots.length ; i++) {//find the slowest robot
                     float speed = robots[i].getSpeed();
                     if(speed>=robots[robotFPV].getSpeed()){
                         robotFPV = i;
@@ -1215,9 +1215,9 @@ public class RobotRace extends Base {
 
             // Auto mode
             } else if (4 == mode) {
-                setViewingDistance(12);
+                setViewingDistance(12);//set some values, to make sure the view doesn't look horrible.
                 startTime = System.currentTimeMillis();
-                for(int i = 0; i < robots.length ; i++) {
+                for(int i = 0; i < robots.length ; i++) {//find the slowest robot
                     float speed = robots[i].getSpeed();
 
                     if(speed>=robots[robotFPV].getSpeed()) {
@@ -1226,10 +1226,10 @@ public class RobotRace extends Base {
                 }
             // Default mode
             } else {
-                setViewingDistance(25);
+                setViewingDistance(25);//set some values, to make sure the view doesn't look horrible.
             }
 
-            robot = (int)(Math.random()*robots.length);
+            robot = (int)(Math.random()*robots.length);//randomly select a robot.
             this.mode = mode;
         }
 
@@ -1269,8 +1269,8 @@ public class RobotRace extends Base {
 
             // Auto mode
             } else if (4 == mode) {
-                if(System.currentTimeMillis() - startTime < interval){
-                    setHelicopterMode();//number from 0-3, to choose a robot.
+                if(System.currentTimeMillis() - startTime < interval){//change perspective on interval
+                    setHelicopterMode();
                 }
                 else if(System.currentTimeMillis() - startTime < 2*interval){
                     setMotorCycleMode();
@@ -1279,8 +1279,8 @@ public class RobotRace extends Base {
                     setFirstPersonMode();
                 }
                 else{
-                    startTime = System.currentTimeMillis();
-                    setHelicopterMode();//number from 0-3, to choose a robot.
+                    startTime = System.currentTimeMillis();//go back to first perspective
+                    setHelicopterMode();
                 }
 
             // Default mode
@@ -1295,14 +1295,13 @@ public class RobotRace extends Base {
          * helicopter mode.
          */
         private void setHelicopterMode() {
-            float t = gs.tAnim/robots[robot].getSpeed();
-            Vector position = raceTrack.getPoint(t);
-            Vector tangent = raceTrack.getTangent(t);
-            position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robot));
+            float t = gs.tAnim/robots[robot].getSpeed();//get the speed of the selected robot, and calculate its actual time
+            Vector position = raceTrack.getPoint(t);//find the position
+            Vector tangent = raceTrack.getTangent(t);//find the current tangent
+            position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robot));//recalculate the position, considering the number of the robot.
             
-            center = position;
-            //eye = robots[0].getOrientation().normalized().add(up);
-            eye = center.add(up.scale(10)).add(Vector.X.normalized());
+            center = position;//set the eye position
+            eye = center.add(up.scale(10)).add(Vector.X.normalized());//eye position is above the robot.
         }
 
         /**
@@ -1310,14 +1309,13 @@ public class RobotRace extends Base {
          * motorcycle mode.
          */
         private void setMotorCycleMode() {
-            float t = gs.tAnim/robots[robot].getSpeed();
-            Vector position = raceTrack.getPoint(t);      
-            Vector tangent = raceTrack.getTangent(t);
-            position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robot));
+            float t = gs.tAnim/robots[robot].getSpeed();//get the speed of the selected robot, and calculate its actual time
+            Vector position = raceTrack.getPoint(t);//find the position
+            Vector tangent = raceTrack.getTangent(t);//find the current tangent
+            position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robot));//recalculate the position, considering the number of the robot.
                     
-            center = position.add(Vector.Z.scale(1.5));       
-            eye = center.add(tangent.cross(Vector.Z).normalized().scale(-1.75*(robot+1)));
-            // code goes here ...
+            center = position.add(Vector.Z.scale(1.5));  //center is just above the track, on the robot position     
+            eye = center.add(tangent.cross(Vector.Z).normalized().scale(-1.75*(robot+1)));//set eye position to be on the inner side of the track.
         }
 
         /**
@@ -1325,14 +1323,13 @@ public class RobotRace extends Base {
          * first person mode.
          */
         private void setFirstPersonMode() {
-            float t = gs.tAnim/robots[robotFPV].getSpeed();
+            float t = gs.tAnim/robots[robotFPV].getSpeed();//this time, use the slowest robot
             Vector position = raceTrack.getPoint(t);
             Vector tangent = raceTrack.getTangent(t);
             position = position.add(tangent.cross(Vector.Z).normalized().scale(0.5f+robotFPV));
             
-            eye = position.add(Vector.Z.scale(2));        
-            center = eye.add(tangent.normalized().scale(0.5));
-            // code goes here ...
+            eye = position.add(Vector.Z.scale(2));//eye position is on top of the head        
+            center = eye.add(tangent.normalized().scale(0.5));//eye is on the head, just in front of the robot.
         }
     }
 
@@ -1953,14 +1950,14 @@ public class RobotRace extends Base {
      * Implementation of the terrain.
      */
     private class Terrain {
-        float gridSize = 25;
-        float step = 0.25f;
-        float waterHeight = 0f;
-        int treeCount = 15;
-        PerlinNoise perlin;
+        float gridSize = 25;//grid is -25 to 25
+        float step = 0.25f;//size of each polygon
+        float waterHeight = 0f;//height of the water
+        int treeCount = 15;//amount of trees
+        PerlinNoise perlin;//the perlinNoise
         int OneDColorId = -1;
         ArrayList<Tree> trees = null;
-        float terrainHeightLevel = 5.0f;
+        float terrainHeightLevel = 5.0f;//severity of the surface
         private Color[] colors = {
             new Color(0,0,255),//blue
             new Color(255,255,0),//yellow
@@ -1984,25 +1981,25 @@ public class RobotRace extends Base {
          * Can be used to set up a display list.
          */
         public Terrain() {
-            perlin = new PerlinNoise(123332321, 4, 5.0);
+            perlin = new PerlinNoise(123332321, 4, 5.0);//create perlinNoise.
         }
 
         public void generateTrees() {
-            trees = new ArrayList<Tree>();
-            for(int i = 0; i < treeCount ; i++){
+            trees = new ArrayList<Tree>();//list of trees
+            for(int i = 0; i < treeCount ; i++){//for all trees
                 float x = 0;
                 float y = 0;
                 float z = 0;
-                while(z < 0.5f){
-                    x = (float)(gridSize*(1-Math.random()*2));
+                while(z < 0.5f){//while no good position is found
+                    x = (float)(gridSize*(1-Math.random()*2));//get x and y, randomly
                     y = (float)(gridSize*(1-Math.random()*2));
 
-                    RaceTrack.TrackCollision collision = raceTrack.findCollision(x, y);
-                    if(!collision.isCollision) {
+                    RaceTrack.TrackCollision collision = raceTrack.findCollision(x, y);//find out if the tree is on the track
+                    if(!collision.isCollision) {//if not, set the height
                         z = heightAt(x, y);
                     }
                 }
-                trees.add(new Tree(x,y,z));//random positions.
+                trees.add(new Tree(x,y,z));//add the tree.
             }
         }
 
@@ -2011,18 +2008,18 @@ public class RobotRace extends Base {
             vbo.open();
 
             VBOBuilder builder = vbo.getVBOBuilder();
-            
-            int nTris = 0;
+
             for(float x = -gridSize;x<gridSize;x+=step)
-            {
+            {//for every x in the range
                 for(float y = -gridSize;y<gridSize;y+=step)
-                {
-                    float lowerLeftCorner = heightAt(x,y);
+                {//for every y in the range
+                    float lowerLeftCorner = heightAt(x,y);//get the 4 corners
                     float lowerRightCorner = heightAt(x+step,y);
                     float upperLeftCorner = heightAt(x,y+step);
                     float upperRightCorner = heightAt(x+step,y+step);
 
-                    /*
+                    /* structure of this quad
+                    * 
                     *             ulc - - - - - - urc
                     *              |             / |
                     *              |    diag  /    |
@@ -2033,15 +2030,13 @@ public class RobotRace extends Base {
                     *                  horizontal
                     */
 
-                    Vector normal = null;
-
                     // Triangle 1
 
                     // Add lower left corner to VBO
-                    builder.addPosition(x, y, lowerLeftCorner);
-                    builder.addNormal(getNormal(x, y, step));
-                    builder.addTexCoord(getColorAtHeight(lowerLeftCorner));
-                    builder.endVertex();
+                    builder.addPosition(x, y, lowerLeftCorner);//add the position
+                    builder.addNormal(getNormal(x, y, step));//find the normal and add the normal
+                    builder.addTexCoord(getColorAtHeight(lowerLeftCorner));//add the texture 
+                    builder.endVertex();//close this vertex
 
                     // Add lower right corner to VBO
                     builder.addPosition(x + step, y, lowerRightCorner);
@@ -2077,9 +2072,9 @@ public class RobotRace extends Base {
                 }
             }
             
-            vbo.upload(builder);
+            vbo.upload(builder);//add it to the vbo.
 
-            generateTrees();
+            generateTrees();//generate all the trees.
         }
 
         /**
@@ -2087,12 +2082,12 @@ public class RobotRace extends Base {
          */
         public void draw() {
             OneDColorId = OneDColorId == -1 ? create1DTexture() : OneDColorId;
-            RobotRace.Material.BLANK.set(gl);
+            RobotRace.Material.BLANK.set(gl);//set to blank material
             gl.glEnable(GL_TEXTURE_1D);
                 gl.glBindTexture(GL_TEXTURE_1D, OneDColorId);
 
-                if(!vbo.isOpened()) {
-                    recomputeGeometry();
+                if(!vbo.isOpened()) {//if no vbo
+                    recomputeGeometry();//make it!
                 }
 
                 vbo.bind();
@@ -2103,11 +2098,11 @@ public class RobotRace extends Base {
                 vbo.disable();
             gl.glDisable(GL_TEXTURE_1D);
             
-            gl.glEnable(GL_BLEND);
-            gl.glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+            gl.glEnable(GL_BLEND);//draw the water surface, enable alpha
+            gl.glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);//enable alpha
                 gl.glBegin(GL_QUADS);
-                    RobotRace.Material.WATER.set(gl);
-                    gl.glVertex3d(-gridSize,-gridSize,waterHeight);
+                    RobotRace.Material.WATER.set(gl);//set material water
+                    gl.glVertex3d(-gridSize,-gridSize,waterHeight);//all 4 corners of the terrain
                     gl.glVertex3d(gridSize,-gridSize,waterHeight);
                     gl.glVertex3d(gridSize,gridSize,waterHeight);
                     gl.glVertex3d(-gridSize,gridSize,waterHeight);
@@ -2138,21 +2133,21 @@ public class RobotRace extends Base {
          * @param textureId The OpenGL texture to upload the colors to
          */
         public void uploadColors(int textureId) {
-            ByteBuffer byteBuffer = ByteBuffer.allocateDirect(colors.length*4).order(ByteOrder.nativeOrder());
-            for(Color color: colors){
-                int pixel = color.getRGB();
-                byteBuffer.put((byte)((pixel >>> 16) & 0xFF));//Red component
-                byteBuffer.put((byte)((pixel >>> 8) & 0xFF));//Green component
-                byteBuffer.put((byte)(pixel & 0xFF));//Blue component
-                byteBuffer.put((byte)(pixel >>> 24));//Alpha component
+            ByteBuffer byteBuffer = ByteBuffer.allocateDirect(colors.length*4).order(ByteOrder.nativeOrder());//create bytebuffer.
+            for(Color color: colors){//for all colors
+                int pixel = color.getRGB();//RGB value
+                byteBuffer.put((byte)((pixel >>> 16) & 0xFF));//select Red component
+                byteBuffer.put((byte)((pixel >>> 8) & 0xFF));//select Green component
+                byteBuffer.put((byte)(pixel & 0xFF));//select Blue component
+                byteBuffer.put((byte)(pixel >>> 24));//select Alpha component
             }
             byteBuffer.flip();
 
             gl.glEnable(GL_TEXTURE_1D);
-                gl.glBindTexture(GL_TEXTURE_1D, textureId);
-                gl.glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, colors.length, 0, GL_RGBA, GL_UNSIGNED_BYTE, byteBuffer);
-                gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                gl.glBindTexture(GL_TEXTURE_1D, textureId);//bind the textures
+                gl.glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, colors.length, 0, GL_RGBA, GL_UNSIGNED_BYTE, byteBuffer);//set the 1d texture
+                gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);//add filters
+                gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);//add filters
             gl.glDisable(GL_TEXTURE_1D);
         }
 
@@ -2185,15 +2180,19 @@ public class RobotRace extends Base {
             return z;
         }
         
+        /**
+         * 
+         * @param z = height
+         * @return 1D coordinates for 1D texture
+         */
         public float getColorAtHeight(float z){
-            float max = ((colors.length)/2.0f)-0.5f;
+            float max = ((colors.length)/2.0f)-0.5f;//maximum
                 
-            if(z > max*2){
-                z = max-1f;
-                z += 1f;
+            if(z > max*2){//if above 2x max
+                z = max;//make it the max
                 z /= max*2+1f;//get a number between 0 and 1, to avoid repeating texture
             } else if(z < -0.5f){
-                z = -0.45f;
+                z = -0.45f;//of lower than -0.5, make it -0.45 to avoid textures fucking up.
                 z += 0.5f;
                 z /= max+0.5f;//get a number from 0 to 1, to avoid repeating texture
             } else{        
@@ -2204,8 +2203,15 @@ public class RobotRace extends Base {
             return z;
         }
         
+        /**
+         * 
+         * @param x_ = x coordinate
+         * @param y_ = y coordinate
+         * @param step = step till next point
+         * @return the normal vector.
+         */
         public Vector getNormal(double x_, double y_, float step) {
-            float x = (float)x_, y = (float)y_;
+            float x = (float)x_, y = (float)y_;//set x and y
             /**
              *     /  | n /
              *   /    | /          a
@@ -2213,7 +2219,7 @@ public class RobotRace extends Base {
              *       /|   /        e
              *      / | s
              */
-            Vector n = positionAt(x,        y + step);
+            Vector n = positionAt(x,        y + step);//find the vector position at specified x and y coordinates
             Vector ne= positionAt(x + step, y + step);
             Vector e = positionAt(x + step, y);
             Vector s = positionAt(x,        y - step);
@@ -2222,12 +2228,12 @@ public class RobotRace extends Base {
 
             Vector p = positionAt(x,        y);
 
-            Vector pn = n.subtract(p);
+            Vector pn = n.subtract(p);//subtract p from n to find vector pn
             Vector pe = e.subtract(p);
             Vector ps = s.subtract(p);
             Vector pw = w.subtract(p);
 
-            Vector npw = pn.cross(pw);
+            Vector npw = pn.cross(pw);//find north west point by crossing pn with pw.
             Vector wps = pw.cross(ps);
             Vector spe = ps.cross(pe);
             Vector epn = pe.cross(pn);
@@ -2236,36 +2242,36 @@ public class RobotRace extends Base {
                             .add(wps)
                             .add(spe)
                             .add(epn)
-                            .normalized();
+                            .normalized();//calculate the normal by adding all nw, ws, se and en.
 
-            assert(normal.z() > 0);
+            assert(normal.z() > 0);//assure the normal points in the correct direction.
 
 //             System.out.println("Position: "+p+" Normal: "+normal);
             
-            return normal;
+            return normal;//return the normal
         }
     }
     
     private class Tree {
-        int levels;
-        float logHeight;
-        float leafHeight;
-        float treeWidth;
-        float logWidth;
-        float offset;
-        float x;
+        int levels;//the amount of levels of leaves.
+        float logHeight;//height of the stump
+        float leafHeight;//height of the leaved part of the tree.
+        float treeWidth;//width of the leaved part of the tree
+        float logWidth;//width of the stump.
+        float offset;//distance between each level.
+        float x;//x y and z coordinates.
         float y;
         float z;
-        int precision = 8;
+        int precision = 8;//precision of the tree objects, low on purpose.
         
         public Tree(float x, float y, float z){
-            levels = 3+Math.round((float)Math.random()*3);
-            logHeight = 0.2f +(float)Math.random()*0.5f;
-            treeWidth = 1.5f + (0.10f+(float)Math.random()*0.10f)*levels;
-            logWidth = 0.2f + (float)Math.random()*0.2f;
-            leafHeight = (0.75f + (float)Math.random()*0.4f)*levels;
-            offset = leafHeight/((levels*2)-1);
-            this.x = x;
+            levels = 3+Math.round((float)Math.random()*3);//minimal levels = 3, max 6
+            logHeight = 0.2f +(float)Math.random()*0.5f;//minimal height 0.2, max 0.7
+            treeWidth = 1.5f + (0.10f+(float)Math.random()*0.10f)*levels;//minimal width 1.5
+            logWidth = 0.2f + (float)Math.random()*0.2f;//minimal width 02f, max 0.4f.
+            leafHeight = (0.75f + (float)Math.random()*0.4f)*levels;//minimal height 0.75
+            offset = leafHeight/((levels*2)-1);//offset is the total leaf height devided by 2*levels, -1.
+            this.x = x;//set the x y and z coordinates of the tree.
             this.y = y;
             this.z = z;
         }
@@ -2273,13 +2279,14 @@ public class RobotRace extends Base {
         public void draw(){
             gl.glPushMatrix();
                 gl.glTranslatef(x, y, 0);
-                RobotRace.Material.WOOD.set(gl);
+                RobotRace.Material.WOOD.set(gl);//set the material to wood
                 glut.glutSolidCylinder(logWidth/2, z+logHeight+0.1f, 50, 51);
-                gl.glTranslatef(0, 0, z+logHeight);
-                RobotRace.Material.LEAF.set(gl);
-                for(int i=0; i<levels; i++){
-                    glut.glutSolidCone((1-(i*offset)/(logHeight+leafHeight))*(treeWidth/2), offset*2, precision, precision+1);
-                    gl.glTranslatef(0, 0, offset);
+                //draw the cylinder as the strump. To make sure the log is long enough, draw from z=0 to the height + logHeight
+                gl.glTranslatef(0, 0, z+logHeight);//translate up for height + logHeight
+                RobotRace.Material.LEAF.set(gl);//set the material to leaves.
+                for(int i=0; i<levels; i++){//for each level of the tree
+                    glut.glutSolidCone((1-(i*offset)/(logHeight+leafHeight))*(treeWidth/2), offset*2, precision, precision+1);//calculate the cylindrical size, and draw.
+                    gl.glTranslatef(0, 0, offset);//transluate up with the offset.
                 }          
             gl.glPopMatrix();
         }
@@ -2324,17 +2331,20 @@ public class RobotRace extends Base {
       {7, 4, 0, 3}
     };
     
+    /*
+     * This code is based on the GLUT approach, but with textures.
+     */
     public void drawBox(final GL2 gl, final float size, final int type, float textureX1, float textureX2, float textureY1, float textureY2) {
         gl.glEnable(gl.GL_TEXTURE_2D);
-        torso.bind(gl);
-        //gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dimensions.w(), dimensions.h(), 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+        torso.bind(gl);//bind the texture
+
         gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
         gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
 
-        float deltaX = 720;
-        float deltaY = 2100;
+        float deltaX = 720;//x size of texture file
+        float deltaY = 2100;//y size of texture file
 
-        textureX1 /= deltaX;
+        textureX1 /= deltaX;//scale to 0 - 1 values
         textureX2 /= deltaX;
         textureY1 /= deltaY;
         textureY2 /= deltaY;
@@ -2355,21 +2365,21 @@ public class RobotRace extends Base {
         final float[][] v = boxVertices;
         final float[][] n = boxNormals;
         final int[][] faces = boxFaces;
-        for (int i = 5; i >= 0; i--) {
+        for (int i = 5; i >= 0; i--) {//for all 6 faces
           gl.glBegin(gl.GL_QUADS);
-          gl.glNormal3fv(n[i], 0);
-          float[] vt = v[faces[i][0]];
-          gl.glTexCoord2f(textureX1, textureY1); 
-          gl.glVertex3f(vt[0] * size, vt[1] * size, vt[2] * size);
-          vt = v[faces[i][1]];
-          gl.glTexCoord2f(textureX1, textureY2); 
-          gl.glVertex3f(vt[0] * size, vt[1] * size, vt[2] * size);
-          vt = v[faces[i][2]];
-          gl.glTexCoord2f(textureX2, textureY2); 
-          gl.glVertex3f(vt[0] * size, vt[1] * size, vt[2] * size);
-          vt = v[faces[i][3]];
-          gl.glTexCoord2f(textureX2, textureY1); 
-          gl.glVertex3f(vt[0] * size, vt[1] * size, vt[2] * size);
+          gl.glNormal3fv(n[i], 0);//set the correct normals for this side of the cube.
+          float[] vt = v[faces[i][0]];//choose the correct face
+          gl.glTexCoord2f(textureX1, textureY1); //set the textures, clockwise
+          gl.glVertex3f(vt[0] * size, vt[1] * size, vt[2] * size);//set coordinates
+          vt = v[faces[i][1]];//choose the correct face
+          gl.glTexCoord2f(textureX1, textureY2);//set the textures, clockwise 
+          gl.glVertex3f(vt[0] * size, vt[1] * size, vt[2] * size);//set coordinates
+          vt = v[faces[i][2]];//choose the correct face
+          gl.glTexCoord2f(textureX2, textureY2);//set the textures, clockwise
+          gl.glVertex3f(vt[0] * size, vt[1] * size, vt[2] * size);//set coordinates
+          vt = v[faces[i][3]];//choose the correct face
+          gl.glTexCoord2f(textureX2, textureY1);//set the textures, clockwise 
+          gl.glVertex3f(vt[0] * size, vt[1] * size, vt[2] * size);//set coordinates
           gl.glEnd();
         }
         gl.glDisable(gl.GL_TEXTURE_2D);
@@ -2383,64 +2393,61 @@ public class RobotRace extends Base {
         gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
         
         
-        float deltaX = 720;
-        float deltaY = 2100;     
+        float deltaX = 720;//x size of texture file
+        float deltaY = 2100;//y size of texture file    
 
         /*textureX1 /= deltaX;
         textureX2 /= deltaX;
         textureY1 /= deltaY;
         textureY2 /= deltaY;*/
         
-        float delta = (textureX2 - textureX1) / (steps-1);
+        float delta = (textureX2 - textureX1) / (steps-1);//calculate size of texture step
         
-        double step = (2* Math.PI) / steps;
+        double step = (2* Math.PI) / steps;//calculate step sizes.
         gl.glBegin(gl.GL_QUADS);
         for(int i = 0; i<steps; i++){
-            double x = Math.cos(step*i)*radius;
+            double x = Math.cos(step*i)*radius;//find x,y, next x, next y, and the points in middle.
             double y = Math.sin(step*i)*radius;
             double xn = Math.cos(step*(i+1))*radius;
             double yn = Math.sin(step*(i+1))*radius;
             double xnn = Math.cos(step*(i+0.5))*radius;
             double ynn = Math.sin(step*(i+0.5))*radius;
             
-            Vector normal = new Vector(xnn,ynn,0).normalized();
+            Vector normal = new Vector(xnn,ynn,0).normalized();//normal found by subtracting 0,0,0 from point
             
-            gl.glNormal3d(normal.x(), normal.y(), normal.z());         
-            gl.glTexCoord2f((textureX1+delta*i)/deltaX, textureY1/deltaY); 
-            gl.glVertex3d(x,y,0);
-            gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
+            gl.glNormal3d(normal.x(), normal.y(), normal.z());//set the normal         
+            gl.glTexCoord2f((textureX1+delta*i)/deltaX, textureY1/deltaY);//find the correct part of the texture (texture is devided into steps to spread it over cylinder face) 
+            gl.glVertex3d(x,y,0);//set coordinates
             gl.glTexCoord2f((textureX1+delta*i)/deltaX, textureY2/deltaY); 
             gl.glVertex3d(x,y,height);
-            gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
             gl.glTexCoord2f((textureX1+delta*(i+1))/deltaX, textureY2/deltaY); 
             gl.glVertex3d(xn,yn,height);
-            gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
             gl.glTexCoord2f((textureX1+delta*(i+1))/deltaX, textureY1/deltaY); 
             gl.glVertex3d(xn,yn,0);
         }
         gl.glEnd();
         
-        float dummyX = 650;
-        float dummyX2 = 700;
+        float dummyX = 650;//part of the texture without special stuff
+        float dummyX2 = 700;//part of the texture without special stuff
         
-        float diffX = (dummyX2 - dummyX);
-        float diffY = (textureY2 - textureY1);
+        float diffX = (dummyX2 - dummyX);//calculate the difference
+        float diffY = (textureY2 - textureY1);//calculate the y difference
         
         gl.glBegin(gl.GL_TRIANGLES);
         for(int i = 0; i<steps; i++){
-            double x = Math.cos(step*i)*radius;
+            double x = Math.cos(step*i)*radius;//find x,y next x and next y coordinates.
             double y = Math.sin(step*i)*radius;
             double xn = Math.cos(step*(i+1))*radius;
             double yn = Math.sin(step*(i+1))*radius;
-            gl.glNormal3d(0, 0, 1);
-            gl.glTexCoord2d((dummyX+0.5*diffX+0.5*diffX*Math.cos(step*i))/deltaX,(textureY1+0.5*diffY+0.5*diffY*Math.sin(step*i))/deltaY);  
-            gl.glVertex3d(x,y,height);
+            gl.glNormal3d(0, 0, 1);//set the normal (midpoint to top, so positive)
+            gl.glTexCoord2d((dummyX+0.5*diffX+0.5*diffX*Math.cos(step*i))/deltaX,(textureY1+0.5*diffY+0.5*diffY*Math.sin(step*i))/deltaY);//select correct part of texture  
+            gl.glVertex3d(x,y,height);//set the coordinates
             gl.glTexCoord2d((dummyX+0.5*diffX+0.5*diffX*Math.cos(step*i+step))/deltaX,(textureY1+0.5*diffY+0.5*diffY*Math.sin(step*(i+1)))/deltaY); 
             gl.glVertex3d(xn,yn,height);
             gl.glTexCoord2d((dummyX+0.5*diffX)/deltaX,(textureY1+0.5*diffY)/deltaY); 
             gl.glVertex3d(0,0,height);
             
-            gl.glNormal3d(0, 0, -1);
+            gl.glNormal3d(0, 0, -1);//set the normal (midpoint to bottom, so negative).
             gl.glTexCoord2d((dummyX+0.5*diffX+0.5*diffX*Math.cos(step*i))/deltaX,(textureY1+0.5*diffY+0.5*diffY*Math.sin(step*i))/deltaY); 
             gl.glVertex3d(x,y,0);
             gl.glTexCoord2d((dummyX+0.5*diffX+0.5*diffX*Math.cos(step*i+step))/deltaX,(textureY1+0.5*diffY+0.5*diffY*Math.sin(step*(i+1)))/deltaY); 
@@ -2452,6 +2459,9 @@ public class RobotRace extends Base {
         gl.glDisable(gl.GL_TEXTURE_2D);
     }
     
+    /*
+     * Different method for the torso, as it uses different order of textures (top and bottom have textures, instead of the curved part)
+     */
     public void drawCylinderFront(float radius, float height, int steps, float textureX1, float textureX2, float textureY1, float textureY2){
         gl.glEnable(gl.GL_TEXTURE_2D);
         torso.bind(gl);
@@ -2460,65 +2470,60 @@ public class RobotRace extends Base {
         gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
         
         
-        float deltaX = 720;
-        float deltaY = 2100;     
+        float deltaX = 720;//x size of texture file
+        float deltaY = 2100;//y size of texture file    
 
-        float diffX = (textureX2 - textureX1);
-        float diffY = (textureY2 - textureY1);
+        float diffX = (textureX2 - textureX1);//difference
+        float diffY = (textureY2 - textureY1);//difference
         
-        double step = (2* Math.PI) / steps;
+        double step = (2* Math.PI) / steps;//calculate the steps
         
         gl.glBegin(gl.GL_TRIANGLES);
-        for(int i = 0; i<steps; i++){
-            double x = Math.cos(step*i)*radius;
+        for(int i = 0; i<steps; i++){//for all steps
+            double x = Math.cos(step*i)*radius;//calculate the x, y, next x and next y values
             double y = Math.sin(step*i)*radius;
             double xn = Math.cos(step*(i+1))*radius;
             double yn = Math.sin(step*(i+1))*radius;
             
-            gl.glNormal3d(0, 0, 1);
-            //gl.glTexCoord2d(textureX1+(0.5*diffX)/deltaX,textureY1+(0.5*diffY)/deltaY); 
-            gl.glTexCoord2d((textureX1+diffX*0.5+diffX*0.5*Math.cos(step*i))/deltaX, (textureY1 + diffY*0.5+ diffY*0.5*Math.sin(step*i))/deltaY);  
-            gl.glVertex3d(x,y,height);
-            gl.glTexCoord2d((textureX1+diffX*0.5+diffX*0.5*Math.cos(step*(i+1)))/deltaX, (textureY1 + diffY*0.5+ diffY*0.5*Math.sin(step*(i+1)))/deltaY); 
+            gl.glNormal3d(0, 0, 1);//set normal (midpoint -> top, +)
+            gl.glTexCoord2d((textureX1+diffX*0.5+diffX*0.5*Math.cos(step*i))/deltaX, (textureY1 + diffY*0.5+ diffY*0.5*Math.sin(step*i))/deltaY);//find the position on the texture  
+            gl.glVertex3d(x,y,height);//set the points
+            gl.glTexCoord2d((textureX1+diffX*0.5+diffX*0.5*Math.cos(step*(i+1)))/deltaX, (textureY1 + diffY*0.5+ diffY*0.5*Math.sin(step*(i+1)))/deltaY);//find the position on the texture 
             gl.glVertex3d(xn,yn,height);
-            gl.glTexCoord2d((textureX1+diffX*0.5)/deltaX, (textureY1 + diffY*0.5)/deltaY);
-            gl.glVertex3d(0,0,height);
+            gl.glTexCoord2d((textureX1+diffX*0.5)/deltaX, (textureY1 + diffY*0.5)/deltaY);//find the position on the texture
+            gl.glVertex3d(0,0,height);//midpoint of top of cylinder
             
-            gl.glNormal3d(0, 0, -1);
+            gl.glNormal3d(0, 0, -1);//set normal (midpoin -> bottom, -)
             gl.glTexCoord2d((textureX1+diffX*0.5-diffX*0.5*Math.cos(step*i))/deltaX, (textureY1 + diffY*0.5+ diffY*0.5*Math.sin(step*i))/deltaY);//show texture mirrored  
             gl.glVertex3d(x,y,0);
             gl.glTexCoord2d((textureX1+diffX*0.5-diffX*0.5*Math.cos(step*(i+1)))/deltaX, (textureY1 + diffY*0.5+ diffY*0.5*Math.sin(step*(i+1)))/deltaY); 
             gl.glVertex3d(xn,yn,0);
             gl.glTexCoord2d((textureX1+diffX*0.5)/deltaX, (textureY1 + diffY*0.5)/deltaY);
-            gl.glVertex3d(0,0,0);
+            gl.glVertex3d(0,0,0);//midpoint of bottom of cylinder
         }
         gl.glEnd();
         
-        float diff = (textureX2 - textureX1);
-        float delta = (textureX2 - textureX1) / (steps-1);
+        float delta = (textureX2 - textureX1) / (steps-1);//texture step increase
 
         gl.glBegin(gl.GL_QUADS);
         for(int i = 0; i<steps; i++){
-            double x = Math.cos(step*i)*radius;
+            double x = Math.cos(step*i)*radius;//calculate x,y, next x, next y, and the x and y in between.
             double y = Math.sin(step*i)*radius;
             double xn = Math.cos(step*i+step)*radius;
             double yn = Math.sin(step*i+step)*radius;
             double xnn = Math.cos(step*i+0.5*step)*radius;
             double ynn = Math.sin(step*i+0.5*step)*radius;
             
-            Vector normal = new Vector(xnn,ynn,0).normalized();
+            Vector normal = new Vector(xnn,ynn,0).normalized();//calculate the normal vector, subtracting vector (0,0,0) from coordinates.
             
-            gl.glNormal3d(normal.x(), normal.y(), normal.z());         
-            gl.glTexCoord2f((textureX1+delta*i+130)/deltaX, textureY1/deltaY); 
+            gl.glNormal3d(normal.x(), normal.y(), normal.z());//set the normal         
+            gl.glTexCoord2f((textureX1+delta*i+130)/deltaX, textureY1/deltaY);//get the location of the texture (only used for torso, so adding 130 gives us clean textures) 
             gl.glVertex3d(x,y,0);
-            gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
-            gl.glTexCoord2f((textureX1+delta*i+130)/deltaX, textureY2/deltaY); 
+            gl.glTexCoord2f((textureX1+delta*i+130)/deltaX, textureY2/deltaY);//get the location of the texture
             gl.glVertex3d(x,y,height);
-            gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
-            gl.glTexCoord2f((textureX1+delta*(i+1)+130)/deltaX, textureY2/deltaY); 
+            gl.glTexCoord2f((textureX1+delta*(i+1)+130)/deltaX, textureY2/deltaY);//get the location of the texture 
             gl.glVertex3d(xn,yn,height);
-            gl.glNormal3d(normal.x(), normal.y(), normal.z()); 
-            gl.glTexCoord2f((textureX1+delta*(i+1)+130)/deltaX, textureY1/deltaY); 
+            gl.glTexCoord2f((textureX1+delta*(i+1)+130)/deltaX, textureY1/deltaY); //get the location of the texture
             gl.glVertex3d(xn,yn,0);
         }
         gl.glEnd();
