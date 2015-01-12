@@ -2420,8 +2420,8 @@ public class RobotRace extends Base {
         }
         gl.glEnd();
         
-        float dummyX = 620*deltaX;
-        float dummyX2 = 700*deltaX;
+        float dummyX = 650;
+        float dummyX2 = 700;
         
         float diffX = (dummyX2 - dummyX);
         float diffY = (textureY2 - textureY1);
