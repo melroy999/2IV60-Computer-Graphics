@@ -7,7 +7,6 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import javax.media.opengl.GL;
-import static javax.media.opengl.GL2.*;
 import javax.media.opengl.GL2;
 import robotrace.Base;
 import robotrace.Texture1D;
@@ -35,7 +34,7 @@ import robotrace.Vector;
  * objects are already defined and cannot be used for other purposes. The
  * texture objects can be used as follows:
  *
- * gl.glColor3f(1f, 1f, 1f); track.bind(gl); gl.glBegin(GL_QUADS);
+ * gl.glColor3f(1f, 1f, 1f); track.bind(gl); gl.glBegin(gl.GL_QUADS);
  * gl.glTexCoord2d(0, 0); gl.glVertex3d(0, 0, 0); gl.glTexCoord2d(1, 0);
  * gl.glVertex3d(1, 0, 0); gl.glTexCoord2d(1, 1); gl.glVertex3d(1, 1, 0);
  * gl.glTexCoord2d(0, 1); gl.glVertex3d(0, 1, 0); gl.glEnd();
@@ -112,37 +111,37 @@ public class RobotRace extends Base {
     public void initialize() {
 
         // Enable blending.
-        gl.glEnable(GL_BLEND);
-        gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        gl.glEnable(gl.GL_BLEND);
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
 
         // Anti-aliasing can be enabled by uncommenting the following 4 lines.
         // This can however cause problems on some graphics cards.
-        gl.glEnable(GL_LINE_SMOOTH);
-        gl.glEnable(GL_POLYGON_SMOOTH);
-        gl.glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-        gl.glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+        gl.glEnable(gl.GL_LINE_SMOOTH);
+        gl.glEnable(gl.GL_POLYGON_SMOOTH);
+        gl.glHint(gl.GL_LINE_SMOOTH_HINT, gl.GL_NICEST);
+        gl.glHint(gl.GL_POLYGON_SMOOTH_HINT, gl.GL_NICEST);
 
         // Enable depth testing.
-        gl.glEnable(GL_DEPTH_TEST);
-        gl.glDepthFunc(GL_LESS);
+        gl.glEnable(gl.GL_DEPTH_TEST);
+        gl.glDepthFunc(gl.GL_LESS);
 
         // Normalize normals.
-        gl.glEnable(GL_NORMALIZE);
+        gl.glEnable(gl.GL_NORMALIZE);
 
         // Converts colors to materials when lighting is enabled.
-        gl.glEnable(GL_COLOR_MATERIAL);
-        gl.glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+        gl.glEnable(gl.GL_COLOR_MATERIAL);
+        gl.glColorMaterial(gl.GL_FRONT_AND_BACK, gl.GL_AMBIENT_AND_DIFFUSE);
 
         // Enable textures.
-        gl.glEnable(GL_TEXTURE_2D);
-        gl.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-        gl.glBindTexture(GL_TEXTURE_2D, 0);
+        gl.glEnable(gl.GL_TEXTURE_2D);
+        gl.glHint(gl.GL_PERSPECTIVE_CORRECTION_HINT, gl.GL_NICEST);
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0);
 
         // Enable lightning
-        gl.glEnable(GL_LIGHTING);
+        gl.glEnable(gl.GL_LIGHTING);
 
         // Create an ambient light
-        gl.glEnable(GL_LIGHT0);
+        gl.glEnable(gl.GL_LIGHT0);
         {
             // Configuration
             float ambientLight[]    = { 0.2f,   0.2f,   0.2f,   1.0f };
@@ -156,7 +155,7 @@ public class RobotRace extends Base {
         }
 
         // Create a positional light
-        gl.glEnable(GL_LIGHT1);
+        gl.glEnable(gl.GL_LIGHT1);
         {
             // Configuration
             float ambientLight[]    = { 0f,     0f,     0f,     0f};
@@ -171,12 +170,12 @@ public class RobotRace extends Base {
         }
 
         // Try to load four textures, add more if you like.
-        gl.glEnable(GL_TEXTURE_2D);
+        gl.glEnable(gl.GL_TEXTURE_2D);
             track = loadTexture("track.png");
             brick = loadTexture("brick.png");
             head = loadTexture("head.jpg");
             torso = loadTexture("textureRobot.jpg");//full texture of the robot
-        gl.glDisable(GL_TEXTURE_2D);
+        gl.glDisable(gl.GL_TEXTURE_2D);
 
         // setup cameras
         mainCamera.frameBuffer = new FrameBuffer(0);
@@ -198,7 +197,7 @@ public class RobotRace extends Base {
         gl.glViewport(0, 0, dimensions.w(), dimensions.h());
 
         // Set projection matrix.
-        gl.glMatrixMode(GL_PROJECTION);
+        gl.glMatrixMode(gl.GL_PROJECTION);
         gl.glLoadIdentity();
 
         // Set the perspective.
@@ -245,7 +244,7 @@ public class RobotRace extends Base {
         );
 
         // Set camera.
-        gl.glMatrixMode(GL_MODELVIEW);
+        gl.glMatrixMode(gl.GL_MODELVIEW);
         gl.glLoadIdentity();
 
         // Initialize camera modes on change
@@ -318,17 +317,17 @@ public class RobotRace extends Base {
         gl.glClearColor(1f, 1f, 1f, 0f);
 
         // Clear background.
-        gl.glClear(GL_COLOR_BUFFER_BIT);
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT);
 
         // Clear depth buffer.
-        gl.glClear(GL_DEPTH_BUFFER_BIT);
+        gl.glClear(gl.GL_DEPTH_BUFFER_BIT);
 
-        gl.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL);
 
         // Axes should not be affected by light
-        gl.glDisable(GL_LIGHTING);
+        gl.glDisable(gl.GL_LIGHTING);
 
-            gl.glEnable(GL_TEXTURE_2D);
+            gl.glEnable(gl.GL_TEXTURE_2D);
                 gl.glColor3f(1.f, 1.f, 1.f);
 
                 screenCamera.frameBuffer.bindColorBuffer();
@@ -354,7 +353,7 @@ public class RobotRace extends Base {
                             textureDimensions.w()/(textureDimensions.w()*screenDelta2D.length()),
                             1.f
                         );
-                        gl.glBegin(GL_QUADS);
+                        gl.glBegin(gl.GL_QUADS);
                             gl.glTexCoord2d(0.f, 0.f); gl.glVertex3f(0.f, 0.f, 0.f);
                             gl.glTexCoord2d(1.f, 0.f); gl.glVertex3f(1.f, 0.f, 0.f);
                             gl.glTexCoord2d(1.f, 1.f); gl.glVertex3f(1.f, 0.f, 1.f);
@@ -376,14 +375,14 @@ public class RobotRace extends Base {
                         glut.glutSolidCube(1.f);
                     gl.glPopMatrix();
                 gl.glPopMatrix();
-            gl.glDisable(GL_TEXTURE_2D);
+            gl.glDisable(gl.GL_TEXTURE_2D);
             
 
             // Draw the axis frame
             if (gs.showAxes) {
                 drawAxisFrame();
             }
-        gl.glEnable(GL_LIGHTING);
+        gl.glEnable(gl.GL_LIGHTING);
 
         // Draw all robots
         int i = 0;
@@ -568,10 +567,10 @@ public class RobotRace extends Base {
          */
         public void set(GL2 gl) {
             // OpenGL, Do the thing!
-            gl.glMaterialfv(GL_FRONT_AND_BACK,  GL_SPECULAR,    specular,   0);
-            gl.glMaterialfv(GL_FRONT_AND_BACK,  GL_DIFFUSE,     diffuse,    0);
-            gl.glMaterialfv(GL_FRONT_AND_BACK,  GL_AMBIENT,     diffuse,    0);
-            gl.glMateriali(GL_FRONT_AND_BACK,   GL_SHININESS,   getShine());
+            gl.glMaterialfv(gl.GL_FRONT_AND_BACK,   gl.GL_SPECULAR,    specular,   0);
+            gl.glMaterialfv(gl.GL_FRONT_AND_BACK,   gl.GL_DIFFUSE,     diffuse,    0);
+            gl.glMaterialfv(gl.GL_FRONT_AND_BACK,   gl.GL_AMBIENT,     diffuse,    0);
+            gl.glMateriali(gl.GL_FRONT_AND_BACK,    gl.GL_SHININESS,   getShine());
             // Nooo, not the thing!
             gl.glColor4fv(diffuse, 0);
         }
@@ -863,9 +862,9 @@ public class RobotRace extends Base {
                              // Draw a stick figure or a triangle strip depending on the mode
                             gl.glEnable(gl.GL_TEXTURE_2D);
                             torso.bind(gl);
-                            //gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dimensions.w(), dimensions.h(), 0, GL_RGB, GL_UNSIGNED_BYTE, null);
-                            gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-                            gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+                            //gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGB, dimensions.w(), dimensions.h(), 0, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, null);
+                            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT );
+                            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT );
                             
                             float textureX = 600;
                             float textureX2 = 650;
@@ -1116,11 +1115,11 @@ public class RobotRace extends Base {
             dimensions = dimensions != null ? dimensions : new Dimensions(1024, 768);
 
             // Give an empty image to OpenGL ( the last "0" )
-            gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dimensions.w(), dimensions.h(), 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+            gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGB, dimensions.w(), dimensions.h(), 0, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, null);
 
             // Poor filtering. Needed !
-            gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST);
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST);
 
             {
                 int [] x = new int [1];
@@ -1130,18 +1129,18 @@ public class RobotRace extends Base {
 
             bindDepthBuffer();
 
-            gl.glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, dimensions.w(), dimensions.h());
-            gl.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, deptBufferHandle);
+            gl.glRenderbufferStorage(gl.GL_RENDERBUFFER, gl.GL_DEPTH_COMPONENT, dimensions.w(), dimensions.h());
+            gl.glFramebufferRenderbuffer(gl.GL_FRAMEBUFFER, gl.GL_DEPTH_ATTACHMENT, gl.GL_RENDERBUFFER, deptBufferHandle);
 
             // Set color buffer to primary storage
-            gl.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBufferHandle, 0);
+            gl.glFramebufferTexture2D(gl.GL_FRAMEBUFFER, gl.GL_COLOR_ATTACHMENT0, gl.GL_TEXTURE_2D, colorBufferHandle, 0);
 
             // Set the list of draw buffers.
             int [] drawBuffers = new int[1];
-            drawBuffers[0] = GL_COLOR_ATTACHMENT0;
+            drawBuffers[0] = gl.GL_COLOR_ATTACHMENT0;
             gl.glDrawBuffers(1, drawBuffers, 0);
 
-            if(gl.glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            if(gl.glCheckFramebufferStatus(gl.GL_FRAMEBUFFER) != gl.GL_FRAMEBUFFER_COMPLETE) {
                 throw new RuntimeException("Could not create camera buffer");
             }
         }
@@ -1155,7 +1154,7 @@ public class RobotRace extends Base {
         }
 
         void bindDepthBuffer() {
-            gl.glBindRenderbuffer(GL_RENDERBUFFER, deptBufferHandle);
+            gl.glBindRenderbuffer(gl.GL_RENDERBUFFER, deptBufferHandle);
         }
 
         Dimensions getDimensions() {
@@ -1686,8 +1685,8 @@ public class RobotRace extends Base {
                     brick.bind(gl);
                 }
 
-                gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-                gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+                gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT );
+                gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT );
 
                 gl.glBegin(gl.GL_LINES);
                 {
@@ -2131,15 +2130,15 @@ public class RobotRace extends Base {
             int stride = layout.getStride();
 
             if(vertexPosition != -1) {
-                gl.glVertexPointer(vertexSize, GL_FLOAT, stride, vertexPosition);
+                gl.glVertexPointer(vertexSize, gl.GL_FLOAT, stride, vertexPosition);
             }
 
             if(texturePosition != -1) {
-                gl.glTexCoordPointer(textureSize, GL_FLOAT, stride, texturePosition);
+                gl.glTexCoordPointer(textureSize, gl.GL_FLOAT, stride, texturePosition);
             }
 
             if(normalPosition != -1) {
-                gl.glNormalPointer(GL_FLOAT, stride, normalPosition);
+                gl.glNormalPointer(gl.GL_FLOAT, stride, normalPosition);
             }
         }
 
@@ -2424,8 +2423,8 @@ public class RobotRace extends Base {
         public void draw() {
             OneDColorId = OneDColorId == -1 ? create1DTexture() : OneDColorId;
             RobotRace.Material.BLANK.set(gl);//set to blank material
-            gl.glEnable(GL_TEXTURE_1D);
-                gl.glBindTexture(GL_TEXTURE_1D, OneDColorId);
+            gl.glEnable(gl.GL_TEXTURE_1D);
+                gl.glBindTexture(gl.GL_TEXTURE_1D, OneDColorId);
 
                 boolean isFirst = true;
                 VBO vbo = null;
@@ -2445,18 +2444,18 @@ public class RobotRace extends Base {
                         vbo.disable();
                     }
                 }
-            gl.glDisable(GL_TEXTURE_1D);
+            gl.glDisable(gl.GL_TEXTURE_1D);
             
-            gl.glEnable(GL_BLEND);//draw the water surface, enable alpha
-            gl.glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);//enable alpha
-                gl.glBegin(GL_QUADS);
+            gl.glEnable(gl.GL_BLEND);//draw the water surface, enable alpha
+            gl.glBlendFunc(gl.GL_ONE_MINUS_SRC_ALPHA, gl.GL_SRC_ALPHA);//enable alpha
+                gl.glBegin(gl.GL_QUADS);
                     RobotRace.Material.WATER.set(gl);//set material water
                     gl.glVertex3d(-CHUNK_SIZE, -CHUNK_SIZE, WATER_HEIGHT);
                     gl.glVertex3d(CHUNK_SIZE,  -CHUNK_SIZE, WATER_HEIGHT);
                     gl.glVertex3d(CHUNK_SIZE,   CHUNK_SIZE, WATER_HEIGHT);
                     gl.glVertex3d(-CHUNK_SIZE,  CHUNK_SIZE, WATER_HEIGHT);
                 gl.glEnd();
-            gl.glDisable(GL_BLEND);
+            gl.glDisable(gl.GL_BLEND);
             
             for(TerrainChunk chunk : chunks) {
                 if(chunk.trees != null) {
@@ -2470,9 +2469,9 @@ public class RobotRace extends Base {
         private int create1DTexture() {
             int[] textureId = new int[1];
 
-            gl.glEnable(GL_TEXTURE_1D);
+            gl.glEnable(gl.GL_TEXTURE_1D);
                 gl.glGenTextures(1 , textureId , 0);
-            gl.glDisable(GL_TEXTURE_1D);
+            gl.glDisable(gl.GL_TEXTURE_1D);
 
             uploadColors(textureId[0]);
 
@@ -2496,12 +2495,12 @@ public class RobotRace extends Base {
             }
             byteBuffer.flip();
 
-            gl.glEnable(GL_TEXTURE_1D);
-                gl.glBindTexture(GL_TEXTURE_1D, textureId);//bind the textures
-                gl.glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, TEXTURE_COLORS.length, 0, GL_RGBA, GL_UNSIGNED_BYTE, byteBuffer);//set the 1d texture
-                gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);//add filters
-                gl.glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);//add filters
-            gl.glDisable(GL_TEXTURE_1D);
+            gl.glEnable(gl.GL_TEXTURE_1D);
+                gl.glBindTexture(gl.GL_TEXTURE_1D, textureId);//bind the textures
+                gl.glTexImage1D(gl.GL_TEXTURE_1D, 0, gl.GL_RGBA, TEXTURE_COLORS.length, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, byteBuffer);//set the 1d texture
+                gl.glTexParameteri(gl.GL_TEXTURE_1D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR);//add filters
+                gl.glTexParameteri(gl.GL_TEXTURE_1D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR);//add filters
+            gl.glDisable(gl.GL_TEXTURE_1D);
         }
 
 
@@ -2665,8 +2664,8 @@ public class RobotRace extends Base {
         gl.glEnable(gl.GL_TEXTURE_2D);
         torso.bind(gl);//bind the texture
 
-        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT );
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT );
 
         float deltaX = 720;//x size of texture file
         float deltaY = 2100;//y size of texture file
@@ -2715,9 +2714,9 @@ public class RobotRace extends Base {
     public void drawCylinder(float radius, float height, int steps, float textureX1, float textureX2, float textureY1, float textureY2){
         gl.glEnable(gl.GL_TEXTURE_2D);
         torso.bind(gl);
-        //gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dimensions.w(), dimensions.h(), 0, GL_RGB, GL_UNSIGNED_BYTE, null);
-        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+        //gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGB, dimensions.w(), dimensions.h(), 0, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, null);
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT );
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT );
         
         
         float deltaX = 720;//x size of texture file
@@ -2792,9 +2791,9 @@ public class RobotRace extends Base {
     public void drawCylinderFront(float radius, float height, int steps, float textureX1, float textureX2, float textureY1, float textureY2){
         gl.glEnable(gl.GL_TEXTURE_2D);
         torso.bind(gl);
-        //gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dimensions.w(), dimensions.h(), 0, GL_RGB, GL_UNSIGNED_BYTE, null);
-        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-        gl.glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+        //gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGB, dimensions.w(), dimensions.h(), 0, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, null);
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT );
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT );
         
         
         float deltaX = 720;//x size of texture file
