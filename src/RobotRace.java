@@ -1,6 +1,3 @@
-/**
- * RobotRace
- */
 import java.awt.Color;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -13,49 +10,27 @@ import robotrace.Texture1D;
 import robotrace.Vector;
 
 /**
- * Handles all of the RobotRace graphics functionality, which should be extended
- * per the assignment.
- *
- * OpenGL functionality: - Basic commands are called via the gl object; -
- * Utility commands are called via the glu and glut objects;
- *
- * GlobalState: The gs object contains the GlobalState as described in the
- * assignment: - The camera viewpoint angles, phi and theta, are changed
- * interactively by holding the left mouse button and dragging; - The camera
- * view width, vWidth, is changed interactively by holding the right mouse
- * button and dragging upwards or downwards; - The center point can be moved up
- * and down by pressing the 'q' and 'z' keys, forwards and backwards with the
- * 'w' and 's' keys, and left and right with the 'a' and 'd' keys; - Other
- * settings are changed via the menus at the top of the screen.
- *
- * Textures: Place your "track.jpg", "brick.jpg", "head.jpg", and "torso.jpg"
- * files in the same folder as this file. These will then be loaded as the
- * texture objects track, bricks, head, and torso respectively. Be aware, these
- * objects are already defined and cannot be used for other purposes. The
- * texture objects can be used as follows:
- *
- * gl.glColor3f(1f, 1f, 1f); track.bind(gl); gl.glBegin(gl.GL_QUADS);
- * gl.glTexCoord2d(0, 0); gl.glVertex3d(0, 0, 0); gl.glTexCoord2d(1, 0);
- * gl.glVertex3d(1, 0, 0); gl.glTexCoord2d(1, 1); gl.glVertex3d(1, 1, 0);
- * gl.glTexCoord2d(0, 1); gl.glVertex3d(0, 1, 0); gl.glEnd();
- *
- * Note that it is hard or impossible to texture objects drawn with GLUT. Either
- * define the primitives of the object yourself (as seen above) or add
- * additional textured primitives to the GLUT object.
+ * RobotRace
+ * Renders some robots
  */
 public class RobotRace extends Base {
     /**
      * Array of the four robots.
      */
     private final Robot[] robots;
+
     /**
-     * Instance of the camera.
+     * The camera that is used to render the scene from the user perspective
      */
     private final Camera mainCamera;
+
+    /**
+     * The camera that is used to render the scene from the screen perspective
+     */
     private final Camera screenCamera;
 
     /**
-     * Currentyl active camera
+     * The camera that is currently being used to draw
      */
     private Camera camera;
 
@@ -257,13 +232,10 @@ public class RobotRace extends Base {
 
 
         // Initialize the viewing matrix
-
         glu.gluLookAt(
             camera.eye.x(),    camera.eye.y(),    camera.eye.z(),
             camera.center.x(), camera.center.y(), camera.center.z(),
             camera.up.x(),     camera.up.y(),     camera.up.z());
-
-
 
         // Update the light only for the main camera
         if(camera == mainCamera)
@@ -296,17 +268,26 @@ public class RobotRace extends Base {
      */
     @Override
     public void drawScene() {
+        //Update the current race track if a different mode is selected
         if(raceTrack.getCurrentCurve() != gs.trackNr) {
             raceTrack.setCurrentCurve(gs.trackNr);
+
+            // Recompute the terrain, needed to make it not stick through the track
             terrain.recomputeGeometry();
         }
 
+        // Draw as the main camera
         drawAs(mainCamera);
+
+        // Draw the screen camera
         drawAs(screenCamera);
-//         mainCamera.frameBuffer.bind();
     }
 
+    /**
+     * Draw as a certain camera
+     */
     public void drawAs(Camera cam) {
+        // Select the camera, bind the framebuffer and set the view if the camera is different
         if(cam != camera) {
             camera = cam;
             camera.frameBuffer.bind();
@@ -2355,16 +2336,16 @@ public class RobotRace extends Base {
                         builder.addTexCoord(terrain.getColorAtHeight(lowerLeftCorner));
                         builder.endVertex();
 
-                        // Add upper left corner to VBO
-                        builder.addPosition(x, y + STEP_SIZE, upperLeftCorner);
-                        builder.addNormal(terrain.getNormal(x, y + STEP_SIZE, STEP_SIZE));
-                        builder.addTexCoord(terrain.getColorAtHeight(upperLeftCorner));
-                        builder.endVertex();
-
                         // Add upper right corner to VBO
                         builder.addPosition(x + STEP_SIZE, y + STEP_SIZE, upperRightCorner);
                         builder.addNormal(terrain.getNormal(x + STEP_SIZE, y + STEP_SIZE, STEP_SIZE));
                         builder.addTexCoord(terrain.getColorAtHeight(upperRightCorner));
+                        builder.endVertex();
+
+                        // Add upper left corner to VBO
+                        builder.addPosition(x, y + STEP_SIZE, upperLeftCorner);
+                        builder.addNormal(terrain.getNormal(x, y + STEP_SIZE, STEP_SIZE));
+                        builder.addTexCoord(terrain.getColorAtHeight(upperLeftCorner));
                         builder.endVertex();
                     }
                 }
