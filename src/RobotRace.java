@@ -1392,7 +1392,7 @@ public class RobotRace extends Base {
                 x * -2 * Math.PI * Math.sin(2 * Math.PI * t),
                 y *  2 * Math.PI * Math.cos(2 * Math.PI * t),
                 0
-            ).normalized();
+            );
         }
     }
 
@@ -1433,6 +1433,26 @@ public class RobotRace extends Base {
         public Vector getTangent(double t) {
             return B(t, controlPoints, true);
         };
+
+        public BezierCurve translate(Vector delta) {
+            Vector [] newPoints = new Vector[controlPoints.length];
+
+            for(int i = 0; i < controlPoints.length ; i ++) {
+                newPoints[i] = controlPoints[i].add(delta);
+            }
+
+            return new BezierCurve(newPoints);
+        }
+
+        public BezierCurve scale(double scale) {
+            Vector [] newPoints = new Vector[controlPoints.length];
+
+            for(int i = 0; i < controlPoints.length ; i ++) {
+                newPoints[i] = controlPoints[i].scale(scale);
+            }
+
+            return new BezierCurve(newPoints);
+        }
     }
 
     /**
@@ -1446,21 +1466,47 @@ public class RobotRace extends Base {
             new BezierCurve(new Vector[] {
                 new Vector( 0,	 10,    1),
                 new Vector( 5.5, 10,    1),
+
                 new Vector( 10,  5.5,   1),
                 new Vector( 10,  0,     1),
-
                 new Vector( 10, -5.5,   1),
+
                 new Vector( 5.5,-10,    1),
                 new Vector( 0,  -10,    1),
-
                 new Vector(-5.5,-10,    1),
+
                 new Vector(-10, -5.5,   1),
                 new Vector(-10,  0,     1),
-
                 new Vector(-10, 5.5,    1),
+
                 new Vector(-5.5, 10,    1),
                 new Vector( 0,   10,    1),
             }),
+            new BezierCurve(new Vector[] {
+                new Vector( 0,    0,    1),
+                new Vector(-0.5,  1,    1),
+
+                new Vector(-1,    8,    1),
+                new Vector( 0,   10,    1),
+                new Vector( 1,   12,    1),
+
+                new Vector( 2,   11,    1),
+                new Vector( 3, 10.5,    1),
+                new Vector( 4,   10,    1),
+
+                new Vector( 2,   4,     1),
+                new Vector( 4,   2,     1),
+                new Vector( 6,   6,     1),
+
+                new Vector( 8,   4,     1),
+                new Vector( 6,   0,     1),
+                new Vector( 4,  -4,     1),
+
+                new Vector(0.5, -1,     1),
+                new Vector( 0,   0,     1),
+            })
+                //.translate(new Vector(10, 2, 0))
+                .scale(5),
 
         };
 
@@ -1557,7 +1603,7 @@ public class RobotRace extends Base {
         
         Vector getOuter(double t, Vector initialPosition) {
             Vector tangent = getTangent(t);
-            Vector upVector = initialPosition.cross(tangent);
+            Vector upVector = Vector.Z;//initialPosition.cross(tangent);
             Vector directionVector = tangent.cross(upVector)
                                             .normalized()
                                             .scale(4);
@@ -1565,18 +1611,23 @@ public class RobotRace extends Base {
             return initialPosition.add(directionVector);
         }
 
+        double normalizeParam(double t) {
+            while(t < 0) t++;
+            return t % 1;
+        }
         /**
          * Returns the position of the curve at 0 <= {@code t} <= 1.
          */
         public Vector getPoint(double t) {
-            return currentCurve.getPoint(t);
+            return currentCurve.getPoint(normalizeParam(t));
         }
 
         /**
          * Returns the tangent of the curve at 0 <= {@code t} <= 1.
          */
         public Vector getTangent(double t) {
-            return currentCurve.getTangent(t);
+            Vector tangent = currentCurve.getTangent(normalizeParam(t)).normalized();
+            return new Vector(tangent.x(), tangent.y(), 0);
         }
         
         public class TrackCollision {
@@ -2315,18 +2366,6 @@ public class RobotRace extends Base {
         RobotRace robotRace = new RobotRace();
         robotRace.run();
     }
-    
-    public RaceTrack getTrack(){
-        return raceTrack;
-    }
-    
-    
-    
-    
-    
-    
-    
-    
     
     private float[][] boxVertices;
     private float[][] boxNormals = {
